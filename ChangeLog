@@ -2,6 +2,19 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2004-07-24 20:07:25 GMT	Ethan Benson <erbenson@alaska.net>	patch-76
+
+    Summary:
+      Fix typos in yaboot man page
+    Revision:
+      yaboot--devel--1.3--patch-76
+
+    man/yaboot.8: Fix various typos (thanks Helge Kreutzman).
+
+    modified files:
+     0arch-timestamps0 ChangeLog man/yaboot.8
+
+
 2004-07-11 20:14:40 GMT	Ethan Benson <erbenson@alaska.net>	patch-75
 
     Summary:

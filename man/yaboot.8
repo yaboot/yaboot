@@ -16,12 +16,12 @@ is \fInot\fR a Linux or MacOS executable file.  Attempting to execute
 Fault. \fByaboot\fR is meant to be executed only by OpenFirmware.
 
 .B yaboot
-is executed from OpenFirmare in the following manner:
+is executed from OpenFirmware in the following manner:
 .I boot hd:2,yaboot
 where \fIhd:\fR is the OpenFirmware path for the hard disk, and the
 \fI2\fR is the partition number \fByaboot\fR is located on.  In this
 example, the hard disk path is actually an OpenFirmware alias which is
-present on all NewWorld powermacs.  It usually points to the internal
+present on all NewWorld PowerMacs.  It usually points to the internal
 ATA hard disk.  If you have a SCSI disk, then you might execute
 \fByaboot\fR with this command:
 .I boot /pci@80000000/pci-bridge@d/ADPT,2930CU@2/@1:2,yaboot
@@ -29,7 +29,7 @@ This path will vary depending on what kind of SCSI host adapter you
 have. For a more detailed explanation of OpenFirmware's [disgusting]
 paths, see man \fBbootstrap\fR(8).  On IBM hardware \fByaboot\fR is
 directly copied to the \fBbootstrap\fR(8) partition raw, without any
-filesystem.  OpenFirmare will boot from a type 0x41 PReP Boot parition
+filesystem.  OpenFirmware will boot from a type 0x41 PReP Boot parition
 marked bootable, this must contain \fByaboot\fR.  On IBM hardware the
 config file is read directly from the root filesystem.  On PowerMac
 hardware it must be present on the \fBbootstrap\fR(8) partition but
@@ -60,7 +60,7 @@ which would pass the argument \fIroot=/dev/hda3\fR to the kernel.
 should preferably be installed on a dedicated \fBbootstrap\fR(8)
 partition (type Apple_Bootstrap for PowerMacs, type 0x41 PReP Boot for
 IBM hardware).  This allows the partition to be modified in such a way
-that OpenFirmare will load \fByaboot\fR or a boot menu automatically
+that OpenFirmware will load \fByaboot\fR or a boot menu automatically
 with a default OF configuration. If \fByaboot\fR cannot be installed
 on a \fBbootstrap\fR(8) partition it can be installed on the root of a
 MacOS boot partition instead.  \fByaboot\fR however should not be
@@ -70,7 +70,7 @@ reliable and more difficult to execute from OpenFirmware.  See the
 (\fBybin\fR(8) is a utility for installing \fByaboot\fR with minimal
 difficulty).
 
-The \fByaboot.conf\fR(5) file must be next to the yaboot executable on
+The \fByaboot.conf\fR(5) file must be next to the \fByaboot\fR executable on
 the \fBbootstrap\fR(8) partition.  \fBybin\fR(8) will take care of this.
 
 OpenFirmware may be accessed by holding down the \fIcommand, option,
@@ -81,13 +81,13 @@ the \fIcommand, option, p, r\fR keys while cold booting.
 
 If you have G4 hardware then your OpenFirmware may already have a
 graphical boot selector built in.  This selector can be accessed by
-holding down the option key when booting the machine.  You should see
+holding down the \fIoption\fR key when booting the machine.  You should see
 a screen with buttons for each bootable partition.  The current
 version (included with \fBybin\fR(8) 0.13) of ofboot includes a
 badge icon, the button with a penguin icon is your \fBbootstrap\fR(8)
 partition.  Thanks to Nicholas Humfrey for creating the Badge icon.
 
-The \fBbootstrap\fR(8) need not and
+The \fBbootstrap\fR(8) partition need not and
 .B should not
 be mounted anywhere on your filesystem, especially not on top of /boot.  \fBYaboot\fR is able
 to load the kernels from the ext2fs root partition so that is where
