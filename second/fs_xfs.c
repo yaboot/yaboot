@@ -1,11 +1,11 @@
 /*
- *  fsys_xfs.c - an implementation for the SGI XFS file system
+ *  fs_xfs.c - an implementation for the SGI XFS file system
  *
- *  Copyright (C) 2001  Ethan Benson
+ *  Copyright (C) 2001 Ethan Benson
  *
  *  Adapted from Grub
  *
- *  Copyright (C) 2001  Serguei Tzukanov
+ *  Copyright (C) 2001 Serguei Tzukanov
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
 #include "types.h"

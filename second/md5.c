@@ -1,6 +1,10 @@
-/* md5.c - an implementation of the MD5 algorithm and MD5 crypt */
 /*
- *  GRUB  --  GRand Unified Bootloader
+ *  md5.c - an implementation of the MD5 algorithm and MD5 crypt
+ *
+ *  Copyright (C) 2001 Ethan Benson
+ * 
+ *  Adapted from GRUB
+ * 
  *  Copyright (C) 2000  Free Software Foundation, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,8 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* See RFC 1321 for a description of the MD5 algorithm.
- */
+/* See RFC 1321 for a description of the MD5 algorithm. */
 
 #include "string.h"
 #include "md5.h"

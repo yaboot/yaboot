@@ -695,7 +695,7 @@ How do I install Debian?
 <list>
 <item>    <url id="http://mirrors.kernel.org/debian/dists/woody/main/disks-powerpc/current/doc/install.en.html"
     name="Installing Debian GNU/Linux 3.0 For PowerPC">
-<item>    <url id="http://www.debian.org/releases/stable/powerpc/install" name="Installing Debian GNU/Linux 2.2 For PowerPC">
+<item>    <url id="http://www.debian.org/releases/potato/powerpc/install" name="Installing Debian GNU/Linux 2.2 For PowerPC">
 </list>
 
 <p>

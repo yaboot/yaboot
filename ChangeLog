@@ -2,6 +2,29 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-27 13:55:42 GMT	Ethan Benson <erbenson@alaska.net>	patch-15
+
+    Summary:
+      Commit yaboot 1.3.6
+    Revision:
+      yaboot--devel--1.3--patch-15
+
+    Commit yaboot 1.3.6.
+
+    modified files:
+     ChangeLog Makefile changelog doc/README.rs6000
+     doc/yaboot-howto.sgml include/bootinfo.h include/cfg.h
+     include/cmdline.h include/debug.h include/errors.h
+     include/fdisk-part.h include/file.h include/fs.h
+     include/mac-part.h include/partition.h include/prom.h
+     include/yaboot.h lib/malloc.c lib/string.S second/cache.S
+     second/cfg.c second/cmdline.c second/file.c second/fs.c
+     second/fs_ext2.c second/fs_iso.c second/fs_of.c
+     second/fs_reiserfs.c second/fs_xfs.c second/md5.c
+     second/partition.c second/prom.c second/yaboot.c
+     util/addnote.c util/elfextract.c ybin/ybin
+
+
 2002-03-27 13:45:22 GMT	Ethan Benson <erbenson@alaska.net>	patch-14
 
     Summary:

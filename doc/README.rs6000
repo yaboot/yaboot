@@ -36,7 +36,6 @@ C. Configuration File (/etc/yaboot.conf):
       ## example /etc/yaboot.conf for RS/6000
       ## Timeout value is in tenths of a second
       boot=/dev/sda1
-      fstype=raw
       install=/usr/local/lib/yaboot/yaboot
       nonvram
       partition=3
@@ -47,8 +46,8 @@ C. Configuration File (/etc/yaboot.conf):
       label=linux
       root=/dev/sda3
 
-      image=/boot/vmlinux.new
-      label=new
+      image=/boot/vmlinux.old
+      label=old
       root=/dev/sda3
 
 

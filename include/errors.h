@@ -1,7 +1,7 @@
 /*
  *  errors.h - Definitions of error numbers returned by filesystems
  *
- *  Copyright (C) 2001  Ethan Benson
+ *  Copyright (C) 2001 Ethan Benson
  *
  *  Copyright (C) 1999 Benjamin Herrenschmidt
  *

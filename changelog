@@ -1,14 +1,14 @@
-2001-11-29  Ethan Benson  <erbenson@alaska.net>
+2001-12-01  Ethan Benson  <erbenson@alaska.net>
 
-	* Version 1.3.6pre2
+	* Version 1.3.6
 
 	* The "IBM needs to test prereleases" release.
 
 	* Documentation:
 	  - New IGNORE^H^H^H^H^H^HREADME, thanks to Chris Tillman for
 	    cleaning up the pile of cruft that this thing was.
-	  - yabootconfig man page was missing --kernel-args from SYSOPSIS.
-	  - include README.rs6000 in the binary dist.
+	  - yabootconfig man page was missing --kernel-args from SYNOPSIS.
+	  - Include README.rs6000 in the binary dist.
 
 	* ybin:
 	  - Automatically use fstype=raw on IBM CHRP, it no longer needs
@@ -17,12 +17,13 @@
 	    instead.
 
 	* yaboot:
+	  - Fix IBM CHRP support.
 	  - Fix device path parsing to support devices containing a comma,
 	    but not including a filename.
-	  - Fix IBM CHRP support.
 	  - Add support for zImage.initrd (Peter Bergner).
 	  - help output no longer claims device=NULL if yaboot.conf does not define it.
 	  - Make password prompting a bit nicer looking.
+	  - Short penalty delay on incorrect passwords.
 
 2001-10-28  Ethan Benson  <erbenson@alaska.net>
 

@@ -1,18 +1,27 @@
 /*
- * Program to hack in a PT_NOTE program header entry in an ELF file.
- * This is needed for OF on RS/6000s to load an image correctly.
- * Note that OF needs a program header entry for the note, not an
- * ELF section.
+ *  addnote.c - Program to hack in a PT_NOTE program header entry in an ELF file.
+ *             This is needed for OF on RS/6000s to load an image correctly.
+ *             Note that OF needs a program header entry for the note, not an
+ *             ELF section.
  *
- * Copyright 2000 Paul Mackerras.
+ *  Copyright 2000 Paul Mackerras.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version
- * 2 of the License, or (at your option) any later version.
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * Usage: addnote zImage
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+
+/* Usage: addnote zImage */
 
 #include <stdio.h>
 #include <fcntl.h>

@@ -1,30 +1,35 @@
-/* OpenFirmware-based filesystem
-   
-   Copyright (C) 1999 Benjamin Herrenschmidt
-   
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-   
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+/*
+ *  fs_of.c - an implementation for OpenFirmware supported filesystems
+ *
+ *  Copyright (C) 2001 Ethan Benson
+ *
+ *  Copyright (C) 1999 Benjamin Herrenschmidt
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-
-   BrokenFirmware cannot "read" from the network. We use tftp "load" method
-   for network boot for now, we may provide our own NFS implementation in
-   a later version. That means that we allocate a huge block of memory for
-   the entire file before loading it. We use the location where the kernel puts
-   RTAS, it's not used by the bootloader and if freed when the kernel is booted.
-   This will have to be changed if we plan to instanciate RTAS in the bootloader
-   itself
-   
-*/
+/* 
+ * BrokenFirmware cannot "read" from the network. We use tftp "load"
+ * method for network boot for now, we may provide our own NFS
+ * implementation in a later version. That means that we allocate a
+ * huge block of memory for the entire file before loading it. We use
+ * the location where the kernel puts RTAS, it's not used by the
+ * bootloader and if freed when the kernel is booted.  This will have
+ * to be changed if we plan to instanciate RTAS in the bootloader
+ * itself
+ */
 
 #include "ctype.h"
 #include "types.h"
