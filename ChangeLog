@@ -2,6 +2,22 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-05-29 08:50:39 GMT	Ethan Benson <erbenson@alaska.net>	patch-22
+
+    Summary:
+      Update timestamp file to exclude {arch}/*
+    Revision:
+      yaboot--devel--1.3--patch-22
+
+    Update timestamp file to exclude {arch}/*.
+    
+    
+    
+
+    modified files:
+     0arch-timestamps0 ChangeLog
+
+
 2002-05-04 13:00:23 GMT	Ethan Benson <erbenson@alaska.net>	patch-21
 
     Summary:
