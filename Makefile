@@ -111,7 +111,7 @@ addnote:
 	$(CC) $(UCFLAGS) -o util/addnote util/addnote.c
 
 elfextract:
-	$(HOSTCC) $(HOSTCFLAGS) -o util/elfextract util/elfextract.c
+	$(CC) $(UCFLAGS) -o util/elfextract util/elfextract.c
 
 mkofboot:
 	ln -sf ybin ybin/mkofboot
@@ -204,7 +204,7 @@ install: all strip
 	@echo
 	@echo "Installation successful."
 	@echo
-	@echo "An example /etc/yaboot.conf has been installed (unless /etc/yaboot.conf already existed"
+	@echo "An example /etc/yaboot.conf has been installed (unless /etc/yaboot.conf already existed)"
 	@echo "You may either alter that file to match your system, or alternatively run yabootconfig"
 	@echo "yabootconfig will generate a simple and valid /etc/yaboot.conf for your system"
 	@echo

@@ -46,7 +46,9 @@ main(int ac, char **av)
     unsigned nb, len, i;
     Elf32_Ehdr eh;
     Elf32_Phdr ph;
-    unsigned long phoffset, phsize, prevaddr;
+    unsigned long phoffset = 0;
+    unsigned long phsize = 0;
+    unsigned long prevaddr = 0;
 
     if (ac > 3 || (ac > 1 && av[1][0] == '-')) {
 	fprintf(stderr, "Usage: %s [elf-file [image-file]]\n", av[0]);

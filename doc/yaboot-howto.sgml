@@ -20,7 +20,7 @@
       <author>
 	<name>Chris Tillman</name>
       </author>
-      <version>Version 1.00, Oct 28 2001</version>
+      <version>Version 1.01, Feb 24 2002</version>
       <abstract>
 This document contains installation and usage instructions for
 <prgn>yaboot</prgn>, the GNU/Linux PowerPC bootloader.
@@ -29,8 +29,15 @@ This document contains installation and usage instructions for
 	<copyrightsummary>
 This document may be distributed and modified under the terms of the
 GNU General Public License.
-&copy; 1998&ndash;2001 Chris Tillman
+&copy; 1998&ndash;2002 Chris Tillman
         </copyrightsummary>
+	<p>
+This document is maintained in the upstream yaboot source.  Patches
+and translations should be sent to erbenson (at) alaska.net.  The most
+recent version of this document is available via the yaboot rsync
+tree: rsync://penguinppc.org/yaboot, and <url
+id="http://penguinppc.org/projects/yaboot/doc/yaboot-howto.shtml"
+name="http://penguinppc.org/projects/yaboot/doc/yaboot-howto.shtml">.
 	<p>
 This document is free software; you may redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -99,7 +106,7 @@ does not change your boot configuration; you must use the included
 
 You can also download <prgn>yaboot</prgn> directly from the
 <prgn>yaboot</prgn> home page at <url
-id="http://penguinppc.org/projects/yaboot">. If you download it using MacOS,
+id="http://penguinppc.org/projects/yaboot/">. If you download it using MacOS,
 be sure to download using <em>binary</em> (not text) format, and don't let
 Stuffit Expander or another utility expand the archive in MacOS.
 
@@ -147,7 +154,7 @@ bootstrap partition of the proper size and type. If your version of
 (Replace xxxx with the starting block number.) A working tarball of a
 bootstrap-capable version of mac-fdisk (Debian users already have this
 version) is also distributed at <url
-id="http://penguinppc.org/projects/eb/">. To install this, use
+id="http://penguinppc.org/~eb/files/">. To install this, use
 
 <example>
      su -
@@ -365,7 +372,7 @@ assumes it will find the kernel on the same device it was booted from, which
 is quite often true. You should always supply the kernel partition number,
 for example <tt>partition=3</tt>, and of course the image path (for example
 <tt>image=/boot/vmlinux</tt> ). If your kernel image is at the root level of
-the parttion, don't forget to include the leading slash when specifying the
+the partition, don't forget to include the leading slash when specifying the
 image path (<tt>image=vmlinux</tt> will probably fail).
 
 <p>
