@@ -27,7 +27,7 @@
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 PRG="${0##*/}"
-VERSION=1.0.4
+VERSION=1.0.5-UNRELEASED_UNSUPPORTED
 DEBUG=0
 export LC_COLLATE=C
 
@@ -285,6 +285,12 @@ scsi_ofpath()
 			lgrep "$i" "mesh" ; done)"
 	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
 	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
+	    ;;
+	ata_k2)
+	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
+			lgrep "$i" "k2-s-ata" ; done)"
+	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
+	    echo "${DEVICE_PATH##*device-tree}/k2-sata@$DEVICE_ID/disk@0:$PARTITION"
 	    ;;
 	*)
 	    echo 1>&2 "$PRG: Driver: $SCSI_DRIVER is not supported"
