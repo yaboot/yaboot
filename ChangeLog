@@ -2,6 +2,21 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2005-02-02 05:26:31 GMT	Ethan Benson <erbenson@alaska.net>	patch-78
+
+    Summary:
+      Update addnote for newer pSeries hardware
+    Revision:
+      yaboot--devel--1.3--patch-78
+
+    * util/addnote.c: Patch from Paul Mackerras to add second .note
+      required by more recent pSeries hardware.
+    
+
+    modified files:
+     0arch-timestamps0 ChangeLog util/addnote.c
+
+
 2004-09-26 08:10:31 GMT	Ethan Benson <erbenson@alaska.net>	patch-77
 
     Summary:
