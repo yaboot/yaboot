@@ -375,7 +375,7 @@ fi
 ## find / device
 if [ -z "$ROOT" ] ; then
     ## IMPORTANT! that last substitution is [<space><tab>] thats all ash will grok
-    ROOT="$(v=`grep '[[:blank:]]/[[:blank:]]' ${CHROOT}etc/fstab` ; echo ${v%%[ 	]*})"
+    ROOT="$(v=`grep '^[^#].*[[:blank:]]/[[:blank:]]' ${CHROOT}etc/fstab` ; echo ${v%%[ 	]*})"
     debug "ROOT=$ROOT\n"
     if [ -z "$ROOT" ] ; then
 	echo 1>&2 "$PRG: Could not determine root partition, aborting..."

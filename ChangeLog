@@ -2,6 +2,21 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-08-15 07:24:35 GMT	Ethan Benson <erbenson@alaska.net>	patch-25
+
+    Summary:
+      Fix rare fstab parsing bug in yabootconfig
+    Revision:
+      yaboot--devel--1.3--patch-25
+
+    * Fix a rare parsing bug in yabootconfig's /etc/fstab parsing. If the
+      user had commented entries for the / filesystem yabootconfig would end
+      up detecting one of those.
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/yabootconfig
+
+
 2002-07-29 08:01:44 GMT	Ethan Benson <erbenson@alaska.net>	patch-24
 
     Summary:
