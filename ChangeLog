@@ -2,6 +2,24 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-05-04 13:00:23 GMT	Ethan Benson <erbenson@alaska.net>	patch-21
+
+    Summary:
+      Add 0arch-timestamps0 setftime timestamp database
+    Revision:
+      yaboot--devel--1.3--patch-21
+
+    Add 0arch-timestamps0 setftime timestamp database.  This allows us to
+    work around arch's lack of preserving timestamps.
+    
+
+    new files:
+     .arch-ids/0arch-timestamps0.id 0arch-timestamps0
+
+    modified files:
+     ChangeLog
+
+
 2002-04-20 13:52:09 GMT	Ethan Benson <erbenson@alaska.net>	patch-20
 
     Summary:
