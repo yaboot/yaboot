@@ -255,6 +255,66 @@ check_color_text_ui(char *color)
 }      
 #endif /* CONFIG_COLOR_TEXT */
 
+
+void print_message_file(char *filename)
+{
+     char *msg = NULL; 
+     char *p, *endp;
+     char *defdev = boot.dev;
+     int defpart = boot.part;
+     char msgpath[1024];
+     int opened = 0;
+     int result = 0;
+     int n;
+     struct boot_file_t file;
+     struct boot_fspec_t msgfile;
+
+     defdev = cfg_get_strg(0, "device");
+     if (!defdev)
+	  defdev = boot.dev;
+     p = cfg_get_strg(0, "partition");
+	  if (p) {
+	       n = simple_strtol(p, &endp, 10);
+	       if (endp != p && *endp == 0)
+		    defpart = n;	       
+	  }
+
+     strncpy(msgpath, filename, sizeof(msgpath));
+     if (!parse_device_path(msgpath, defdev, defpart, "/etc/yaboot.msg", &msgfile)) {
+	  prom_printf("%s: Unable to parse\n", msgpath);
+	  goto done;
+     }
+
+     result = open_file(&msgfile, &file);
+     if (result != FILE_ERR_OK) {
+	  prom_printf("%s:%d,", msgfile.dev, msgfile.part);
+	  prom_perror(result, msgfile.file);
+	  goto done;
+     } else
+	  opened = 1;
+
+     msg = malloc(2001);
+     if (!msg)
+	  goto done;
+     else
+	  memset(msg, 0, sizeof(*msg));
+
+     if (file.fs->read(&file, 2000, msg) <= 0)
+	  goto done;
+     else
+	  prom_printf("%s", msg);
+
+done:
+     if (opened)
+	  file.fs->close(&file);
+     if (msg)
+	  free(msg);
+     if (p)
+	  free(p);
+     if (endp)
+	  free(endp);
+}
+
 /* Currently, the config file must be at the root of the filesystem.
  * todo: recognize the full path to myself and use it to load the
  * config file. Handle the "\\" (blessed system folder)
@@ -359,11 +419,10 @@ load_config_file(char *device, char* path, int partition)
      p = cfg_get_strg(0, "init-message");
      if (p)
 	  prom_printf("%s\n", p);
-#if 0
+
      p = cfg_get_strg(0, "message");
      if (p)
 	  print_message_file(p);
-#endif		
 
      result = 1;
     
@@ -653,7 +712,7 @@ int get_params(struct boot_param_t* params)
 	       "press <return> to boot it.\n\n"
 	       "To boot any other label simply type its name and press <return>.\n\n"
 	       "To boot a kernel image which is not defined in the yaboot configuration \n"
-	       "file, enter the kernel image name as [device:][partno],/path, where \n"
+	       "file, enter the kernel image name as [[device:][partno],]/path, where \n"
 	       "\"device:\" is the OpenFirmware device path to the disk the image \n"
 	       "resides on, and \"partno\" is the partition number the image resides on.\n"
 	       "Note that the comma (,) is only required if you specify an OpenFirmware\n"

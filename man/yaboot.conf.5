@@ -6,7 +6,7 @@
 .\" This program is distributed according to the Gnu General Public License.
 .\" See the file COPYING in the ybin source distribution.
 .\"
-.TH YABOOT.CONF 5 "25 September 2001" "GNU/Linux PowerPC" "File Formats"
+.TH YABOOT.CONF 5 "25 October 2001" "GNU/Linux PowerPC" "File Formats"
 .SH NAME
 .B yaboot.conf
 \- Configuration file format used by
@@ -247,8 +247,12 @@ darwin.  This is only relevant if you have \fIbsd=\fR, \fImacos=\fR,
 \fImacosx=\fR, or \fIdarwin=\fR options defined.
 .TP
 .BI "message=" message_filename
-Specifies a file containing a message that is displayed before the boot
-prompt. [CURRENTLY UNIMPLEMENTED]
+Specifies a file containing a message that is displayed before the
+boot prompt.  You may specify either a plain pathname, in which case
+the default device and partition will be derived from the
+\fIdevice=\fR and \fIpartition=\fR lines in the global section of
+\fByaboot.conf\fR, or you can specify a full OpenFirmware device
+path.  Note: only the first 2000 bytes of this file will be read.
 .TP
 .BI "password=" password
 Protect booting by a password. The password is given in either

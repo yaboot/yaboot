@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.5pre1
+VERSION = 1.3.5pre2
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars
@@ -144,6 +144,7 @@ clean:
 	find . -name '#*' | xargs rm -f
 	find . -name '.#*' | xargs rm -f
 	find . -name '*~' | xargs rm -f
+	find . -name '*.swp' | xargs rm -f
 	-gunzip man/*.gz
 	rm -rf man.deb
 	chmod 755 ybin/ybin ybin/ofpath ybin/yabootconfig

@@ -414,7 +414,7 @@ prom_puts (prom_handle file, char *s)
 void
 prom_vfprintf (prom_handle file, char *fmt, va_list ap)
 {
-     static char printf_buf[1536];
+     static char printf_buf[2048];
      vsprintf (printf_buf, fmt, ap);
      prom_puts (file, printf_buf);
 }
@@ -422,7 +422,7 @@ prom_vfprintf (prom_handle file, char *fmt, va_list ap)
 void
 prom_vprintf (char *fmt, va_list ap)
 {
-     static char printf_buf[1536];
+     static char printf_buf[2048];
      vsprintf (printf_buf, fmt, ap);
      prom_puts (prom_stdout, printf_buf);
 }

@@ -134,12 +134,10 @@ ext2_open(	struct boot_file_t*	file,
      DEBUG_OPEN;
 
      if (opened) {
-	  prom_printf("ext2_open() : fs busy\n");
 	  DEBUG_LEAVE(FILE_ERR_FSBUSY);
 	  return FILE_ERR_FSBUSY;
      }
      if (file->device_kind != FILE_DEVICE_BLOCK) {
-	  prom_printf("Can't open ext2 filesystem on non-block device\n");
 	  DEBUG_LEAVE(FILE_ERR_BADDEV);
 	  return FILE_ERR_BADDEV;
      }
