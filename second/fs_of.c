@@ -44,7 +44,8 @@
 #include "debug.h"
 
 #define LOAD_BUFFER_POS		0x600000
-#define LOAD_BUFFER_SIZE	0x400000
+/* this cannot be safely increased any further */
+#define LOAD_BUFFER_SIZE	0x600000
 
 static int of_open(struct boot_file_t* file, const char* dev_name,
 		   struct partition_t* part, const char* file_name);

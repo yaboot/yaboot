@@ -2,6 +2,20 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2004-07-11 19:55:54 GMT	Ethan Benson <erbenson@alaska.net>	patch-73
+
+    Summary:
+      Increase tftp buffer to ~6MB
+    Revision:
+      yaboot--devel--1.3--patch-73
+
+    * second/fs_of.c: increase tftp buffer to 6MB.  This is as far as it
+      can go.
+
+    modified files:
+     0arch-timestamps0 ChangeLog second/fs_of.c
+
+
 2004-07-11 19:52:17 GMT	Ethan Benson <erbenson@alaska.net>	patch-72
 
     Summary:
