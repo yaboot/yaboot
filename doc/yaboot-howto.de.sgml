@@ -41,8 +41,8 @@ unter: rsync://penguinppc.org/yaboot zu finden.
         <p>
 Die Bezugsquelle dieses
 Dokumentes ist <url
-id="http://penguinppc.org/projects/yaboot/doc/yaboot-howto.shtml"
-name="http://penguinppc.org/projects/yaboot/doc/yaboot-howto.shtml">.
+id="http://penguinppc.org/bootloaders/yaboot/doc/yaboot-howto.shtml"
+name="http://penguinppc.org/bootloaders/yaboot/doc/yaboot-howto.shtml">.
 <p>
 Dieses Dokument ist freie Software; Sie dürfen es weiterverbreiten und/oder
 modifizieren, zu den Bedingungen der GNU General Public Licence, wie sie von
@@ -112,7 +112,7 @@ müssen dafür das inkludierte <prgn>ybin</prgn> Werkzeug verwenden.
 <p>
 
 Sie können <prgn>yaboot</prgn> auch direkt von der Home-Page von
-<prgn>yaboot</prgn> unter <url id="http://penguinppc.org/projects/yaboot/">
+<prgn>yaboot</prgn> unter <url id="http://penguinppc.org/bootloaders/yaboot/">
 herunterladen. Wenn Sie es mit MacOS herunterladen, vergewissern Sie sich, dass
 sie das <em>binary</em> (nicht text) Format verwenden, und lassen Sie weder
 Stuffit Expander noch ein anderes Werkzeut das Archiv in MacOS expandieren.
@@ -148,7 +148,7 @@ Befehle auf (ersetzen Sie mit den tatsächlichen Revisions-Nummern bei X und Y):
 <p>
 
 Überprüfen Sie bitte die <prgn>mac-fdisk</prgn> Grundlagen-Seite auf
-<url id="http://penguinppc.org/projects/yaboot/doc/mac-fdisk-basics.shtml">.
+<url id="http://penguinppc.org/bootloaders/yaboot/doc/mac-fdisk-basics.shtml">.
 Wenn Sie eine neue Linux-Installation erstellen, sollte die ersten Partition,
 die mit <prgn>mac-fdisk</prgn> Sie erstellen, die bootstrap-Partition sein.
 Verwenden Sie lediglich den <prgn>mac-fdisk</prgn> <tt>b</tt> Befehl, um
@@ -747,7 +747,7 @@ Prompt geben Sie <em>install</em> gefolgt von Enter ein.
 
 Wo ist yaboot zu Hause?
 <list>
-<item>    <url id="http://penguinppc.org/projects/yaboot/" name="Yaboot Home">
+<item>    <url id="http://penguinppc.org/bootloaders/yaboot/" name="Yaboot Home">
 </list>
 
 <p>
