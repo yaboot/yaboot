@@ -11,7 +11,7 @@ A. System Partitioning:
       This partition must be less than 10MB.
 
    Recommended partition configuration:
-      /dev/sda1 : PREP Boot.    Type 0x41. Size = 4 MB
+      /dev/sda1 : PREP Boot.    Type 0x41. Size = 800K
       /dev/sda2 : Linux swap.   Type 0x82. Size = 128 MB
       /dev/sda3 : Linux native. Type 0x83.
 
@@ -20,13 +20,12 @@ B. Building & Installation:
       your system partitions when installing Linux.
    2. Build yaboot by doing:
        make clean; make
-   3. Install yaboot by doing (as root):
-      dd if=yaboot of=/dev/sdax
-      where x is the boot partition; for example: dd if=yaboot of=/dev/sda1
-   4. Make a yaboot.conf file in /etc/yaboot.conf
+   3. Make a yaboot.conf file in /etc/yaboot.conf
+   4. Install yaboot by doing (as root):
+      mkofboot
 
 C. Configuration File (/etc/yaboot.conf):
-   1. See the ybin documentation for the full range of options.
+   1. See the yaboot.conf(5) man page for the full range of options.
    2. Options tested on an RS/6000 include:
       timeout = <time in tenths of a second>
       default = <default label>
@@ -38,6 +37,11 @@ C. Configuration File (/etc/yaboot.conf):
 
       ## example /etc/yaboot.conf for RS/6000
       ## Timeout value is in tenths of a second
+      boot=/dev/sda1
+      fstype=raw
+      install=/usr/local/lib/yaboot/yaboot
+      nonvram
+      partition=3
       timeout=200
       default=linux
 
@@ -65,14 +69,12 @@ D. Tested Configurations:
 
    2. RS/6000 Model 260 (PPC 630; CHRP IBM,7043-260)
 
-      * Set "CONFIG_PPC64BRIDGE = y" in the Makefile!
-
    3. RS/6000 Model F50 (PPC 630; CHRP IBM,7025-F50)
 
 
 E. Other Documentation:
-   1. The ybin distribution includes addition README files and
-      man pages.
+   1. man pages under man/
+   2. other README files in doc/
 
 F. Questions & comments can be directed to:
    engebret@us.ibm.com or

@@ -1,5 +1,16 @@
 2001-09-20  Ethan Benson  <erbenson@alaska.net>
 
+	* Version 1.3.1
+
+	* Don't include /etc/yaboot.conf in binary dist, instead put the
+	  example in /usr/local/share/doc.  This way extracting the tarball
+	  from / won't blow away existing configs.
+
+	* Move strip commands from install target to strip target, install
+	  now depends on strip.
+
+2001-09-20  Ethan Benson  <erbenson@alaska.net>
+
 	* Version 1.3
 
 	* Merging of ybin and yaboot source trees, this is now the

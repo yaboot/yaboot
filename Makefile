@@ -1,6 +1,6 @@
 ## Configuration section
 
-VERSION = 1.3
+VERSION = 1.3.1
 # Debug mode (verbose)
 DEBUG = 0
 ROOT =
@@ -124,6 +124,8 @@ bindist: all
 	mkdir -p -m 755 ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot
 	cp -a COPYING ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/COPYING
 	cp -a README ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/README
+	mv ../yaboot-binary-${VERSION}/etc/yaboot.conf ../yaboot-binary-${VERSION}/usr/local/share/doc/
+	rmdir ../yaboot-binary-${VERSION}/etc
 	${GETROOT} tar -C ../yaboot-binary-${VERSION} -zcvpf ../yaboot-binary-${VERSION}.tar.gz .
 	rm -rf ../yaboot-binary-${VERSION}
 
@@ -137,11 +139,13 @@ clean:
 	chmod -R u+rwX,go=rX .
 	chmod a-w COPYING
 
-install: all
-	@strip second/yaboot
-	@strip --remove-section=.comment second/yaboot
-	@strip util/addnote
-	@strip --remove-section=.comment --remove-section=.note util/addnote
+strip: all
+	strip second/yaboot
+	strip --remove-section=.comment second/yaboot
+	strip util/addnote
+	strip --remove-section=.comment --remove-section=.note util/addnote
+
+install: all strip
 	install -d -o root -g root -m 0755 ${ROOT}/etc/
 	install -d -o root -g root -m 0755 ${ROOT}/${PREFIX}/sbin/
 	install -d -o root -g root -m 0755 ${ROOT}/${PREFIX}/lib
