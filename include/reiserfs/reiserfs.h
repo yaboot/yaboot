@@ -95,14 +95,14 @@ struct reiserfs_journal_header {
 /* Item version determines which offset_v# struct to use */
 #define ITEM_VERSION_1 0
 #define ITEM_VERSION_2 1
-#define IH_KEY_OFFSET(ih) (INFO->version < 2 \
-                           || ih_version(ih) == ITEM_VERSION_1 \
-                           ? (ih)->ih_key.u.k_offset_v1.k_offset \
+#define IH_KEY_OFFSET(ih) ((INFO->version < 2 \
+                           || ih_version(ih) == ITEM_VERSION_1) \
+                           ? le32_to_cpu ((ih)->ih_key.u.k_offset_v1.k_offset) \
                            : offset_v2_k_offset(&(ih)->ih_key.u.k_offset_v2))
  
-#define IH_KEY_ISTYPE(ih, type) (INFO->version < 2 \
-                || ih_version(ih) == ITEM_VERSION_1 \
-                ? (ih)->ih_key.u.k_offset_v1.k_uniqueness == V1_##type \
+#define IH_KEY_ISTYPE(ih, type) ((INFO->version < 2 \
+                || ih_version(ih) == ITEM_VERSION_1) \
+                ? le32_to_cpu((ih)->ih_key.u.k_offset_v1.k_uniqueness) == V1_##type \
                 : offset_v2_k_type(&(ih)->ih_key.u.k_offset_v2) == V2_##type)
 
 //
