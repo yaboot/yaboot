@@ -1,0 +1,345 @@
+#%ybinscript-1.1
+
+## THIS IS NOT A CONFFILE DO NOT EDIT !!!
+
+###############################################################################
+##
+## ofboot first stage autoconfiguring bootloader for yaboot and ybin
+## Copyright (C) 2000, 2001 Ethan Benson
+##
+## Forth code written by Chris Emerson
+##
+## Copyright (C) 2000, 2001 Chris Emerson
+##
+## Portions of Forth code also written by iNOUE Koich!
+##
+## Copyright (C) 2000, 2001 iNOUE Koich!
+##
+## This program is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License
+## as published by the Free Software Foundation; either version 2
+## of the License, or (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+##
+###############################################################################
+
+## THIS IS NOT A CONFFILE DO NOT EDIT !!!
+##
+## This script is not meant to be called directly, only by ybin.
+##
+## Usage: OS-count defaultos timeout fgc bgc osname oslabel oskey osdev osfile ...
+
+DEBUG=0
+PRG=ofboot
+
+## make sure we are called at least somewhat sanely.
+if [ $# = 0 ] ; then
+    echo 1>&2 "$PRG: Need arguments"
+    exit 1
+fi
+
+if [ $# != "$(($1 * 5 + 5))" ] ; then
+    echo 1>&2 "$PRG: Invalid argument count: $# should be $(($1 * 5 + 5))"
+    exit 1
+fi
+
+if [ "$1" -gt 8 ] ; then
+    echo 1>&2 "$PRG: Maximum number of OSes is currently 8"
+    exit 1
+fi
+
+## we need printf so \n works, but echo -e -n will sometimes do.
+if [ "$(printf printf_test 2>/dev/null)" = printf_test ] ; then
+    PRINTF=printf
+else
+    PRINTF="echo -e -n"
+fi
+
+## make sure echo is not lame if we must use it.
+if [ "$PRINTF" != printf ] ; then
+    if [ "$(echo -e -n echo_test)" != echo_test ] ; then
+	echo 1>&2 "$PRG: printf unavailable and echo is broken, sorry."
+	exit 1
+    fi
+fi
+
+## get first 5 args which are global and dispose of them.
+OSNUM="$1"
+DEFAULTOS="$2"
+TIMEOUT="$3"
+FGCOLOR="$4"
+BGCOLOR="$5"
+shift 5
+
+## is a boot menu actually needed?
+if [ "$OSNUM" = 1 ] ; then
+    MENU=0
+else
+    MENU=1
+fi
+
+## create the variables.
+##
+## OSNAME="$1"
+## OSLABEL="$2"
+## OSKEY="$3"
+## OSDEV="$4"
+## OSFILE="$5"
+
+COUNT=1
+while [ "$COUNT" -le "$OSNUM" ] ; do
+    case "$COUNT" in
+	1)
+	OSNAME1="$1"
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file1: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	BTYA=": boot$1 \" Loading second stage bootstrap...\" .printf 100 ms load-base release-load-area \" ${4}${5}\" \$boot ;"
+	MENUYA="\" Press $3 for GNU/Linux${c-,}\"(0d 0a)\" .printf"
+	GETYA="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+	2)
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file2: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	BT2=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
+	MENU2="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
+	GET2="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+	3)
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file3: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	BT3=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
+	MENU3="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
+	GET3="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+	4)
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file4: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	BT4=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
+	MENU4="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
+	GET4="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+	5)
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file5: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	BT5=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
+	MENU5="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
+	GET5="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+	6)
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file6: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	BT6=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
+	MENU6="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
+	GET6="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+	7)
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file7: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	BT7=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
+	MENU7="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
+	GET7="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+	8)
+	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file8: $5\n"
+	[ "$COUNT" = "$OSNUM" ] && c="."
+	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	BT8=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
+	MENU8="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
+	GET8="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
+	shift 5
+	COUNT="$(($COUNT + 1))"
+	;;
+    esac
+done
+
+## first OS is reserved.
+if [ "$OSNAME1" != yaboot ] ; then
+    echo 1>&2 "ofboot: first OS must be yaboot"
+    exit 1
+fi
+
+## concatenate the variables together.
+case "$OSNUM" in
+    1)
+    BOOTVARS="${BTYA}"
+    MENUOPTS="${MENUYA}"
+    GETOS="${GETYA}"
+    ;;
+    2)
+    BOOTVARS="${BTYA}\n${BT2}"
+    MENUOPTS="${MENUYA}\n${MENU2}"
+    GETOS="${GETYA}\n${GET2}"
+    ;;
+    3)
+    BOOTVARS="${BTYA}\n${BT2}\n${BT3}"
+    MENUOPTS="${MENUYA}\n${MENU2}\n${MENU3}"
+    GETOS="${GETYA}\n${GET2}\n${GET3}"
+    ;;
+    4)
+    BOOTVARS="${BTYA}\n${BT2}\n${BT3}\n${BT4}"
+    MENUOPTS="${MENUYA}\n${MENU2}\n${MENU3}\n${MENU4}"
+    GETOS="${GETYA}\n${GET2}\n${GET3}\n${GET4}"
+    ;;
+    5)
+    BOOTVARS="${BTYA}\n${BT2}\n${BT3}\n${BT4}\n${BT5}"
+    MENUOPTS="${MENUYA}\n${MENU2}\n${MENU3}\n${MENU4}\n${MENU5}"
+    GETOS="${GETYA}\n${GET2}\n${GET3}\n${GET4}\n${GET5}"
+    ;;
+    6)
+    BOOTVARS="${BTYA}\n${BT2}\n${BT3}\n${BT4}\n${BT5}\n${BT6}"
+    MENUOPTS="${MENUYA}\n${MENU2}\n${MENU3}\n${MENU4}\n${MENU5}\n${MENU6}"
+    GETOS="${GETYA}\n${GET2}\n${GET3}\n${GET4}\n${GET5}\n${GET6}"
+    ;;
+    7)
+    BOOTVARS="${BTYA}\n${BT2}\n${BT3}\n${BT4}\n${BT5}\n${BT6}\n${BT7}"
+    MENUOPTS="${MENUYA}\n${MENU2}\n${MENU3}\n${MENU4}\n${MENU5}\n${MENU6}\n${MENU7}"
+    GETOS="${GETYA}\n${GET2}\n${GET3}\n${GET4}\n${GET5}\n${GET6}\n${GET7}"
+    ;;
+    8)
+    BOOTVARS="${BTYA}\n${BT2}\n${BT3}\n${BT4}\n${BT5}\n${BT6}\n${BT7}\n${BT8}"
+    MENUOPTS="${MENUYA}\n${MENU2}\n${MENU3}\n${MENU4}\n${MENU5}\n${MENU6}\n${MENU7}\n${MENU8}"
+    GETOS="${GETYA}\n${GET2}\n${GET3}\n${GET4}\n${GET5}\n${GET6}\n${GET7}\n${GET8}"
+    ;;
+esac
+
+if [ -n "$YBINOFICON" -a -f "$YBINOFICON" -a -r "$YBINOFICON" ] ; then
+    OFBOOTICON="$(cat "$YBINOFICON")"
+else
+    OFBOOTICON="<OS-BADGE-ICONS>
+1010
+000000000000F8FEACF6000000000000
+0000000000F5FFFFFEFEF50000000000
+00000000002BFAFEFAFCF70000000000
+0000000000F65D5857812B0000000000
+0000000000F5350B2F88560000000000
+0000000000F6335708F8FE0000000000
+00000000005600F600F5FD8100000000
+00000000F9F8000000F5FAFFF8000000
+000000008100F5F50000F6FEFE000000
+000000F8F700F500F50000FCFFF70000
+00000088F70000F50000F5FCFF2B0000
+0000002F582A00F5000008ADE02C0000
+00090B0A35A62B0000002D3B350A0000
+000A0A0B0B3BF60000505E0B0A0B0A00
+002E350B0B2F87FAFCF45F0B2E090000
+00000007335FF82BF72B575907000000
+000000000000ACFFFF81000000000000
+000000000081FFFFFFFF810000000000
+0000000000FBFFFFFFFFAC0000000000
+000000000081DFDFDFFFFB0000000000
+000000000081DD5F83FFFD0000000000
+000000000081DDDF5EACFF0000000000
+0000000000FDF981F981FFFF00000000
+00000000FFACF9F9F981FFFFAC000000
+00000000FFF98181F9F981FFFF000000
+000000ACACF981F981F9F9FFFFAC0000
+000000FFACF9F981F9F981FFFFFB0000
+00000083DFFBF981F9F95EFFFFFC0000
+005F5F5FDDFFFBF9F9F983DDDD5F0000
+005F5F5F5FDD81F9F9E7DF5F5F5F5F00
+0083DD5F5F83FFFFFFFFDF5F835F0000
+000000FBDDDFACFBACFBDFDFFB000000
+000000000000FFFFFFFF000000000000
+0000000000FFFFFFFFFFFF0000000000
+0000000000FFFFFFFFFFFF0000000000
+0000000000FFFFFFFFFFFF0000000000
+0000000000FFFFFFFFFFFF0000000000
+0000000000FFFFFFFFFFFF0000000000
+0000000000FFFFFFFFFFFFFF00000000
+00000000FFFFFFFFFFFFFFFFFF000000
+00000000FFFFFFFFFFFFFFFFFF000000
+000000FFFFFFFFFFFFFFFFFFFFFF0000
+000000FFFFFFFFFFFFFFFFFFFFFF0000
+000000FFFFFFFFFFFFFFFFFFFFFF0000
+00FFFFFFFFFFFFFFFFFFFFFFFFFF0000
+00FFFFFFFFFFFFFFFFFFFFFFFFFFFF00
+00FFFFFFFFFFFFFFFFFFFFFFFFFF0000
+000000FFFFFFFFFFFFFFFFFFFF000000
+</OS-BADGE-ICONS>"
+fi
+
+## create tmp files safely.
+TMP="${TMPDIR:-/tmp}"
+TMPBOOT=`mktemp -q "$TMP/ofboot.XXXXXX"`
+    if [ $? != 0 ] ; then
+        echo 1>&2 "Cannot create temp file, aborting."
+        exit 1
+    fi
+
+## create the real script
+$PRINTF \
+"<CHRP-BOOT>
+<COMPATIBLE>
+MacRISC
+</COMPATIBLE>
+<DESCRIPTION>
+PowerPC GNU/Linux First Stage Bootstrap
+</DESCRIPTION>
+<BOOT-SCRIPT>
+: .printf fb8-write drop ;
+$BOOTVARS
+\" screen\" output
+variable interactive
+$MENU interactive !
+
+0 interactive @ = if
+  bootyaboot
+then
+
+dev screen
+\" \"(0000000000aa00aa0000aaaaaa0000aa00aaaa5500aaaaaa)\" drop 0 7 set-colors
+\" \"(5555555555ff55ff5555ffffff5555ff55ffffff55ffffff)\" drop 8 15 set-colors
+device-end
+$FGCOLOR to foreground-color
+$BGCOLOR to background-color
+\" \"(0C)\" .printf
+
+\" First Stage GNU/Linux Bootstrap\"(0d 0a)\" .printf
+\"  \"(0d 0a)\" .printf
+$MENUOPTS
+\"  \"(0d 0a)\" .printf
+\" Boot: \" .printf
+get-msecs d# $TIMEOUT 3E8 * +
+begin
+  key? if
+    key case
+$GETOS
+    endcase
+  then
+  dup get-msecs &lt;
+until
+drop
+\"  \"(0d 0a)\" .printf $DEFAULTOS
+</BOOT-SCRIPT>
+$OFBOOTICON
+</CHRP-BOOT>\n" > "$TMPBOOT"
+
+echo "$TMPBOOT"

@@ -1,0 +1,132 @@
+diff -urN -X CVS man/mkofboot.8 man.deb/mkofboot.8
+--- man/mkofboot.8	Thu May 24 04:32:54 2001
++++ man.deb/mkofboot.8	Mon Aug  6 03:01:39 2001
+@@ -94,7 +94,7 @@
+ .TP
+ .BR \-i ,\  \-\-install\ \fIboot-file
+ Use \fIboot-file\fR as the primary boot loader executable, instead of
+-the default\fI/usr/local/lib/yaboot/yaboot\fR(8).
++the default\fI/usr/lib/yaboot/yaboot\fR(8).
+ .TP
+ .BR \-C ,\  \-\-config\ \fIconfig-file
+ Use \fIconfig-file\fR as the \fBmkofboot\fR/\fByaboot\fR(8) configuration
+@@ -200,8 +200,8 @@
+ Print out the version number and exit.
+ .SH FILES
+ .nf
+-/usr/local/lib/yaboot/yaboot \- boot loader executable
+-/usr/local/lib/yaboot/ofboot \- OpenFirmware boot script
++/usr/lib/yaboot/yaboot \- boot loader executable
++/usr/lib/yaboot/ofboot \- OpenFirmware boot script
+ /etc/yaboot.conf \- boot loader/mkofboot configuration file
+ .fi
+ .SH ENVIRONMENT
+@@ -218,7 +218,7 @@
+ program otherwise \fBmkofboot\fR will be vulnerable to race conditions.
+ The Debian mktemp is derived from OpenBSD and thus should be secure.
+ 
+-\fI/usr/local/lib/yaboot/ofboot\fR now contains code executed by /bin/sh (by
++\fI/usr/lib/yaboot/ofboot\fR now contains code executed by /bin/sh (by
+ \fBmkofboot\fR) it is thus critical that it not be writable by anyone
+ but root.  It is also critical that \fI/etc/yaboot.conf\fR not be
+ writable by anyone but root since a different \fIofboot\fR script could be
+diff -urN -X CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
+--- man/yaboot.conf.5	Mon Aug  6 02:43:23 2001
++++ man.deb/yaboot.conf.5	Mon Aug  6 03:01:39 2001
+@@ -136,7 +136,7 @@
+   boot=/dev/hda2
+   device=hd:
+   partition=3
+-  magicboot=/usr/local/lib/yaboot/ofboot
++  magicboot=/usr/lib/yaboot/ofboot
+   timeout=50
+   root=/dev/hda3
+   read-only
+@@ -228,7 +228,7 @@
+ magicboot script will be executed by OF automatically at boot (instead
+ of the \fBinstall\fR file.)  See man \fBbootstrap\fR(8) for more
+ information on this.  As of ybin 0.22 you should set this to
+-/usr/local/lib/yaboot/ofboot which is a autoconfiguring first stage
++/usr/lib/yaboot/ofboot which is a autoconfiguring first stage
+ loader for yaboot.  It is capable of presenting a dual boot menu for
+ GNU/Linux, MacOS and MacOSX.  If dual booting is not required or
+ configured it will simply load yaboot directly.  You must specify this
+@@ -299,7 +299,7 @@
+ option you will be presented with a simple menu at bootup allowing you
+ to hit L to boot GNU/Linux or B to boot BSD (along with other choices
+ if configured).  This will only work if you are using the new
+-\fI/usr/local/lib/yaboot/ofboot\fR script.  When this is set to a unix
++\fI/usr/lib/yaboot/ofboot\fR script.  When this is set to a unix
+ device node (ie \fI/dev/hda11\fR) then ybin will use the
+ \fBofpath\fR(8) utility to determine the OpenFirmware device path.
+ .TP
+@@ -308,7 +308,7 @@
+ partition.  When you define this option you will be presented with a
+ simple menu at bootup allowing you to hit L to boot GNU/Linux or M to
+ boot MacOS (along with other choices if configured).  This will only
+-work if you are using the new \fI/usr/local/lib/yaboot/ofboot\fR
++work if you are using the new \fI/usr/lib/yaboot/ofboot\fR
+ script.  When this is set to a unix device node (ie \fI/dev/hda11\fR)
+ then ybin will use the \fBofpath\fR(8) utility to determine the
+ OpenFirmware device path.
+@@ -318,7 +318,7 @@
+ When you define this option you will be presented with a simple menu
+ at bootup allowing you to hit L to boot GNU/Linux or X to boot MacOSX
+ (along with other choices if configured).  This will only work if you
+-are using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When
++are using the new \fI/usr/lib/yaboot/ofboot\fR script.  When
+ this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
+ use the \fBofpath\fR(8) utility to determine the OpenFirmware device
+ path.
+@@ -339,7 +339,7 @@
+ When you define this option you will be presented with a simple menu
+ at bootup allowing you to hit L to boot GNU/Linux or D to boot Darwin
+ (along with other choices if configured).  This will only work if you
+-are using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When
++are using the new \fI/usr/lib/yaboot/ofboot\fR script.  When
+ this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
+ use the \fBofpath\fR(8) utility to determine the OpenFirmware device
+ path.
+@@ -587,8 +587,8 @@
+ root=/dev/hda3
+ partition=3
+ timeout=20
+-install=/usr/local/lib/yaboot/yaboot
+-magicboot=/usr/local/lib/yaboot/ofboot
++install=/usr/lib/yaboot/yaboot
++magicboot=/usr/lib/yaboot/ofboot
+ fgcolor=black
+ bgcolor=green
+ default=Linux
+diff -urN -X CVS man/ybin.8 man.deb/ybin.8
+--- man/ybin.8	Thu May 24 04:33:16 2001
++++ man.deb/ybin.8	Mon Aug  6 03:01:39 2001
+@@ -109,7 +109,7 @@
+ .TP
+ .BR \-i ,\  \-\-install\ \fIboot-file
+ Use \fIboot-file\fR as the primary boot loader executable, instead of
+-the default \fI/usr/local/lib/yaboot/yaboot\fR.
++the default \fI/usr/lib/yaboot/yaboot\fR.
+ .TP
+ .BR \-C ,\  \-\-config\ \fIconfig-file
+ Use \fIconfig-file\fR as the \fBybin\fR/\fByaboot\fR(8) configuration
+@@ -214,8 +214,8 @@
+ Print out the version number and exit.
+ .SH FILES
+ .nf
+-/usr/local/lib/yaboot/yaboot \- boot loader executable
+-/usr/local/lib/yaboot/ofboot \- OpenFirmware boot script
++/usr/lib/yaboot/yaboot \- boot loader executable
++/usr/lib/yaboot/ofboot \- OpenFirmware boot script
+ /etc/yaboot.conf \- boot loader/ybin configuration file
+ .fi
+ .SH ENVIRONMENT
+@@ -232,7 +232,7 @@
+ program, otherwise \fBybin\fR will be vulnerable to race conditions.
+ The Debian mktemp is derived from OpenBSD and thus should be secure.
+ 
+-\fI/usr/local/lib/yaboot/ofboot\fR now contains code executed by /bin/sh (by
++\fI/usr/lib/yaboot/ofboot\fR now contains code executed by /bin/sh (by
+ \fBybin\fR). It is thus critical that it not be writable by anyone but
+ root.  It is also critical that \fI/etc/yaboot.conf\fR not be writable
+ by anyone but root since a different \fIofboot\fR script could be

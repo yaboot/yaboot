@@ -2,3 +2,144 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-25 07:43:37 GMT	Ethan Benson <erbenson@alaska.net>	patch-1
+
+    Summary:
+      Commit yaboot 1.3.0
+    Revision:
+      yaboot--devel--1.3--patch-1
+
+    Commit yaboot 1.3.0.
+
+    new files:
+     .arch-ids/BUGS.id .arch-ids/COPYING.id .arch-ids/INSTALL.id
+     .arch-ids/Makefile.id .arch-ids/README.id
+     .arch-ids/README.man.patch.id .arch-ids/THANKS.id
+     .arch-ids/TODO.id .arch-ids/changelog.id doc/.arch-ids/=id
+     doc/.arch-ids/README.ofboot.id doc/.arch-ids/README.ofpath.id
+     doc/.arch-ids/README.rs6000.id doc/examples/.arch-ids/=id
+     doc/examples/.arch-ids/README.dualboot.chrp.id
+     doc/examples/.arch-ids/README.mbicons.id
+     doc/examples/.arch-ids/README.simpleboot.chrp.id
+     doc/examples/.arch-ids/dualboot.chrp.id
+     doc/examples/.arch-ids/large-penguin.mbicon.id
+     doc/examples/.arch-ids/simpleboot.chrp.id
+     doc/examples/.arch-ids/yaboot.conf.multi-boot.id
+     doc/examples/.arch-ids/yaboot.conf.rs6k.id etc/.arch-ids/=id
+     etc/.arch-ids/yaboot.conf.id first/.arch-ids/=id
+     first/.arch-ids/ofboot.id include/.arch-ids/=id
+     include/asm/.arch-ids/=id include/asm/.arch-ids/elf.h.id
+     include/asm/.arch-ids/ppc_asm.tmpl.id
+     include/asm/.arch-ids/processor.h.id
+     include/.arch-ids/bootinfo.h.id
+     include/.arch-ids/byteorder.h.id include/.arch-ids/cfg.h.id
+     include/.arch-ids/cmdline.h.id include/.arch-ids/ctype.h.id
+     include/et/.arch-ids/=id include/et/.arch-ids/com_err.c.id
+     include/et/.arch-ids/com_err.h.id include/ext2fs/.arch-ids/=id
+     include/ext2fs/.arch-ids/bitops.h.id
+     include/ext2fs/.arch-ids/ext2_err.h.id
+     include/ext2fs/.arch-ids/ext2_io.h.id
+     include/ext2fs/.arch-ids/ext2fs.h.id
+     include/.arch-ids/fdisk-part.h.id include/.arch-ids/file.h.id
+     include/.arch-ids/fs.h.id include/.arch-ids/gui.h.id
+     include/linux/.arch-ids/=id include/linux/.arch-ids/elf.h.id
+     include/linux/.arch-ids/ext2_fs.h.id
+     include/linux/.arch-ids/iso_fs.h.id
+     include/linux/.arch-ids/stat.h.id
+     include/linux/.arch-ids/types.h.id
+     include/.arch-ids/mac-part.h.id include/.arch-ids/md5.h.id
+     include/.arch-ids/partition.h.id include/.arch-ids/prom.h.id
+     include/reiserfs/.arch-ids/=id
+     include/reiserfs/.arch-ids/reiserfs.h.id
+     include/.arch-ids/setjm2.h.id include/.arch-ids/setjmp.h.id
+     include/.arch-ids/stdlib.h.id include/.arch-ids/string.h.id
+     include/.arch-ids/swab.h.id include/.arch-ids/types.h.id
+     include/.arch-ids/video.h.id include/.arch-ids/yaboot.h.id
+     lib/.arch-ids/=id lib/.arch-ids/ctype.c.id
+     lib/.arch-ids/libext2fs.a.id lib/.arch-ids/malloc.c.id
+     lib/.arch-ids/nosys.c.id lib/.arch-ids/string.S.id
+     lib/.arch-ids/strstr.c.id lib/.arch-ids/strtol.c.id
+     lib/.arch-ids/vsprintf.c.id man/.arch-ids/=id
+     man/.arch-ids/bootstrap.8.id man/.arch-ids/mkofboot.8.id
+     man/.arch-ids/ofpath.8.id man/.arch-ids/yaboot.8.id
+     man/.arch-ids/yaboot.conf.5.id man/.arch-ids/yabootconfig.8.id
+     man/.arch-ids/ybin.8.id .arch-ids/man.patch.id
+     second/.arch-ids/=id second/.arch-ids/cache.S.id
+     second/.arch-ids/cfg.c.id second/.arch-ids/cmdline.c.id
+     second/.arch-ids/crt0.S.id second/.arch-ids/file.c.id
+     second/.arch-ids/fs.c.id second/.arch-ids/fs_ext2.c.id
+     second/.arch-ids/fs_iso.c.id second/.arch-ids/fs_of.c.id
+     second/.arch-ids/fs_reiserfs.c.id second/gui/.arch-ids/=id
+     second/gui/.arch-ids/colormap.c.id
+     second/gui/.arch-ids/effects.c.id
+     second/gui/.arch-ids/pcx.c.id second/gui/.arch-ids/video.c.id
+     second/.arch-ids/iso_util.c.id second/.arch-ids/md5.c.id
+     second/.arch-ids/partition.c.id second/.arch-ids/prom.c.id
+     second/.arch-ids/setjmp.S.id second/.arch-ids/yaboot.c.id
+     util/.arch-ids/=id util/.arch-ids/addnote.c.id
+     util/.arch-ids/elfextract.c.id ybin/.arch-ids/=id
+     ybin/.arch-ids/mkofboot.id ybin/.arch-ids/ofpath.id
+     ybin/.arch-ids/yabootconfig.id ybin/.arch-ids/ybin.id BUGS
+     COPYING INSTALL Makefile README README.man.patch THANKS TODO
+     changelog doc/README.ofboot doc/README.ofpath
+     doc/README.rs6000 doc/examples/README.dualboot.chrp
+     doc/examples/README.mbicons
+     doc/examples/README.simpleboot.chrp doc/examples/dualboot.chrp
+     doc/examples/large-penguin.mbicon doc/examples/simpleboot.chrp
+     doc/examples/yaboot.conf.multi-boot
+     doc/examples/yaboot.conf.rs6k etc/yaboot.conf first/ofboot
+     include/asm/elf.h include/asm/ppc_asm.tmpl
+     include/asm/processor.h include/bootinfo.h include/byteorder.h
+     include/cfg.h include/cmdline.h include/ctype.h
+     include/et/com_err.c include/et/com_err.h
+     include/ext2fs/bitops.h include/ext2fs/ext2_err.h
+     include/ext2fs/ext2_io.h include/ext2fs/ext2fs.h
+     include/fdisk-part.h include/file.h include/fs.h include/gui.h
+     include/linux/elf.h include/linux/ext2_fs.h
+     include/linux/iso_fs.h include/linux/stat.h
+     include/linux/types.h include/mac-part.h include/md5.h
+     include/partition.h include/prom.h include/reiserfs/reiserfs.h
+     include/setjm2.h include/setjmp.h include/stdlib.h
+     include/string.h include/swab.h include/types.h
+     include/video.h include/yaboot.h lib/ctype.c lib/libext2fs.a
+     lib/malloc.c lib/nosys.c lib/string.S lib/strstr.c
+     lib/strtol.c lib/vsprintf.c man/bootstrap.8 man/mkofboot.8
+     man/ofpath.8 man/yaboot.8 man/yaboot.conf.5 man/yabootconfig.8
+     man/ybin.8 man.patch second/cache.S second/cfg.c
+     second/cmdline.c second/crt0.S second/file.c second/fs.c
+     second/fs_ext2.c second/fs_iso.c second/fs_of.c
+     second/fs_reiserfs.c second/gui/colormap.c
+     second/gui/effects.c second/gui/pcx.c second/gui/video.c
+     second/iso_util.c second/md5.c second/partition.c
+     second/prom.c second/setjmp.S second/yaboot.c util/addnote.c
+     util/elfextract.c ybin/mkofboot ybin/ofpath ybin/yabootconfig
+     ybin/ybin
+
+    modified files:
+     ChangeLog
+
+    new directories:
+     doc/.arch-ids doc/examples/.arch-ids etc/.arch-ids
+     first/.arch-ids include/.arch-ids include/asm/.arch-ids
+     include/et/.arch-ids include/ext2fs/.arch-ids
+     include/linux/.arch-ids include/reiserfs/.arch-ids
+     lib/.arch-ids man/.arch-ids second/.arch-ids
+     second/gui/.arch-ids util/.arch-ids ybin/.arch-ids doc
+     doc/examples etc first include include/asm include/et
+     include/ext2fs include/linux include/reiserfs lib man second
+     second/gui util ybin
+
+
+2002-03-25 03:28:42 GMT	Ethan Benson <erbenson@alaska.net>	base-0
+
+    Summary:
+      Create yaboot arch repo
+    Revision:
+      yaboot--devel--1.3--base-0
+
+    Create yaboot arch repo.
+
+    new files:
+     ./.arch-ids/ChangeLog.id ./ChangeLog
+
+

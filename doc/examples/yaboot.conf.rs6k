@@ -1,0 +1,72 @@
+## Example yaboot.conf for ybin and yaboot >= 0.6
+## see man yaboot.conf for more details.
+
+## Change `unconfigured' to your bootstrap partition ie: /dev/hda2
+boot=unconfigured
+
+## fstype=raw is what makes ybin dd yaboot to the bootstrap partition
+## instead of using a filesystem. 
+
+fstype=raw
+
+## device is the OpenFirmware device path to the disk containing
+## kernel images.  if your disk is /dev/hda you can find the
+## OpenFirmware path by running the command: ofpath /dev/hda DO NOT
+## specify a partition number for this!  This is generally not
+## necessary for IBM hardware
+
+#device=hd:
+
+## partition is the partition number where the kernel images are
+## located.  The kernel images should be on your root filesystem, so
+## this is usually the same partition number as your root filesystem.
+## so if root = /dev/hda3 (the 3rd partition) then you should have
+## partition=3  This *MUST* be set correct or yaboot won't boot!  This
+## option can be either set globally as shown here, or per image in
+## the image= sections
+
+partition=3
+
+## timeout is the amount of time in tenths of a second that yaboot
+## will wait before booting the default kernel image (the first image=
+## section in this config file or the value of default=).  
+
+timeout=20
+install=/usr/local/lib/yaboot/yaboot
+
+## nonvram is required for IBM hardware currently since ofpath does
+## not support them, it is also probably not necessary.
+
+nonvram
+
+## Password supplied in plaintext, required for yaboot to boot, unless
+## restricted is also present (see below).  Be sure to
+## chmod 600 /etc/yaboot.conf if you set this!
+
+#password=secret
+
+## Password supplied as an md5 hash, see above
+
+#password=$1$saltstri$WHZcnT3IOdSrMvizOq7Ht1
+
+## A password is only required to boot an image specified here if
+## parameters are specified on the command line or if the user enters
+## an image is not specified in the configuration file at all (ie.
+## arbitrary file load).  restricted can also be placed in an image
+## section in that case any image not including the restricted keyword
+## will be fully password protected.
+
+#restricted
+
+## image is the kernel itself, commonly kept in / but also commonly
+## found in /boot.  Note that /boot should generally not be its own
+## partition on powerpcs, its not necessary and complicates things.
+## Make sure /boot is on the partition specified by partition= see
+## above.  /boot should never be an HFS filesystem.  You may point
+## image= to a symbolic link so long as the symlink does not cross
+## partition boundries.
+
+image=/vmlinux
+	label=Linux
+	root=/dev/sda3
+	read-only

@@ -1,0 +1,80 @@
+RS/6000 yaboot Notes
+---------------------
+
+A. System Partitioning:
+   1. Only FDISK partitioning has been tested on the RS/6000.
+      However, yaboot does support mac partitions on a mac, so they should
+      work on an RS/6000 if you really want to go that route.
+   2. Extended FDISK partitions have not been tested and are not expected to
+      work at this time.
+   3. yaboot must be installed by itself in a bootable partition of type 0x41.
+      This partition must be less than 10MB.
+
+   Recommended partition configuration:
+      /dev/sda1 : PREP Boot.    Type 0x41. Size = 4 MB
+      /dev/sda2 : Linux swap.   Type 0x82. Size = 128 MB
+      /dev/sda3 : Linux native. Type 0x83.
+
+B. Building & Installation:
+   1. See the partitioning section for notes & examples on how to configure
+      your system partitions when installing Linux.
+   2. Build yaboot by doing:
+       make clean; make
+   3. Install yaboot by doing (as root):
+      dd if=yaboot of=/dev/sdax
+      where x is the boot partition; for example: dd if=yaboot of=/dev/sda1
+   4. Make a yaboot.conf file in /etc/yaboot.conf
+
+C. Configuration File (/etc/yaboot.conf):
+   1. See the ybin documentation for the full range of options.
+   2. Options tested on an RS/6000 include:
+      timeout = <time in tenths of a second>
+      default = <default label>
+      root= <device containing the root filesystem>
+      image = <path to vmlinux kernel file>
+      label = <short name for this image>
+
+   3. Examples:
+
+      ## example /etc/yaboot.conf for RS/6000
+      ## Timeout value is in tenths of a second
+      timeout=200
+      default=linux
+
+      image=/boot/vmlinux
+      label=linux
+      root=/dev/sda3
+
+      image=/boot/vmlinux.new
+      label=new
+      root=/dev/sda3
+
+
+D. Tested Configurations:
+   1. RS/6000 Model 150 (PPC 604e; CHRP IBM,7043-150)
+
+      fdisk -l /dev/sda
+
+      Disk /dev/sda: 64 heads, 32 sectors, 8678 cylinders
+      Units = cylinders of 2048 * 512 bytes
+
+         Device Boot    Start       End    Blocks   Id  System
+      /dev/sda1   *         1         9      9200   41  PPC PReP Boot
+      /dev/sda2            10      2010   2049024   83  Linux
+      /dev/sda3          2011      2139    132096   82  Linux swap
+
+   2. RS/6000 Model 260 (PPC 630; CHRP IBM,7043-260)
+
+      * Set "CONFIG_PPC64BRIDGE = y" in the Makefile!
+
+   3. RS/6000 Model F50 (PPC 630; CHRP IBM,7025-F50)
+
+
+E. Other Documentation:
+   1. The ybin distribution includes addition README files and
+      man pages.
+
+F. Questions & comments can be directed to:
+   engebret@us.ibm.com or
+   bergner@us.ibm.com
+

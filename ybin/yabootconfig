@@ -1,0 +1,635 @@
+#! /bin/sh
+
+###############################################################################
+##
+## yabootconfig generates a simple /etc/yaboot.conf
+## Copyright (C) 2001 Ethan Benson
+##
+## This program is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License
+## as published by the Free Software Foundation; either version 2
+## of the License, or (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+##
+###############################################################################
+
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+## allow to run out of /target in boot-floppies
+if [ -n "$PATH_PREFIX" ] ; then
+    PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
+fi
+PRG="${0##*/}"
+VERSION=1.0.3
+CHROOT=/
+## $CONFIG is relative to $CHROOT
+CONFIG=etc/yaboot.conf
+NOINSTALL=0
+QUIET=0
+SIGINT="$PRG: Interrupt caught ... exiting"
+export LC_COLLATE=C
+
+## catch signals, clean up temporary file
+trap "cleanup" 0
+trap "exit 129" 1
+trap "echo 1>&2 $SIGINT ; exit 130" 2
+trap "exit 131" 3
+trap "exit 143" 15
+
+## check for printf, use it if possible otherwise fall back on
+## unreliable echo -e -n ("SUS" says echo shall support no switches)
+if [ "$(printf printf_test 2>/dev/null)" = printf_test ] ; then
+    PRINTF=printf
+else
+    PRINTF="echo -e -n"
+fi
+
+## make sure echo is not lame if we must use it.
+if [ "$PRINTF" != printf ] ; then
+    if [ "$(echo -e -n echo_test)" != "echo_test" ] ; then
+	echo 1>&2 "$PRG: printf unavailable and echo is broken, sorry."
+	exit 1
+    fi
+fi
+
+## make fake `id' if its missing, outputs 0 since if its missing we
+## are probably running on boot floppies and thus are root.
+if (command -v id > /dev/null 2>&1) ; then 
+    true
+else
+    id()
+    {
+    echo 0
+    }
+fi
+
+## --version output
+version()
+{
+echo \
+"$PRG $VERSION
+Written by Ethan Benson
+
+Copyright (C) 2001 Ethan Benson
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+}
+
+## --help output.
+usage()
+{
+echo \
+"Usage: $PRG [OPTION]...
+Generate a working /etc/yaboot.conf.
+
+  -t, --chroot               set root directory $PRG should work from
+  -r, --root                 set root partition, Example: /dev/hda3
+			       default: determined from {chroot}/etc/fstab
+  -b, --boot                 set bootstrap partition, Example: /dev/hda2
+			       default: first type: Apple_Bootstrap partition
+      --kernel-args          add an append= line with specified arguments
+  -q, --quiet                don't ask any questions/confirmation
+      --noinstall            don't automatically run mkofboot
+  -h, --help                 display this help and exit
+  -V, --version              output version information and exit"
+}
+
+confirm()
+{
+    $PRINTF \
+"yaboot is the Linux Loader for PowerPC.  $PRG sets up your system to boot directly
+from your hard disk, without the need for a boot CD, floppy or a network boot.\n"
+[ "$NOINSTALL" = 0 ] && $PRINTF "Install yaboot bootstrap on $BOOT to boot Linux from $ROOT? [Yes] "
+[ "$NOINSTALL" = 1 ] && $PRINTF "Create simple ${CHROOT}${CONFIG} to boot Linux from $ROOT? [Yes] "
+    read ans
+    case "$ans" in
+	Y|y|Yes|yes|YES|"")
+	echo "Creating a simple ${CHROOT}${CONFIG}..."
+	return 0
+	;;
+	*)
+	if [ "$NOINSTALL" = 0 ] ; then
+	    $PRINTF "Create simple ${CHROOT}${CONFIG} without installing the bootstrap? [Yes] "
+	    read ans
+	    case "$ans" in
+		Y|y|Yes|yes|YES|"")
+		NOINSTALL=1
+		echo 1>&2 "Creating a simple ${CHROOT}${CONFIG}..."
+		return 0
+		;;
+		*)
+		echo "OK, quitting"
+		return 1
+		;;
+	    esac
+	else
+	    echo "OK, quitting"
+	    return 1
+	fi
+	;;
+    esac
+}
+
+## find out whether we have mac-fdisk or pdisk (they work the same)
+ckmacfdisk()
+{
+    if (command -v mac-fdisk > /dev/null 2>&1) ; then
+	FDISK=mac-fdisk
+    elif (command -v pdisk > /dev/null 2>&1) ; then
+	FDISK=pdisk
+    else
+	echo 1>&2 "$PRG: Unable to locate mac-fdisk"
+	return 1
+    fi
+
+    if [ ! -x `command -v $FDISK` 2> /dev/null ] ; then
+	echo 1>&2 "$PRG: `command -v $FDISK`: Permission denied"
+	return 1
+    fi
+    return 0
+}
+
+## find out if we have ddisk or fdisk (fdisk for dos labels) debian
+## uses both names
+ckfdisk()
+{
+    if (command -v ddisk > /dev/null 2>&1) ; then
+	FDISK=ddisk
+    elif (command -v fdisk > /dev/null 2>&1) ; then
+	FDISK=fdisk
+    else
+	echo 1>&2 "$PRG: Unable to locate fdisk"
+	return 1
+    fi
+
+    if [ ! -x `command -v $FDISK` 2> /dev/null ] ; then
+	echo 1>&2 "$PRG: `command -v $FDISK`: Permission denied"
+	return 1
+    fi
+    return 0
+}
+
+## find bootstrap partition, supports IBM CHRP with msdos disklabels
+findbootblock()
+{
+    ## mac partition table magic == ER
+    if [ "$(dd if="$DISK" bs=2 count=1 2> /dev/null)" = ER ] ; then
+	ckmacfdisk || return 1
+	if [ "$FDISK" = pdisk ] ; then
+	    ## handle braindamaged pdisk
+	    BOOT="$(v=`$FDISK -l "$DISK" 2>/dev/null | grep '\<Apple_Bootstrap\>'` ; echo ${v%%:*})"
+	    if [ -n "$BOOT" ] ; then
+		BOOT="${DISK}${BOOT}"
+	    fi
+	else
+	    BOOT="$(v=`$FDISK -l "$DISK" 2>/dev/null | grep '\<Apple_Bootstrap\>'` ; echo ${v%%[ ]*})"
+	fi
+	if [ -z "$BOOT" ] ; then
+	    echo 1>&2 "$PRG: Unable to locate bootstrap partition on $DISK..."
+	    echo 1>&2 "$PRG: You must create an 800K type: Apple_Bootstrap partition to make the disk bootable"
+	    return 1
+	fi
+    else
+	ckfdisk || return 1
+	BOOT="$(v=`$FDISK -l "$DISK" 2>/dev/null | grep '\<PPC PReP Boot\>'` ; echo ${v%%[ ]*})"
+	if [ -z "$BOOT" ] ; then
+	    echo 1>&2 "$PRG: Unable to locate bootstrap partition on $DISK..."
+	    echo 1>&2 "$PRG: You must create an 800K type: 0x41 PPC PReP Boot partition to make the disk bootable"
+	    return 1
+	fi
+    fi
+    return 0
+}
+
+## if readlink is missing use a kludge
+if (command -v readlink > /dev/null 2>&1) ; then
+    true
+else
+    readlink()
+    {
+	SYMTARGET="$(v=`ls -l "$2" 2>/dev/null` ; echo ${v##*> })"
+	if [ -n "$SYMTARGET" ] ; then
+	    echo "$SYMTARGET"
+	    return 0
+	else
+	    return 1
+	fi
+    }
+fi
+
+## we have to do some things differently with a retarded devfs name.
+ckdevfs()
+{
+    case "$1" in
+	/dev/ide/*|/dev/scsi/*|/dev/discs/*)
+	return 0
+	;;
+	*)
+	return 1
+	;;
+    esac
+}
+
+cleanup()
+{
+    if [ -n "$TMPCONF" ] ; then rm -f "$TMPCONF" ; fi
+    return 0
+}
+
+##########
+## Main ##
+##########
+
+if [ $# != 0 ] ; then
+    while true ; do
+        case "$1" in 
+            -V|--version)
+                version
+                exit 0
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+	    -t|--chroot)
+                if [ -n "$2" ] ; then
+                    CHROOT="$2"
+                    shift 2
+                else
+                    echo 1>&2 "$PRG: option requires an argument $1"
+                    echo 1>&2 "Try \`$PRG --help' for more information."
+                    exit 1
+                fi
+		;;
+	    -b|--boot)
+                if [ -n "$2" ] ; then
+                    BOOT="$2"
+                    shift 2
+                else
+                    echo 1>&2 "$PRG: option requires an argument $1"
+                    echo 1>&2 "Try \`$PRG --help' for more information."
+                    exit 1
+                fi
+		;;
+	    -r|--root)
+                if [ -n "$2" ] ; then
+                    ROOT="$2"
+                    shift 2
+                else
+                    echo 1>&2 "$PRG: option requires an argument $1"
+                    echo 1>&2 "Try \`$PRG --help' for more information."
+                    exit 1
+                fi
+		;;
+	    --kernel-args)
+                if [ -n "$2" ] ; then
+                    KERNARGS="$2"
+                    shift 2
+                else
+                    echo 1>&2 "$PRG: option requires an argument $1"
+                    echo 1>&2 "Try \`$PRG --help' for more information."
+                    exit 1
+                fi
+		;;
+	    -q|--quiet)
+		QUIET=1
+		shift 1
+		;;
+	    --noinstall)
+		NOINSTALL=1
+		shift 1
+		;;
+            "")
+                break
+                ;;
+            *)
+                echo 1>&2 "$PRG: unrecognized option \`$1'"
+                echo 1>&2 "Try \`$PRG --help' for more information."
+                exit 1
+                ;;
+        esac
+    done
+fi
+
+if [ `id -u` != 0 ] ; then
+    echo 1>&2 "$PRG: You are not root, go away"
+    exit 1
+fi
+
+## we need /proc because df does
+if [ ! -f /proc/uptime ] ; then
+    echo 1>&2 "$PRG: This utility requires the /proc filesystem"
+    exit 1
+fi
+
+## check that chroot exists
+if [ -d "$CHROOT" ] ; then
+    ## HACK: add trailing / to chroot, otherwise are paths later get b0rked.
+    case "$CHROOT" in
+	*/)
+	true
+	;;
+	*)
+	CHROOT="${CHROOT}/"
+	;;
+    esac
+elif [ ! -e "$CHROOT" ] ; then
+    echo 1>&2 "$PRG: $CHROOT: No such file or directory"
+    exit 1
+elif [ ! -d "$CHROOT" ] ; then
+    echo 1>&2 "$PRG: $CHROOT: Not a directory"
+    exit 1
+fi
+
+## make sure the chroot is an actual root filesystem
+if [ ! -f "${CHROOT}etc/fstab" ] ; then
+    echo 1>&2 "$PRG: $CHROOT does not appear to be a valid root filesystem"
+    exit 1
+fi
+
+## find / device
+if [ -z "$ROOT" ] ; then
+    ## IMPORTANT! that last substitution is [<space><tab>] thats all ash will grok
+    ROOT="$(v=`grep '[[:blank:]]/[[:blank:]]' ${CHROOT}etc/fstab` ; echo ${v%%[ 	]*})"
+    if [ -z "$ROOT" ] ; then
+	echo 1>&2 "$PRG: Could not determine root partition, aborting..."
+	exit 1
+    fi
+fi
+
+## make sure root device exists
+if [ ! -e "$ROOT" ] ; then
+    echo 1>&2 "$PRG: $ROOT: No such file or directory"
+    exit 1
+fi
+
+## find root disk.
+if ckdevfs "$ROOT" ; then
+    DISK="${ROOT%/*}/disc"
+else
+    DISK="${ROOT%%[0-9]*}"
+fi
+if [ -z "$DISK" ] ; then
+    echo 1>&2 "$PRG: Could not determine root disk, aborting..."
+    exit 1
+fi
+
+## make sure main disk exists
+if [ ! -e "$DISK" ] ; then
+    echo 1>&2 "$PRG: $DISK: No such file or directory"
+    exit 1
+fi
+
+## find bootstrap partition
+if [ -z "$BOOT" ] ; then
+    findbootblock || exit 1
+fi
+
+## make sure bootstrap device exists
+if [ ! -e "$BOOT" ] ; then
+    echo 1>&2 "$PRG: $BOOT: No such file or directory"
+    exit 1
+fi
+
+## sanity check
+for i in "$DISK" "$ROOT" "$BOOT" ; do
+    if [ ! -b "$i" ] ; then
+	echo 1>&2 "$PRG: $i: Not a block device"
+	exit 1
+    fi
+done
+
+## unless --quiet ask permission to proceed
+if [ "$QUIET" = 0 ] ; then
+    confirm || exit 2
+fi
+
+## find the kernel in the usual places and (if not --quiet) ask the
+## user if we cannot find one.
+if [ -f "${CHROOT}vmlinux" ] ; then
+    KERNEL="${CHROOT}vmlinux"
+elif [ -f "${CHROOT}boot/vmlinux" ] ; then
+    KERNEL="${CHROOT}boot/vmlinux"
+elif [ -f "${CHROOT}boot/vmlinux-`uname -r`" ] ; then
+    KERNEL="${CHROOT}boot/vmlinux-`uname -r`"
+elif [ -f "${CHROOT}vmlinux-`uname -r`" ] ; then
+    KERNEL="${CHROOT}vmlinux-`uname -r`"
+elif [ "$QUIET" = 0 ] ; then
+    echo 1>&2 "$PRG: Cannot find a kernel, please locate one"
+    while true ; do
+	$PRINTF 1>&2 "Enter path to a kernel image: "
+	read KERN
+	if [ -f "$KERN" ] ; then
+	    KERNEL="$KERN"
+	    break
+	elif [ ! -e "$KERN" ] ; then
+	    echo 1>&2 "$PRG: $KERN: No such file or directory"
+	elif [ -d "$KERN" ] ; then
+	    echo 1>&2 "$PRG: $KERN: Is a directory"
+	else
+	    echo 1>&2 "$PRG: $KERN: Is not a regular file"
+	fi
+    done
+else
+    echo 1>&2 "$PRG: Cannot find a kernel, aborting..."
+    exit 1
+fi
+
+## get partition number the kernel lives on, and the OF device= name
+## of the whole disk.
+KERNDEV="$(v=`df "$KERNEL" 2> /dev/null | grep ^/dev/` ; echo ${v%%[ ]*})"
+KERNDIR="$(v=`df "$KERNEL" 2> /dev/null | grep ^/dev/` ; echo ${v##*[ ]})"
+LINKDEV="$(v=`df "${KERNEL%/*}/" 2>/dev/null | grep ^/dev/` ; echo ${v%%[ ]*})"
+PARTITION="${KERNDEV##*[a-z]}"
+
+if ckdevfs "$KERNDEV" ; then
+    KERNELDISK="${KERNDEV%/*}/disc"
+else
+    KERNELDISK="${KERNDEV%%[0-9]*}"
+fi
+
+## sanity check
+for i in "$KERNDEV" "$KERNDIR" "$LINKDEV" "$PARTITION" "$KERNELDISK" ; do
+    if [ -z "$i" ] ; then
+	echo 1>&2 "$PRG: Could not determine necessary information, aborting..."
+	exit 1
+    fi
+done
+
+## check for cross device symlink
+if [ -L "$KERNEL" ] ; then
+    if [ "$KERNDEV" != "$LINKDEV" ] ; then
+	echo 1>&2 "$PRG: Warning: Cross device symlink $KERNEL, using it's target instead"
+	KERNEL="$(readlink -f "$KERNEL" 2>/dev/null)"
+	if [ ! -f "$KERNEL" ] ; then
+	    echo 1>&2 "$PRG: Unable to canonicalize symlink's target.  Do not create cross device symlinks."
+	    exit 1
+	fi
+    fi
+fi
+
+## only powermacs appear to need device=
+if (cat /proc/cpuinfo 2>/dev/null | grep -q pmac-generation 2> /dev/null) ; then
+    DEVICE="\ndevice=$(ofpath $KERNELDISK)"
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: Unable to determine OpenFirmware device name to $KERNELDISK, aborting..."
+	exit 1
+    fi
+fi
+
+## IBM hardware needs fstype=raw for ybin
+if (cat /proc/cpuinfo 2>/dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
+    FSTYPE="\nfstype=raw"
+fi
+
+## if there is a separate /boot partition we must strip off the /boot
+## mountpoint or else yaboot will not find the kernel.
+if [ "$KERNDIR" != "$CHROOT" ] ; then
+    IMAGE="${KERNEL##*$KERNDIR}"
+else
+    IMAGE="$KERNEL"
+fi
+
+## fix chrooted path
+if [ "$CHROOT" != / ] ; then
+    IMAGE="${IMAGE##*$CHROOT}"
+fi
+
+## fix relative path (caused by chroot path fix)
+case "$IMAGE" in
+    /*)
+    true
+    ;;
+    *)
+    IMAGE="/${IMAGE}"
+    ;;
+esac
+
+## figure out if yaboot is installed in /usr/local or not
+if [ -f /usr/local/lib/yaboot/yaboot ] ; then
+    INSTALL=/usr/local/lib/yaboot/yaboot
+elif [ -f /usr/lib/yaboot/yaboot ] ; then
+    INSTALL=/usr/lib/yaboot/yaboot
+else
+    echo 1>&2 "$PRG: yaboot is not installed correctly"
+    exit 1
+fi
+
+## newworld powermacs need the ofboot first stage loader
+if [ "$(v=`cat /proc/cpuinfo 2>/dev/null | grep pmac-generation` ; echo ${v##*:})" = NewWorld ] ; then
+    if [ -f /usr/local/lib/yaboot/ofboot ] ; then
+	OFBOOT="\nmagicboot=/usr/local/lib/yaboot/ofboot"
+    elif [ -f /usr/lib/yaboot/ofboot ] ; then
+	OFBOOT="\nmagicboot=/usr/lib/yaboot/ofboot"
+    else
+	echo 1>&2 "$PRG: yaboot is not installed correctly"
+	exit 1
+    fi
+fi    
+
+## check for properly (read debian) packaged yaboot.
+if [ -d ${CHROOT}usr/share/doc/yaboot/examples ] ; then
+    HEADER="## see also: /usr/share/doc/yaboot/examples for example configurations.\n"
+fi
+
+## setup append line
+if [ -n "$KERNARGS" ] ; then
+    APPEND="\tappend=\"${KERNARGS}\"\n"
+fi
+
+## generate global section of yaboot.conf
+GLOBAL="## yaboot.conf generated by $PRG $VERSION
+##
+## run: \"man yaboot.conf\" for details. Do not make changes until you have!!
+${HEADER}##
+## For a dual-boot menu, add one or more of: 
+## bsd=/dev/hdaX, macos=/dev/hdaY, macosx=/dev/hdaZ\n
+boot=${BOOT}${FSTYPE:-}${DEVICE:-}
+partition=$PARTITION
+root=$ROOT
+timeout=30
+install=${INSTALL}${OFBOOT:-}\n"
+
+## generate image= section
+IMAGES="
+image=$IMAGE
+\tlabel=Linux
+\tread-only\n${APPEND:-}"
+
+## safely create a tmp file then move it into place after we are sure
+## it was written.
+TMPCONF=`mktemp -q "${CHROOT}${CONFIG}.XXXXXX"`
+if [ $? != 0 ] ; then
+    echo 1>&2 "$PRG: Unable to write to ${CHROOT}${CONFIG%/*}"
+    exit 1
+fi
+
+$PRINTF "${GLOBAL}${IMAGES}" > "$TMPCONF"
+if [ $? != 0 ] ; then
+    echo 1>&2 "$PRG: Unable to write temporary file ${TMPCONF}, aborting..."
+    exit 1
+fi
+
+## rotate backups of /etc/yaboot.conf, 3 backups are kept
+if [ -f "${CHROOT}${CONFIG}.old" ] ; then
+    for i in 1 0 ; do
+	if [ -f "${CHROOT}${CONFIG}.old.${i}" ] ; then
+	    mv -f "${CHROOT}${CONFIG}.old.$i" "${CHROOT}${CONFIG}.old.$(($i + 1))"
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: Unable to make backup of existing ${CHROOT}${CONFIG}.old.$i, aborting..."
+		exit 1
+	    fi
+	fi
+    done
+
+    mv -f "${CHROOT}${CONFIG}.old" "${CHROOT}${CONFIG}.old.0"
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: Unable to make backup of existing ${CHROOT}${CONFIG}.old, aborting..."
+	exit 1
+    fi
+fi
+
+## backup /etc/yaboot.conf
+if [ -f "${CHROOT}${CONFIG}" ] ; then
+    mv -f "${CHROOT}${CONFIG}" "${CHROOT}${CONFIG}.old"
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: Unable to make backup of existing ${CHROOT}${CONFIG}, aborting..."
+	exit 1
+    fi
+fi
+
+## move new config into place
+mv -f "${TMPCONF}" "${CHROOT}${CONFIG}"
+if [ $? != 0 ] ; then
+    echo "$PRG: Unable to write file ${CHROOT}${CONFIG}"
+    exit 1
+else
+    ## nothing sensitive in generated config, comply with debian policy
+    chmod 644 "${CHROOT}${CONFIG}"
+fi
+
+## tell mkofboot where to find the config file if necessary
+if [ "${CHROOT}${CONFIG}" != /etc/yaboot.conf ] ; then
+    YBINARGS="-C ${CHROOT}${CONFIG}"
+fi
+
+## run mkofboot to install the bootstrap, unless --noinstall
+if [ "$NOINSTALL" = 0 ] ; then
+    if (command -v mkofboot 2>&1 > /dev/null) ; then
+	[ "$QUIET" = 0 ] && echo "Running mkofboot to make the disk bootable..."
+	mkofboot -f $YBINARGS || exit 1
+	[ "$QUIET" = 0 ] && echo "Done"
+    else
+	echo 1>&2 "$PRG: yaboot is not installed correctly, not running mkofboot"
+	exit 1
+    fi
+fi
+
+exit 0

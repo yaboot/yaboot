@@ -1,0 +1,137 @@
+.\" Hey Emacs! This file is -*- nroff -*- source.
+.\"
+.\" yabootconfig generates a simple /etc/yaboot.conf
+.\" Copyright (C) 2001 Ethan Benson
+.\"
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License          
+.\" along with this program; if not, write to the Free Software                
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+.\"
+.TH YABOOTCONFIG 8 "22 June 2001" "GNU/Linux PowerPC" "System Manager's Manual"
+.SH NAME
+.B yabootconfig
+\- generates a simple /etc/yaboot.conf
+.SH SYNOPSIS
+.B yabootconfig
+.RB [ \ \-t | \-\-chroot\ \\fIdirectory\  ]
+.RB [ \ \-b | \-\-boot\ \fIdevice\  ]
+.RB [ \ \-r | \-\-root\ \fIdevice\  ]
+.RB [ \ \-q | \-\-quiet\  ]
+.RB [ \ \-\-noinstall\  ]
+.RB [ \ \-h | \-\-help\  ]
+.RB [ \ \-V | \-\-version\  ]
+.SH DESCRIPTION
+This manual page explains 
+.B yabootconfig
+the configurator for the  
+.BR yaboot (8) 
+boot loader enabling GNU/Linux to be booted by OpenFirmware.
+Specifically it inspects the running system, generates a working
+.BR /etc/yaboot.conf (5)
+and then runs \fBmkofboot\fR(8) to make the system bootable.
+
+.B yabootconfig
+requires an 800K bootstrap partition on the same disk as the root
+partition.  It must be type \*(lqApple_Bootstrap\*(rq for PowerMacs,
+and type \*(lq0x41 PPC PReP Boot\*(rq for IBM CHRP hardware.
+
+The \fBbootstrap\fR(8) must not be mounted anywhere on your
+filesystem, especially not on top of /boot.  \fBYaboot\fR is able to
+load the kernels from the ext2fs root partition so that is where they
+should be kept. \fBmkofboot\fR will refuse to operate on the
+\fBbootstrap\fR(8) partition if it is mounted.
+
+.B yabootconfig
+requires \fBofpath\fR(8) in order to get the OpenFirmware device name
+for the root disk on PowerMacs. 
+.SH OPTIONS
+.TP
+.BR \-t.,\  \-\-chroot\ \fIdirectory
+Cause \fByabootconfig\fR to work as if \fIdirectory\fR is the /
+directory.  This is useful when booting from a rescue floppy or CDROM
+in which case you mount your true root filesystem on /target or /mnt.
+\fByabootconfig\fR will generate \fI<chroot>/etc/yaboot.conf\fR and
+pass the \*(lq-C <chroot>/etc/yaboot.conf\*(rq arguments to \fBmkofboot\fR(8).
+Example: yabootconfig --chroot /target
+.TP
+.BR \-r ,\  \-\-root\ \fIdevice
+Normally \fByabootconfig\fR will automatically determine the root
+partition by inspecting \fI<chroot>/etc/fstab\fR(5).  This option
+forces it to use \fIdevice\fR instead of auto-detecting it.  This
+option is only intended to be used by distribution installers which
+should already know with absolute certainty what the root partition
+device is.
+.TP
+.BR \-b ,\  \-\-boot\ \fIdevice
+Normally \fByabootconfig\fR will automatically find your
+\fBbootstrap\fR partition, this option forces it to use \fIdevice\fR
+instead of auto-detecting it.  This option is only intended to be used
+by distribution installers which should already know with absolute
+certainty what the \fBbootstrap\fR partition device is.  The
+\fBbootstrap\fR partition is where \fBmkofboot\fR(8) will install the
+bootloader onto, this device should be that of your \fBbootstrap\fR(8)
+partition. For example, if your \fBbootstrap\fR partition is located
+on your first primary IDE drive in the second partition, your device
+would be: \fI/dev/hda2\fR.  IMPORTANT: The \fBbootstrap\fR partition
+WILL BE ERASED when \fByabootconfig\fR runs \fBmkofboot\fR(8).
+.TP
+.BR \-\-kernel\-args
+This option allows you to specify additional kernel arguments which
+will be placed in an \fIappend=\fR configuration variable in
+\fI/etc/yaboot.conf\fR(5).  You must quote the arguments you supply to this
+option.  Example: --kernel-args "video=ofonly"
+.TP
+.BR \-q ,\  \-\-quiet
+Normally \fByabootconfig\fR will ask permission and explain what it is
+about to do before proceeding, this option prevents \fByabootconfig\fR
+from asking any questions or displaying any informational messages
+except errors.  This option also prevents \fByabootconfig\fR from
+interactively asking the user to locate a kernel image if it fails to
+find one in the standard locations.  This option is only intended to
+be used by distribution installers which may run \fByabootconfig\fR in
+the background in order to make the disk bootable after OS installation.
+.TP
+.BR \-\-noinstall
+Normally \fByabootconfig\fR will automatically run \fBmkofboot\fR(8)
+after it successfully generates a valid
+\fI<chroot>/etc/yaboot.conf\fR.  This option causes \fByabootconfig\fR
+to only generate the config file without installing the \fBbootstrap\fR.
+.TP
+.BR \-h ,\  \-\-help
+Print out usage information and exit.
+.TP
+.BR \-V ,\  \-\-version
+Print out the version number and exit.
+.SH FILES
+.nf
+/etc/fstab \- static information about the filesystems
+.br
+/etc/yaboot.conf \- bootloader/ybin configuration file
+.fi
+.SH AUTHORS
+.B yabootconfig
+and this man page was written by Ethan Benson. 
+.br
+.B yaboot
+was written by Benjamin Herrenschmidt.
+.SH REPORTING BUGS
+Report bugs to <erbenson@alaska.net>
+.br
+Report bugs in \fByaboot\fR(8) to <benh@kernel.crashing.org>
+.SH SEE ALSO
+.BR bootstrap (8),
+.BR fstab (5),
+.BR mkofboot (8),
+.BR ofpath (8),
+.BR yaboot (8),
+.BR yaboot.conf (5),

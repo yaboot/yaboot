@@ -1,0 +1,47 @@
+This is a new OpenFirmware CHRP script designed to be automatically
+configured by ybin.  It is more robust then previous CHRP scripts, it
+includes the following capabilities:
+
+* Multibooting GNU/Linux, MacOS 8.* or 9.* MacOSX, Darwin, direct from
+* CDROM, Network and into an OpenFirmware prompt.
+
+* Presenting a real menu of OS choices.
+
+* Automatic configuration by ybin.  This script should NOT be edited
+  by the user.  It should also not be used without ybin, its not
+  directly useable by OpenFirmware. 
+
+* Configurable colors.  (see the yaboot.conf(5) man page).
+
+The multiboot menu is only presented when an extra OS is defined in
+/etc/yaboot.conf, otherwise this script loads yaboot without any user
+interaction. 
+
+To enable a multi boot menu add bsd=ofpath and/or macos=ofpath and/or
+macosx=ofpath, and/or darwin=ofpath where ofpath is the OpenFirmware
+device path to the MacOS or MacOSX boot partition.  Example:
+macos=hd:10 you can also specify a unix device node, ie: /dev/hda5,
+and ybin will translate it automatically using ofpath.
+
+This script when presenting a dual boot menu will wait for a defined
+number of seconds before automatically booting the default OS.  Both
+this delay and the default OS can be configured in /etc/yaboot.conf.
+
+The delay is configured by adding delay=seconds.  Unlike timeout this
+is in seconds rather then 10ths of seconds.  This option has no effect
+on the yaboot boot: prompt timeout.  If delay= is not set, ybin will
+translate the value of timeout= to seconds and use that.
+
+The default OS is configured by adding defaultos=macos.  There is only
+four values that are acceptable: linux, bsd, macos, macosx and darwin.  The
+default is linux.  This should not be confused with yaboot's
+`default=' variable.
+
+The name and letter used to load MacOS or MacOSX (M and X
+respectively) cannot be be configured.  (others are D for Darwin, C
+for CDROM, N for network, and O for OpenFirmware)
+
+The Forth code in this script was written by Chris Emerson and iNOUE Koich!.  
+
+This script has only been formally tested on a Rev 1 Blue G3, a G4,
+and an ibook, please report any incompatibilities.

@@ -1,0 +1,621 @@
+2001-09-20  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3
+
+	* Merging of ybin and yaboot source trees, this is now the
+	  official upstream yaboot/ybin source tree.
+
+	* yaboot:
+	  - Various ppc64 & chrp fixes by Peter Bergner, fix fdisk partition
+	    handling.
+	  - Fix netboot (was broken by reiserfs patch)
+	
+2001-08-26  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.2.6
+
+	* ofpath became broken on non-scsi systems due to quoting fix.
+	
+2001-08-20  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.2.5
+
+	* Fix broken quoting uncovered by debian's current /bin/ash.
+
+2001-08-06  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.2.4
+
+	* ofboot: remove <OS-VOLUME-NAME> tag as it was causing the
+	  OpenFirmware multibooter to crash.
+
+	* mkofboot: zero first 800K of bootstrap partition before creating
+	  filesystem.
+
+	* yaboot:
+	  - Version 1.2.3
+	  - Supports using an md5 hash as well as plaintext password. (me)
+	  - Fix again system.map loading. That also fix an old pending bug
+	    we had where yaboot could pass random values for system.map,
+	    causing the kernel to mark random pages reserved. (BenH)
+	  - IBM CHRP fixes. (Peter Bergner)
+	  - Add reiserfs support (Jeff Mahoney)
+
+2001-06-30  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.2.3
+
+	* ofpath:
+	  - Version 1.0
+	  - Add support for IBM CHRP, thanks to Marco d'Itri for testing.
+	  - Use real wc if available, this speeds up ofpath slightly for scsi.
+	  - Make variables local to their function unless they need to be global.
+
+	* ybin:
+	  - If installing on IBM CHRP run addnote on yaboot binary before installing.
+	  - Reword some error/verbose messages
+	  - Make variables local to their function unless they need to be global.
+
+2001-06-24  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.2.2
+
+	* yabootconfig:
+	  - Now works with braindamaged versions of pdisk.
+	  - Add --kernel-args switch which allows boot-floppies to easily
+	    add an append= line if needed.
+
+2001-06-01  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.2.1
+
+	* Fix test for strict posix/SUS echo behavior.
+
+	* Check for printf built into the shell.
+
+	* yabootconfig: check for and attempt to deal with cross device symlinks.
+
+2001-05-28  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.2
+
+	* Added yabootconfig, a script to build a valid /etc/yaboot.conf
+
+	* ybin:
+	  - Detect IBM CHRP hardware and disable nvram update automatically
+	  - Automatically run yabootconfig if /etc/yaboot.conf is missing
+	  - Check for PATH_PREFIX environment variable and add all bin and
+	    sbin directories from under it to PATH.  This is for boot-floppies.
+	  - Add bsd= to list of multiboot options.
+
+	* ofboot: bump maximum number of OSes to 8.
+
+	* ofpath:
+	  - No longer report bogus paths for non-existent scsi devices.
+	  - Fix bug where garbage characters were mixed with the
+	    OpenFirmware device path.
+	  - Fix broken Wallstreet PowerBook support.
+	  - Add support for silly devfs naming convention, Thanks to Tom Rini.
+
+2001-05-06  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.1.1
+
+	* ofboot: 
+	  - Hopefully fix random and rare booting problem when chainloading
+	    other OSes.  Thanks to Segher Boessenkool for the fix.
+	  - Add volume name which shows up in the OpenFirmware multiboot
+	    screen.
+	  - It is now possible to replace the badge icon for the multiboot
+	    screen, see examples/README.mbicon.
+
+	* yaboot: 
+	  - Version 1.2.1
+	  - Includes my previous 1.1.1-eb3 patches for password protection and single-key.
+
+	* Various spelling errors and clarifications to man pages.  Thanks to sword.
+
+2001-04-26  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.1
+
+	* ofpath:
+	  - Version 0.8
+	  - Add support for Performa 6400_200, PowerMac 4400, and the clones.
+	  - Removed `No such file or directory' errors when system has no
+	    scsi at all.
+
+	* ybin:  
+	  - If delay= is not set use value of timeout= (converted to
+	    seconds) instead.
+	  - Removed command line options --type, --creator, and long
+	    obsolete and deprecated --conffile.  The config file options
+	    hfstype and hfscreator are still there.
+	  - Removed long obsolete and deprecated bootconf= config option.
+	  - Removed some old now unneeded debug cruft.
+
+	* yaboot:
+	  - Include version 1.1.1-eb3, this includes the following changes
+	  - Adds password protection capabilities.
+	  - Add `single-key' option from silo.
+
+	* Documentation:
+	  - Rewrote the yaboot.conf man page, now derived from silo.conf(5)
+
+2001-03-22  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.0
+
+	* ybin:
+	  - Fix a few bugs that occured when magicboot= was not used.  
+	  - Add basic support for IBM style bootstrap partitions.  These
+	    partitions have yaboot dded directly to them.  See the yaboot.conf
+	    man page regarding fstype for more info, also
+	    examples/yaboot.conf.rs6k. 
+	  - Don't require that ofpath be installed if its not needed.
+
+	* Documentation:
+	  - Added examples/yaboot.conf.rs6k
+	  - Man page updates for IBM support.
+
+2001-02-19  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.31
+
+	* ofpath:
+	  - Quiet shell error when run on non-PowerMac (but still
+	    PowerPC) hardware.
+	  - Properly recognize more OldWorld PowerMac G3s. 
+	  - Fix OldWorld detection for kernels < 2.2.17
+	  - Require that /proc be mounted.
+
+	* ybin: 
+	  - Fix OldWorld detection for kernels < 2.2.17
+	  - Make the `not bootable on OldWorld' warning very loud and
+	    obnoxious. 	
+	  - Change PATH to make /usr/local the last component instead of
+	    the first.
+	  - Make the text/background color in the boot menu configurable,
+	    see the yaboot.conf(5) man page for details. 
+	  - Change default foreground color to white per yaboot 1.0.
+	  - Remove support for obsolete /etc/ybin.conf.
+
+	* Documentation: 
+	  - Clarified the `partition=' variable in the yaboot.conf man page
+	    and correct an error in the example in that man page.
+	  - Added more comments to included yaboot.conf examples. 
+
+	* yaboot: 
+	  - Include version 1.1.1
+	  - Includes color support
+
+2000-11-18  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.30
+
+	* ybin: add `brokenosx' option, when used with macosx= ybin makes
+	the MacOSX menu entry execute \System\Library\CoreServices\BootX
+	directly instead of using \\:tbxi.  This is necessary for
+	people who insist on installing OSX on HFS+ instead of UFS, since
+	MacOS deblesses HFS+ OSX partitions.
+	
+2000-10-28  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.29 (the brown paper bag release)
+
+	* The yaboot.conf man page was broken.
+
+	* While were at it, include yaboot 0.9 binary (compiled -Os,
+	stripped)
+	
+2000-10-24  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.28
+
+	* ybin: Add mntpoint= option, this allows ybin to install the
+	bootstrap into an already mounted filesystem.  This is NOT
+	recommended unless you know what your doing.  
+
+	* ybin: fixed generation of ofboot.b so it will work with nobless
+	and usemount.
+	
+2000-10-20  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.27
+
+	* ofboot: fixed problem where text was not visible on some newer iMacs. 
+
+	* ybin: Now warn the user when they are using ybin on an OldWorld
+	PowerMac.  (it will still work since its possible to make newworld
+	bootable disks on an OldWorld mac)
+
+	* ofpath: Now works on oldworld macs under 2.4 kernels. 
+
+	* Added check for packaged versions of ybin to the Makefile and
+	warn user about them.
+	
+2000-09-23  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.26
+
+	* ofboot: completely rewrote the generator script, it is now more
+	extendable and supports more menu options.  More thanks to iNOUE
+	Koich! for the continuing help on OpenFirmware issues!!
+
+	* ybin: added options for mulitboot menu: now can create a menu
+	with options for GNU/Linux, MacOS, MacOSX, Darwin, and booting off
+	a CDROM, from the network, and even directly into an OpenFirmware
+	prompt. 
+
+	* ybin: some errors were sent to stdout instead of stderr, fixed.
+
+	* ofpath: refuse to run on anything but GNU/Linux.  (for now anyway)
+	
+2000-09-18  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.25
+
+	* ofboot: now changes the background color to black and the text
+	color to cyan like yaboot.  Thanks to again to iNOUE Koich!  
+
+2000-09-16  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.24
+
+	* ofboot: many bugs in the Forth code fixed. code should now be
+	compliant to the OpenFirmware spec.  Also add CD boot menu option.
+	(add enablecdboot to /etc/yaboot.conf) Thanks to iNOUE Koich! for
+	the Forth code.
+
+2000-09-13  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.23
+
+	* ybin: now hard code the target filename for ofboot, its always
+	installed as ofboot.b on the bootstrap partition.  This eliminates
+	ambiguity when someone tries a different script with different name.
+
+	* ybin: all debugging output goes to stderr now.
+
+2000-09-09  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.22
+
+	* ofboot.b renamed to ofboot.  (.b means boot block which this is not) 
+
+	* yaboot and ofboot are now installed in /usr/local/lib/yaboot/
+	instead of /boot, since these files are never directly accessed by
+	the firmware it is not really appropriate to keep them in /boot.
+	make install will create backwords compatibility symlinks when
+	installing over an older version of ybin so nothing should break.
+	IMPORTANT: you should run mkofboot on a dedicated bootstrap
+	partition to purge old filenames.
+
+	* Man pages updated to reflect new file locations.  Also include a
+	patch to change the paths to /usr/lib/yaboot for Debian and redhat
+	package maintainers.
+
+	* ybin: now checks two places for a default value for install=
+	/usr/local/lib/yaboot/yaboot, /usr/lib/yaboot/yaboot.
+	
+2000-09-02  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.21
+
+	* ybin: fixed nvram update so it uses a real filename instead of
+	\\:tbxi when nobless is set in /etc/yaboot.conf.  (\\: means find
+	file in blessed directory).
+
+	* ofpath: more oldworld machines supported.  Now supports 7200,
+	7300, 8600, 9500, Gossamer G3, PowerBook 1998, PowerBook 3400 (and
+	possibly 2400).
+	
+2000-08-31  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.20
+
+	* ybin: check for Newworld compatible nvsetenv and if found will
+	automatically update the OpenFirmware boot-device variable in
+	nvram.
+
+	* ofpath: support some oldworld machines. (this does not mean
+	ybin/yaboot supports oldworld).  Also silence a harmless error on
+	machines lacking a CDROM.
+
+	* ofboot.b: added more machines to <COMPATIBLE>
+	
+2000-08-25  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.19
+
+	* Added PowerMac3,2 and PowerMac3,3 to ofboot.b scripts.  Fixes
+	Debian bug #69870
+
+2000-08-22  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.18
+
+	* ofboot.b: changed the yaboot boot commands to boot yaboot by
+	filename rather then file type. Booting by file type did not work
+	reliably on all machines.
+
+	* ybin: hard code the target filename for yaboot, regardless of
+	the source filename (from install=) the target filename on the
+	bootstrap partition will always be "yaboot.b".
+
+	* Added ofpath utility, this is a rewrite of the show_of_path.sh
+	utility written by Olaf Hering.  Ofpath works with /bin/ash and on
+	stripped down systems such as the Debian boot floppies.  Also
+	wrote a small man page for this utility.
+
+	* ybin: automatically use ofpath to find the OpenFirmware device
+	path when ofpath= is not defined in /etc/yaboot.conf.  Ybin will
+	also use ofpath when macos= or macosx= are set to unix device
+	nodes (ie /dev/hda11), these options can still be set to
+	OpenFirmware paths as well. 
+
+	* Makefile: minor cleanup, added installation of ofpath
+	utility/man page as well as a deinstall rule.
+
+2000-08-13  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.17
+
+	* Yaboot 0.7 binary included.
+
+	* ybin: fix bug where ybin would fail if the bootstrap files
+	included an "_" in the filename.  (actually its a workaround for
+	hfsutils brain-damage)
+
+	* ofboot.b: completely rewritten.  Now includes shell script code
+	to allow ybin to configure it based on config options in
+	/etc/yaboot.conf instead of requiring the user to edit it
+	themselves.  Additionally this new script will display a REAL boot
+	menu when dual booting is configured.  It is capable of dual or
+	tri booting GNU/Linux (yaboot), MacOS 8.*/9.* and MacOSX.  This
+	new ofboot.b script should *NOT* be edited by the user, and thus
+	should NOT be marked as a conffile in Debian and redhat packages.
+	These packages should now install ofboot.b in /boot instead of
+	/etc since it is no longer a config file.  WARNING: The Forth code
+	in this script has not been tested on all machines and may not be
+	universally compatible.  Thanks to Chris Emerson for writing the
+	Forth code.
+
+	* yaboot.conf: new options: ofboot= macos= macosx= delay=
+	defaultos=.  See the yaboot.conf man page for details. 
+
+	* Now include a Makefile to handle installation, only make install
+	is defined.  Removed install-sh. 
+
+	* mkofboot is now distributed and installed as a symlink instead
+	of a hardlink.
+	
+	* Man page updates.
+	
+2000-04-25  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.16
+
+	* menu_ofboot.b: fixed bug where the yaboot line was missing the
+	boot command, this prevented it from booting yaboot.
+
+2000-04-25  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.15
+
+	* Merge quik's bootstrap(8) man page with ybin's ofboot(8) man
+	page and rename it back to bootstrap(8).  This also solves the
+	conflict with quik.  In a more useful way IMO.
+
+2000-04-24  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.14
+
+	* Ship man pages uncompressed, gzip them in install-sh instead,
+	this allows for easier patching by debian maintainers if need be.
+
+	* Rename bootstrap(8) man page to ofboot(8) so ybin does not
+	conflict with quik.
+	
+2000-04-23  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.13
+
+	* Rewrote the config file parsing yet again to remove dependencies
+	on tr, and awk.  This allows ybin to function on minimal systems
+	such as boot/rescue floppies.  This also pretty much solves the
+	slowness problem.  Thanks to Daniel Jacobwitz for the help.
+
+	* Made changes to remove dependencies on basename and wc.  Again
+	this is to allow ybin to work on boot floppies.
+
+	* Changed all calls to grep to stop using GNU extensions, this is
+	so ybin will work properly with the minimal version of grep
+	included in busybox.
+
+	* Added signal handling so ybin/mkofboot will cleanup after
+	themselves if killed with signals 1 2 3 or 15.
+	
+	* Added OS Badge icons to the ofboot.b scripts.  On G4 machines
+	you can hold down the option key and get a graphical boot selector
+	with one button for each bootable partition, the button with the
+	penguin icon is the bootstrap partition.  Thanks to Nicholas
+	Humfrey for creating the Badge icon.
+
+	* Minor updates to the man pages.
+	
+2000-04-19  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.12
+
+	* Now include yaboot binary in ybin distribution.
+
+	* Include a install-sh script to install everything.
+
+	* Use of the separate ybin.conf file is deprecated.  Use
+	/etc/yaboot.conf instead.
+
+	* Removed the so called kludge options, without being able to
+	bless the root directory they were just useless bloat.
+
+	* Removed useless --readonly option, it was already default (as it
+	should be)
+
+	* Deprecated bootconf options since the yaboot.conf is the same
+	config ybin uses.  (it is still there and works but that may change)
+
+	* Changed configuration file format to be more like quik/lilo:
+	bootfile= is now install= (--bootfile is now --install), wrapper=
+	is now magicboot=, usemount, protect, and hide are now just a
+	keyword options, if they are present in the configuration file
+	they are turned on, if they are not present they are turned off.
+	bless= is now the nobless keyword option, since bless is default
+	this one changed names.
+
+	* ybin: no longer need to specify -C /dev/null if you don't have a
+	configuration file in /etc/.  If this is the case ybin will generate
+	a generic yaboot.conf to install on the bootstrap partition.  
+
+	* More changes to the configuration parsing to improve speed, the
+	format change also helped the speed problem.
+
+	* Added man pages for ybin, mkofboot, yaboot, yaboot.conf and
+	bootstrap. 
+
+	* More general fixes/cleanup/tweaks.
+	
+2000-03-13  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.11
+
+	* Added command line options to both scripts, try --help. This
+	makes the ybin.conf file optional if you wish (-C /dev/null)
+
+	* Changed the way the config file is parsed, no longer source it
+	with the shell, this allows ybin.conf to be merged with
+	yaboot.conf at which point yaboot can live with unknown options in
+	its config file. 
+
+	* Use /etc/ybin.conf if it exists, if not use /etc/yaboot.conf for
+	ybin configuration.
+
+	* Merged ybin and mkofboot into one script, mkofboot shared 90% of
+	of its code with ybin anyway and this will make them much easier
+	to maintain. mkofboot is now a hard link to ybin (or a symlink if
+	you prefer, both will work)
+
+	* Added an experimental feature to generate a yaboot.conf on the
+	fly based on command line options.  The defaults should be
+	workable on a Debian system with an internal ATA disk, with the
+	root partition being the 3rd on the disk. Depends on mktemp for
+	creating the temporary file, Debian's mktemp is secure against
+	race conditions, use with caution if your distribution lacks a
+	secure mktemp utility. This option is activated with -c auto.
+
+	* No longer depends on bash. Works with Debian's
+	/bin/ash. Interpreter is now set to /bin/sh.
+
+	* Assorted cleanup, minor bug fixes.
+
+	* Added example yaboot.conf.
+	
+2000-02-04  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.10
+
+	* Added a simple multi-boot menu written by Benjamin Herrenschmidt.
+
+2000-01-17  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.9
+
+	* mkofboot was still broken. :-(
+
+
+2000-01-14  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.8
+
+	* Added a basic CHRP script ofboot.b to work around the problem of
+	OF refusing to load `tbxi' files unless they contain a CHRP boot
+	header. See README.ofboot.b for details.
+
+	* Updated default ybin.conf to install ofboot.b by default.
+	
+2000-01-13  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.7
+
+	* mkofboot: Check for hformat was broken. 
+
+2000-01-12  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.6
+
+	* mkofboot: Fixed problem where it was insisting that mkdosfs be
+	present even when using hfs filesystems if usemount=yes.
+
+	* mkofboot: Added proper checks for hformat or mkdosfs.
+	
+2000-01-09  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.5
+
+	* First public release.
+	
+	* Add TODO and BUGS files.
+
+	* mkofboot: Check to see if usemount=yes, and if so make sure we
+	are root before proceeding to erase the partition.
+
+	* ybin: Removed useless echo line. 
+	
+2000-01-05  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.4
+
+	* ybin (util_install): Fully support OF `wrappers' now: if a
+	wrapper is defined in the configuration file then the wrapper is
+	given the HFS file type specified instead of the bootfile, the
+	bootfile's type is set to "boot".  
+
+	* ybin: New configuration option `bless' when yes and are using
+	hfsutils we will `bless' the root directory of the bootstrap
+	filesystem so OF should be able to find and boot the system
+	without reconfiguration.
+
+	* mkofboot/ybin (checkconf): Add validation for the new `bless'
+	option. Also add check that the wrapper, if defined, exists and we
+	have permission to it.
+	
+2000-01-04  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.3.
+	
+	* ybin (util_install): Quote the filetype/creator arguments to
+	hattrib to prevent the shell from interpreting any meta-characters
+	in some cases. Also no longer try and set metadata on wrapper if
+	there is no wrapper.
+
+	* mkofboot: When creating hfs or dos filesystems give them volume
+	label of "bootstrap".
+	
+2000-01-03  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.2.
+
+	* mkofboot: added -w switch to grep when checking if a filesystem
+	is already mounted to prevent erroneous positive matches.
+
+	* ybin (util_install): Add check to make sure that the target
+	device is not mounted as a filesystem before mucking with it.
+
+	* Added changelog.
+	
+2000-01-01  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 0.1.
+	
+	* first version.
+
+End:

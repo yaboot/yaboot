@@ -1,0 +1,249 @@
+.\" Hey Emacs! This file is -*- nroff -*- source.
+.\"
+.\" ybin (YaBoot INstaller) installs/updates the yaboot boot loader.
+.\" Copyright (C) 2000, 2001 Ethan Benson
+.\"
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License          
+.\" along with this program; if not, write to the Free Software                
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+.\"
+.TH MKOFBOOT 8 "28 April 2001" "GNU/Linux PowerPC" "System Manager's Manual"
+.SH NAME
+.B mkofboot
+\- format bootstrap partition and install the yaboot boot loader
+.SH SYNOPSIS
+.B mkofboot 
+.RB [ \ \-b | \-\-boot\ \fIdevice\  ]
+.RB [ \ \-o | \-\-ofboot\ \fIof-path\  ]
+.RB [ \ \-i | \-\-install\ \fIboot-file\  ]
+.RB [ \ \-C | \-\-config\ \fIconfig-file\  ]
+.RB [ \ \-m | \-\-magicboot\ \fIchrp-file\  ]
+.RB [ \ \-\-filesystem\ \fIhfs | \fImsdos | \fIraw\  ]
+.RB [ \ \-\-nobless\  ]
+.RB [ \ \-M | \-\-mount\  ]
+.RB [ \ \-\-hide\  ]
+.RB [ \ \-\-protect\  ]
+.RB [ \ \-\-nonvram\  ]
+.RB [ \ \-\-device\ \fIOF-dev\  ]
+.RB [ \ \-\-partition\ \fIroot-part-#\  ]
+.RB [ \ \-\-timeout\ \fItimeout\  ]
+.RB [ \ \-\-image\ \fIkernel\  ]
+.RB [ \ \-\-label\ \fIlabel\  ]
+.RB [ \ \-\-root\ \fIroot-dev\  ]
+.RB [ \ \-\-force\  ]
+.RB [ \ \-v | \-\-verbose\  ]
+.RB [ \ \-\-debug\  ]
+.RB [ \ \-h | \-\-help\  ]
+.RB [ \ \-V | \-\-version\  ]
+.SH DESCRIPTION
+This manual page explains 
+.B mkofboot
+the initial installer for the  
+.BR yaboot (8) 
+boot loader enabling GNU/Linux to be booted by OpenFirmware.
+
+.B mkofboot
+does exactly the same thing as 
+.BR ybin (8)
+except that it erases and creates a new filesystem (specified by
+\-\-filesystem) on the \fBbootstrap\fR(8) partition before copying the
+boot loader files to it.  See the
+.BR ybin (8)
+man page for more details on the installation process.
+
+The \fBbootstrap\fR(8) need not and should not be mounted anywhere on
+your filesystem, especially not on top of /boot.  \fBYaboot\fR(8) is able
+to load the kernels from the ext2fs root partition so that is where
+they should be kept. \fBMkofboot\fR will refuse to operate on the
+\fBbootstrap\fR(8) partition if it is mounted.
+.SH OPTIONS
+NOTE:
+.B mkofboot
+uses the exact same command line options as
+.BR ybin (8)
+so if you have already read the \fBybin\fR(8) man page you can skip this
+section. 
+.TP
+.BR \-b ,\  \-\-boot\ \fIdevice
+Install the boot loader onto the specified device.  This device should
+be that of your \fBbootstrap\fR(8) partition. For example, if your
+\fBbootstrap\fR partition is located on your first primary IDE drive in the 
+second partition, your device would be: \fI/dev/hda2\fR.
+.TP
+.BR \-o ,\  \-\-ofboot\ \fIof-path
+The OpenFirmware device path to the \fBbootstrap\fR(8) partition. This
+is needed so the first stage \fIofboot\fR loader can be configured
+properly.  It should include the OpenFirmware path including the
+partition number (but not any filename).  Example: if your
+\fBbootstrap\fR(8) partition is /dev/hda2, the OF path will likely be
+hd:2.  As of \fBmkofboot\fR 0.18 you no longer are required to specify
+this option.  If left undefined \fBmkofboot\fR will attempt to figure
+out the OpenFirmware path automatically using the \fBofpath\fR(8)
+utility.  You should only need to define this option if
+\fBofpath\fR(8) fails.
+.TP
+.BR \-i ,\  \-\-install\ \fIboot-file
+Use \fIboot-file\fR as the primary boot loader executable, instead of
+the default\fI/usr/local/lib/yaboot/yaboot\fR(8).
+.TP
+.BR \-C ,\  \-\-config\ \fIconfig-file
+Use \fIconfig-file\fR as the \fBmkofboot\fR/\fByaboot\fR(8) configuration
+file instead of the default \fI/etc/yaboot.conf\fR.
+.TP
+.BR \-m ,\  \-\-magicboot\ \fIchrp-script
+Use \fIchrp-script\fR as the boot loader \*(lqwrapper\*(rq. This
+script is needed to either provide a boot menu for dual boot with
+MacOS or to load yaboot (due to an OpenFirmware bug).
+.TP
+.BR \-\-filesystem\ \fIhfs\fR|\fImsdos\fR|\fIraw\fR
+Set the filesystem type that \fBmkofboot\fR will create on the
+\fBbootstrap\fR(8). The \*(lqraw\*(rq filesystem type causes
+\fBmkofboot\fR to copy the bootloader (the value of \fIinstall=\fR
+directly to the \fBbootstrap\fR(8) partition without creating a
+filesystem.  \*(lqraw\*(rq is required on IBM hardware.  CAUTION: this
+will destroy any data or filesystem on the \fBbootstrap\fR(8)
+partition (value of \fIboot=\fR) if you specify something like
+\fIboot=/dev/sda\fR you will destroy the partition table and lose ALL
+data on the disk.  The default is HFS.
+.TP
+.BR \-M ,\  \-\-mount
+Do not use the userspace
+.BR hfsutils (1)
+to modify the \fBbootstrap\fR(8), instead try and mount the filesystem
+directly.  NOTE: Attributes cannot be set on the filesystem or the
+boot loader files using this method, your system will NOT be bootable
+without modifying OpenFirmware's \*(lqboot-device\*(rq variable to something
+like: \*(lqhd:2,ofboot\*(rq (no quotes).
+.TP
+.BR \-\-nobless
+Do not \*(lqbless\*(rq the root directory of the \fBbootstrap\fR(8)
+partition's filesystem.  Only use this option if the \fBbootstrap\fR(8)
+partition is actually a MacOS boot partition.  This option is ignored
+unless the filesystem is HFS, and is ignored when used with \-\-mount.
+.TP
+.BR \-\-hide
+.br
+Set the invisible bit on all the boot loader files once copied to the
+\fBbootstrap\fR(8) partition.  This setting is useful if you must install
+the boot loader onto a MacOS boot partition and do not with to see the
+boot loader files cluttering up the MacOS root directory.  This option
+is ignored unless the filesystem is HFS, and will not work
+with \-\-mount.
+.TP
+.BR \-\-protect
+Set the read-only bit on all boot loader files once copied to the
+\fBbootstrap\fR(8) partition.  This setting is useful if you must install
+the bootloader onto a MacOS boot partition and want to discourage
+alterations/deletion of the boot loader.  This option works for both
+HFS and MSDOS filesystems.
+.TP
+.BR \-\-nonvram
+Prevent \fBmkofboot\fR from setting the OpenFirmware boot-device
+variable with \fBnvsetenv\fR(8).
+.TP
+.BR \-\-device\ \fIopenfirmware-dev-path
+This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
+specifies the OpenFirmware device of the disk the system will boot
+from.  The default is \*(lqhd:\*(rq.
+.TP
+.BR \-\-partition\ \fIroot-partition-number
+This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
+specifies the partition number of the root filesystem.  Mac partition
+tables are considered a partition themselves, so the first real
+partition will be 2, usually the \fBbootstrap\fR(8) partition, followed
+by the root partition, number 3.
+.TP
+.BR \-\-timeout\ \fItimeout
+This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
+specifies the timeout value in tenths of a second.  The timeout is how
+long \fByaboot\fR(8) will wait before booting the default (first listed)
+image.
+.TP
+.BR \-\-image\ \fIkernel-image
+This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
+specifies the path to the default kernel to be booted.
+.TP
+.BR \-\-label\ \fIlabel
+This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
+specifies the label used to boot the above kernel image.  The default
+is Linux.
+.TP
+.BR \-\-root\ \fIroot-device
+This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
+specifies the Linux device of the root partition.  This is passed to
+the kernel at boot time.  The default is \fI/dev/hda3\fR.
+.TP
+.BR \-v ,\  \-\-verbose
+This option causes \fBmkofboot\fR to be more verbose as it proceeds.
+.TP
+.BR \-f ,\  \-\-force
+This option suppresses any confirmation questions.
+.TP
+.BR \-\-debug
+This option causes \fBmkofboot\fR to output some boring details useful
+only for debugging \fBmkofboot\fR itself.
+.TP
+.BR \-h ,\  \-\-help
+Print out usage information and exit.
+.TP
+.BR \-V ,\  \-\-version
+Print out the version number and exit.
+.SH FILES
+.nf
+/usr/local/lib/yaboot/yaboot \- boot loader executable
+/usr/local/lib/yaboot/ofboot \- OpenFirmware boot script
+/etc/yaboot.conf \- boot loader/mkofboot configuration file
+.fi
+.SH ENVIRONMENT
+.TP
+.B TMPDIR
+.br
+The temporary directory \fBmkofboot\fR will use.
+.SH SECURITY
+The \fByaboot.conf\fR(5) auto generation requires a temporary file, this
+file is created with
+.BR mktemp (1)
+it is important that your system use a secure 
+.BR mktemp (1)
+program otherwise \fBmkofboot\fR will be vulnerable to race conditions.
+The Debian mktemp is derived from OpenBSD and thus should be secure.
+
+\fI/usr/local/lib/yaboot/ofboot\fR now contains code executed by /bin/sh (by
+\fBmkofboot\fR) it is thus critical that it not be writable by anyone
+but root.  It is also critical that \fI/etc/yaboot.conf\fR not be
+writable by anyone but root since a different \fIofboot\fR script could be
+specified there.
+.SH BUGS
+.B Mkofboot
+should be able to take care of OpenFirmware variables as needed on IBM
+hardware.
+.SH AUTHORS
+.BR mkofboot (8)
+, and this man page written by Ethan Benson. 
+.br
+.BR yaboot (8)
+was written by Benjamin Herrenschmidt.
+.SH REPORTING BUGS
+Report bugs to <erbenson@alaska.net>
+.br
+Report bugs in \fByaboot\fR(8) to <benh@kernel.crashing.org>
+.SH SEE ALSO
+.BR bootstrap (8),
+.BR hfsutils (1),
+.BR mkofboot (8),
+.BR mktemp (1),
+.BR mount (8),
+.BR nvsetenv (8),
+.BR ofpath (8),
+.BR yaboot (8),
+.BR yaboot.conf (5).

@@ -1,0 +1,1677 @@
+#! /bin/sh
+
+###############################################################################
+##
+## ybin (YaBoot INstaller) installs/updates the yaboot bootloader.
+## Copyright (C) 2000, 2001 Ethan Benson
+##
+## This program is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License
+## as published by the Free Software Foundation; either version 2
+## of the License, or (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+##
+###############################################################################
+
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+## allow to run out of /target in boot-floppies
+if [ -n "$PATH_PREFIX" ] ; then
+    PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
+fi
+PRG="${0##*/}"
+SIGINT="$PRG: Interrupt caught ... exiting"
+VERSION=1.3
+DEBUG=0
+VERBOSE=0
+TMP="${TMPDIR:-/tmp}"
+export LC_COLLATE=C
+
+## catch signals, clean up junk in /tmp.
+trap "cleanup" 0
+trap "exit 129" 1
+trap "echo 1>&2 $SIGINT ; exit 130" 2
+trap "exit 131" 3
+trap "exit 143" 15
+
+## allow for non-existent config file, in which case it will be
+## generated from command line arguments.
+if [ -f /etc/yaboot.conf ] ; then
+    CONF=/etc/yaboot.conf
+    bootconf=$CONF
+    ERR=" Error in $CONF:"
+else
+    CONF=/dev/null
+    bootconf=/dev/null
+fi
+
+## define default configuration
+boot=unconfigured
+
+## allow default to work on packaged and non-packaged yaboot. 
+## no default for magicboot since it is not required everywhere.
+if [ -f /usr/local/lib/yaboot/yaboot ] ; then
+    install=/usr/local/lib/yaboot/yaboot
+elif [ -f /usr/lib/yaboot/yaboot ] ; then
+    install=/usr/lib/yaboot/yaboot
+fi
+
+## defaults
+usemount=no
+fstype=hfs
+hfstype=tbxi
+hfscreator=UNIX
+bless=yes
+protect=no
+hide=no
+nonvram=0
+defaultos=linux
+brokenosx=no
+cdrom=no
+network=no
+of=no
+fgcolor=white
+bgcolor=black
+
+## yaboot autoconf defaults
+label=Linux
+timeout=40
+image=/vmlinux
+partition=3
+root=/dev/hda3
+device=hd:
+
+## this program behaves differently based on how its called, this
+## ensures that nothing nasty happens if someone makes a bogus
+## symlink.
+case "$PRG" in
+    ybin)
+    ;;
+    mkofboot)
+    ;;
+    *)
+    echo 1>&2 "This program must be called as either \`ybin' or \`mkofboot'"
+    exit 1
+    ;;
+esac
+
+## check for printf, use it if possible otherwise fall back on
+## unreliable echo -e -n ("SUS" says echo shall support no switches)
+if [ "$(printf printf_test 2>/dev/null)" = printf_test ] ; then
+    PRINTF=printf
+else
+    PRINTF="echo -e -n"
+fi
+
+## make fake `id' if its missing, outputs 0 since if its missing we
+## are probably running on boot floppies and thus are root.
+if (command -v id > /dev/null 2>&1) ; then 
+    true
+else
+    id()
+    {
+    echo 0
+    }
+fi
+
+## --version output
+version()
+{
+echo \
+"$PRG $VERSION
+Written by Ethan Benson
+
+Copyright (C) 2000, 2001 Ethan Benson
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+}
+
+## --help output.
+usage()
+{
+echo \
+"Usage: $PRG [OPTION]...
+Update/install bootloader onto a bootstrap partition.
+
+  -b, --boot                 set bootstrap partition device [ -b /dev/hda2 ]
+  -o, --ofboot               set bootstrap partition OpenFirmware device
+			       default: automatically determined [ -o hd:2 ]
+  -i, --install              pathname to the actual bootloader binary
+                               default: /usr/{local/}lib/yaboot/yaboot same as
+                               install= in config file [ -i bootloader_file ]
+  -C, --config               use alternate configuration file (ybin and yaboot)
+			       [ -C config_file ]
+  -m, --magicboot            pathname to a OpenFirmware magicboot (CHRP) script
+      --filesystem           set the filesystem type of the bootstrap partition
+                               available options are hfs, msdos, and raw
+			       [ --filesystem hfs ] default is hfs
+      --nobless              don't bless the root directory, this should only
+                               be used if you are using a MacOS boot partition
+			       as the bootstrap partition (not recommended)
+  -M, --mount                don't use userspace hfsutils to modify the
+			       bootstrap instead try and mount the filesystem
+                               directly.  Note that attributes cannot be set
+			       this way and you will have to manually modify
+			       OpenFirmware to make your system bootable
+      --protect              set the read-only (locked) bit on all bootstrap
+			       files
+      --hide                 set the invisible bit on all bootstrap files
+                               this is useful of you don't want them to be
+                               visible from MacOS.
+      --nonvram              do not update the boot-device variable in nvram.
+      --device               yaboot auto configuration: sets the OF boot device
+			       default: hd:
+      --partition            yaboot auto configuration: sets the partition
+			       number of the root partition. default: 3
+      --timeout              yaboot auto configuration: sets the time yaboot
+			       will wait for user input before booting default
+                               image default: 40 (4 seconds)
+      --image                yaboot auto configuration: sets the path to the
+			       kernel image. default: /vmlinux
+      --label                yaboot auto configuration: sets the image label
+                               default: Linux
+      --root                 yaboot auto configuration: sets the root device
+                               default: /dev/hda3
+      --force                don't ever ask for confirmation
+  -v, --verbose              make $PRG more verbose
+      --debug                print boring junk only useful for debugging
+  -h, --help                 display this help and exit
+  -V, --version              output version information and exit"
+}
+
+## configuration file parsing. FIXME: need a method which can parse
+## image= sections.
+parseconf()
+{
+case "$1" in
+    str)
+       v=`grep "^$2[\ ,=]" "$CONF"` ; echo "${v#*=}"
+       ;;
+    flag)
+       grep "^$2\>" "$CONF" > /dev/null && echo 0 || echo 1
+       ;;
+    ck)
+       grep "^$2[\ ,=]" "$CONF" > /dev/null && echo 0 || echo 1
+       ;;
+esac
+}
+
+## check for existence of a configuration file, and make sure we have
+## read permission.
+confexist()
+{
+    if [ ! -e "$CONF" ] ; then
+	echo 1>&2 "$PRG: $CONF: No such file or directory"
+	return 1
+    elif [ ! -f "$CONF" ] ; then
+	echo 1>&2 "$PRG: $CONF: Not a regular file"
+	return 1
+    elif [ ! -r "$CONF" ] ; then
+	echo 1>&2 "$PRG: $CONF: Permission denied"
+	return 1
+    else
+	return 0
+    fi
+}
+
+## check to make sure the configuration file is sane and correct.
+## maybe this is an insane ammount of error checking, but I want to
+## make sure (hopfully) nothing unexpected ever happens.  and i just
+## like useful errors from programs.  every error just marks an error
+## variable so we give the user as much info as possible before we
+## abandon ship.
+checkconf()
+{
+    if [ ! -e "$boot" ] ; then
+	echo 1>&2 "$PRG: $boot: No such file or directory"
+	local CONFERR=1
+    elif [ ! -b "$boot" -a ! -f "$boot" ] ; then
+	echo 1>&2 "$PRG: $boot: Not a regular file or block device"
+	local CONFERR=1
+    elif [ ! -w "$boot" -o ! -r "$boot" ] ; then
+	[ -z "$mntpoint" ] && echo 1>&2 "$PRG: $boot: Permission denied"
+	[ -z "$mntpoint" ] && CONFERR=1
+    fi
+
+    if [ ! -e "$install" ] ; then
+	echo 1>&2 "$PRG: $install: No such file or directory"
+	local CONFERR=1
+    elif [ ! -f "$install" ] ; then
+	echo 1>&2 "$PRG: $bootconf: Not a regular file"
+	local CONFERR=1
+    elif [ ! -r "$install" ] ; then
+	echo 1>&2 "$PRG: $install: Permission denied"
+	local CONFERR=1
+    fi
+
+    if [ "$bootconf" = auto ] ; then
+	true
+    elif [ ! -e "$bootconf" ] ; then
+	echo 1>&2 "$PRG: $bootconf: No such file or directory"
+	local CONFERR=1
+    elif [ ! -f "$bootconf" ] ; then
+	echo 1>&2 "$PRG: $bootconf: Not a regular file"
+	local CONFERR=1
+    elif [ ! -r "$bootconf" ] ; then
+	echo 1>&2 "$PRG: $bootconf: Permission denied"
+	local CONFERR=1
+    fi
+
+    if [ -n "$magicboot" ] ; then
+	if [ ! -e "$magicboot" ] ; then
+	    echo 1>&2 "$PRG: $magicboot: No such file or directory"
+	    local CONFERR=1
+	elif [ ! -f "$magicboot" ] ; then
+	    echo 1>&2 "$PRG: $magicboot: Not a regular file"
+	    local CONFERR=1
+	elif [ ! -r "$magicboot" ] ; then
+	    echo 1>&2 "$PRG: $magicboot: Permission denied"
+	    local CONFERR=1
+	fi
+    fi
+
+    case "$fstype" in
+	hfs|msdos|raw)
+	 ;;
+	*)
+	 if [ "$ARGFS" = 1 ] ; then
+	    echo 1>&2 "$PRG: --filesystem must be either \`hfs', \`msdos', or \`raw'"
+	 else
+	    echo 1>&2 "$PRG:$ERR \`fstype' must be either \`hfs', \`msdos', or \`raw'"
+	 fi
+	 local CONFERR=1
+	 ;;
+    esac
+
+    ## if we are not using HFS filesystems we don't care about HFS
+    ## specific options.
+    if [ "$fstype" = hfs ] ; then
+	if [ `echo ${#hfstype}` != 4 ] ; then
+	    if [ "$ARGTP" = 1 ] ; then
+		echo 1>&2 "$PRG: --type must be 4 characters"
+	    else
+		echo 1>&2 "$PRG:$ERR \`hfstype' must be 4 characters"
+	    fi
+	    local CONFERR=1
+	fi
+	
+	if [ `echo ${#hfscreator}` != 4 ] ; then
+	    if [ "$ARGCT" = 1 ] ; then
+		echo 1>&2 "$PRG: --creator must be 4 characters"
+	    else
+		echo 1>&2 "$PRG:$ERR \`hfscreator' must be 4 characters"
+	    fi
+	    local CONFERR=1
+	fi
+    fi
+
+    ## some options are not compatible with fstype=raw
+    if [ "$fstype" = raw ] ; then
+	if [ -n "$mntpoint" ] ; then
+	    echo 1>&2 "$PRG:$ERR \`mntpoint' is not compatible with fstype=raw"
+	    local CONFERR=1
+	fi
+	if [ "$usemount" = yes ] ; then
+	    echo 1>&2 "$PRG:$ERR \`usemount' is not compatible with fstype=raw"
+	    local CONFERR=1
+	fi
+	if [ -n "$magicboot" ] ; then
+	    echo 1>&2 "$PRG:$ERR \`magicboot' scripts cannot be used with fstype=raw"
+	    local CONFERR=1
+	fi
+    fi
+
+    if [ -n "$mntpoint" ] ; then
+	## standard checks
+	if [ ! -e "$mntpoint" ] ; then
+	    echo 1>&2 "$PRG: $mntpoint: No such file or directory"
+	    local CONFERR=1
+	elif [ ! -d "$mntpoint" ] ; then
+	    echo 1>&2 "$PRG: $mntpoint: Not a directory"
+	    local CONFERR=1
+	elif [ ! -w "$mntpoint" -o ! -r "$mntpoint" ] ; then
+	    echo 1>&2 "$PRG: $mntpoint: Permission denied"
+	    local CONFERR=1
+	elif [ ! -O "$mntpoint" -a `id -u` != 0 ] ; then
+	    echo 1>&2 "$PRG: $mntpoint: Permission denied (not owner)"
+	    local CONFERR=1
+	fi
+
+	## make sure no embedded spaces exist
+	echo "$mntpoint" | grep -q [[:space:]]
+	if [ $? = 0 ] ; then
+	    echo 1>&2 "$PRG:$ERR \`mntpoint=$mntpoint' contains embedded spaces, don't use lame filenames"
+	    local CONFERR=1
+	fi
+
+	## make sure $mntpoint is on $boot, this matters to nvram updating.
+	if [ "$(v=`df "$mntpoint" 2> /dev/null | grep ^/dev/` ; echo ${v%%[ ]*})" != "$boot" -a -d "$mntpoint" ] ; then
+	    echo 1>&2 "$PRG: $mntpoint is not located on $boot"
+	    local CONFERR=1
+	    ## more then one subdirectory deep is not supported. no sed available on boot floppies ( / -> \ )
+	elif [ "$mntpoint" != "$(v=`df "$mntpoint" 2> /dev/null | grep ^/dev/` ; echo ${v##*[ ]})" ] ; then
+	    echo "$(v=`df "$mntpoint" 2>/dev/null | grep ^/dev/`; m=${v##*[ ]}; echo "${mntpoint##*$m/}")" | grep -q /
+	    if [ $? = 0 ] ; then
+		echo 1>&2 "$PRG:$ERR $mntpoint is more then one subdirectory deep from root of $boot"
+		local CONFERR=1
+	    else
+		OFDIR="$(v=`df "$mntpoint" 2>/dev/null | grep ^/dev/`; m=${v##*[ ]}; echo "${mntpoint##*$m/}")"
+	    fi
+	fi
+
+	if [ "$usemount" = no ] ; then
+	    echo 1>&2 "$PRG:$ERR \`mntpoint=' requires \`usemount' be set"
+	    local CONFERR=1
+	fi
+    fi
+
+    if [ -n "$magicboot" ] ; then
+	case "$defaultos" in 
+	    linux|Linux|GNU|Gnu|gnu)
+		defaultos=bootyaboot
+		;;
+	    bootyaboot)
+		;;
+	    bsd)
+		defaultos=bootbsd
+		if [ -z "$bsd" ] ; then
+		    echo 1>&2 "$PRG:$ERR no entry for \`bsd' found, but defaultos is set to \`bsd'"
+		    local CONFERR=1
+		fi
+		;;
+	    macos)
+		defaultos=bootmacos
+		if [ -z "$macos" ] ; then
+		    echo 1>&2 "$PRG:$ERR no entry for \`macos' found, but defaultos is set to \`macos'"
+		    local CONFERR=1
+		fi
+		;;
+	    macosx)
+		defaultos=bootmacosx
+		if [ -z "$macosx" ] ; then
+		    echo 1>&2 "$PRG:$ERR no entry for \`macosx' found, but defaultos is set to \`macosx'"
+		    local CONFERR=1
+		fi
+		;;
+	    darwin)
+		defaultos=bootdarwin
+		if [ -z "$darwin" ] ; then
+		    echo 1>&2 "$PRG:$ERR no entry for \`darwin' found, but defaultos is set to \`darwin'"
+		    local CONFERR=1
+		fi
+		;;
+	    *)
+		echo 1>&2 "$PRG:$ERR \`defaultos' must be either \`linux', \`bsd', \`macos' or \`macosx'"
+		local CONFERR=1
+		;;
+	esac
+    fi
+
+    ## nvsetenv requires /proc
+    if [ ! -f /proc/uptime -a "$nonvram" = 0 ] ; then
+	echo 1>&2 "$PRG: /proc filesystem is not mounted, nvram will not be updated"
+	nonvram=1
+    fi
+
+    if [ "$nonvram" = 0 ] ; then
+	## see if nvsetenv exists and is executable
+	if (command -v nvsetenv > /dev/null 2>&1) ; then
+	    [ -x `command -v nvsetenv` ] || MISSING=1 ; else MISSING=1
+	fi
+
+	if [ "$nonvram" = 0 ] ; then
+	    ## if nvsetenv exists see if its the old broken version
+	    if [ "$MISSING" != 1 ] ; then
+		nvsetenv --version > /dev/null 2>&1 || OLD=1
+	    else
+		nonvram=1
+		echo 1>&2 "$PRG: Warning: \`nvsetenv' could not be found, nvram will not be updated"
+	    fi
+
+	    if [ "$OLD" = 1 ] ; then
+		## i check this myself to avoid misleading error
+		## messages. nvsetenv should REALLY support --version.
+		if [ ! -e /dev/nvram ] ; then
+		    echo 1>&2 "$PRG: /dev/nvram: No such file or directory"
+		    echo 1>&2 "$PRG: Warning: nvram will not be updated"
+		    nonvram=1
+		elif [ ! -c /dev/nvram ] ; then
+		    echo 1>&2 "$PRG: /dev/nvram: Not a character device"
+		    echo 1>&2 "$PRG: Warning: nvram will not be updated"
+		    nonvram=1
+		elif [ ! -w /dev/nvram -o ! -r /dev/nvram ] ; then
+		    echo 1>&2 "$PRG: /dev/nvram: Permission denied"
+		    echo 1>&2 "$PRG: Warning: nvram will not be updated"
+		    nonvram=1
+		else
+		    nonvram=1
+		    echo 1>&2 "$PRG: Warning: Incompatible version of \`nvsetenv', nvram will not be updated"
+		fi
+	    fi
+	fi
+
+	if [ -f "$boot" ] ; then
+	    echo 1>&2 "$PRG: $boot is a regular file, disabling nvram updating"
+	    nonvram=1
+	fi
+    fi
+
+    ## check for newworld mac. use cat hack due to /proc wierdness.
+    ## do not bail if we are on an OldWorld only warn (very loudly).
+    if [ "$(v=`cat /proc/cpuinfo 2>/dev/null | grep pmac-generation` ; echo ${v##*:})" = NewWorld ] ; then
+	true
+    elif [ "$(v=`cat /proc/cpuinfo 2>/dev/null | grep pmac-generation` ; echo ${v##*:})" = OldWorld ] ; then
+	echo 1>&2
+	echo 1>&2 '@@@@@@@@@@@@@@ WARNING!! WARNING!! WARNING!! @@@@@@@@@@@@@@'
+	echo 1>&2 "$PRG: Warning: This is an OldWorld PowerMac, $boot will **NOT** be bootable on this machine"
+	echo 1>&2 "$PRG: Oldworld PowerMacs need to use the quik bootloader, not yaboot"
+	echo 1>&2 '@@@@@@@@@@@@@@ WARNING!! WARNING!! WARNING!! @@@@@@@@@@@@@@'
+	echo 1>&2
+	[ "$nonvram" = 0 ] && echo 1>&2 "$PRG: OldWorld PowerMac, nvram will not be updated"
+	nonvram=1
+    elif (cat /proc/cpuinfo 2>/dev/null | grep ^motherboard | grep -q AAPL) ; then
+	echo 1>&2
+	echo 1>&2 '@@@@@@@@@@@@@@ WARNING!! WARNING!! WARNING!! @@@@@@@@@@@@@@'
+	echo 1>&2 "$PRG: Warning: This is an OldWorld PowerMac, $boot will **NOT** be bootable on this machine"
+	echo 1>&2 "$PRG: Oldworld PowerMacs need to use the quik bootloader, not yaboot"
+	echo 1>&2 '@@@@@@@@@@@@@@ WARNING!! WARNING!! WARNING!! @@@@@@@@@@@@@@'
+	echo 1>&2
+	[ "$nonvram" = 0 ] && echo 1>&2 "$PRG: OldWorld PowerMac, nvram will not be updated"
+	nonvram=1
+    elif (cat /proc/cpuinfo 2> /dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
+	## IBM hardware does not need nvram update AFAICT
+	nonvram=1
+	ADDNOTE=yes
+    else
+	#echo 1>&2 "$PRG: Warning: Unknown archetecture, $boot may not be bootable on this machine"
+	[ "$nonvram" = 0 ] && echo 1>&2 "$PRG: Warning: Unknown architecture, nvram will not be updated"
+	nonvram=1
+    fi
+
+    ## convert human readable color values from config to proper color
+    ## codes
+    case "$fgcolor" in
+	black) fgc=0 ;;	blue) fgc=1 ;; green) fgc=2 ;; cyan) fgc=3 ;;
+	red) fgc=4 ;; purple) fgc=5 ;; brown) fgc=6 ;; light-gray) fgc=7 ;;
+	dark-gray) fgc=8 ;; light-blue) fgc=9 ;; light-green) fgc=a ;;
+	light-cyan) fgc=b ;; light-red) fgc=c ;; light-purple) fgc=d ;;
+	yellow) fgc=e ;; white) fgc=f ;;
+	*)
+	echo 1>&2 "$PRG:$ERR Invalid fgcolor: \`$fgcolor'"
+	local CONFERR=1
+	;;
+    esac
+    case "$bgcolor" in
+	black) bgc=0 ;;	blue) bgc=1 ;; green) bgc=2 ;; cyan) bgc=3 ;;
+	red) bgc=4 ;; purple) bgc=5 ;; brown) bgc=6 ;; light-gray) bgc=7 ;;
+	dark-gray) bgc=8 ;; light-blue) bgc=9 ;; light-green) bgc=a ;;
+	light-cyan) bgc=b ;; light-red) bgc=c ;; light-purple) bgc=d ;;
+	yellow) bgc=e ;; white) bgc=f ;;
+	*)
+	echo 1>&2 "$PRG:$ERR Invalid bgcolor: \`$bgcolor'"
+	local CONFERR=1
+	;;
+    esac
+
+    ## if delay is not set use yaboot's timeout
+    if [ -z "$delay" ] ; then
+	delay="$(($timeout / 10))"
+    fi
+
+    if [ "$CONFERR" = 1 ] ; then
+	return 1
+    else
+	return 0
+    fi
+}
+
+
+## if readlink is missing use a kludge
+if (command -v readlink > /dev/null 2>&1) ; then
+    true
+else
+    readlink()
+    {
+	SYMTARGET="$(v=`ls -l "$2" 2>/dev/null` ; echo ${v##*> })"
+	if [ -n "$SYMTARGET" ] ; then
+	    echo "$SYMTARGET"
+	    return 0
+	else
+	    return 1
+	fi
+    }
+fi
+
+## /etc/yaboot.conf with password should not be world readable.
+permcheck()
+{
+if [ -L "$bootconf" ] ; then
+    local realfile="$(readlink -f "$bootconf")" || return 0
+else
+    local realfile="$bootconf"
+fi
+
+## don't bother if we could not read the symlink
+[ -z "$realfile" ] && return 0
+[ ! -f "$realfile" ] && return 0
+
+## get permissions, and don't bother checking if we can't
+local PERM=`v=$(ls -l "$realfile" 2>/dev/null) ; echo ${v%% *}`
+[ -z "$PERM" ] && return 0
+[ `echo ${#PERM}` != 10 ] && return 0
+
+case "$PERM" in
+    -rw-------|-r--------)
+      if [ ! -O "$realfile" -a `id -u` = 0 ] ; then
+	 echo 1>&2 "$PRG: Warning: $bootconf is not owned by root"
+      fi
+      ;;
+    -rw-r-----|-r--r-----)
+      if [ ! -O "$realfile" -a `id -u` = 0 ] ; then
+	 echo 1>&2 "$PRG: Warning: $bootconf is not owned by root"
+      fi
+      if [ ! -G "$realfile" -a `id -g` = 0 ] ; then
+	 echo 1>&2 "$PRG: Warning: $bootconf is not owned by group root"
+      fi
+      ;;
+    -r--r--r--|-rw-r--r--|-rw-rw-r--|-rw-rw-rw-|-rw-rw----)
+      echo 1>&2 "$PRG: Warning: Insecure permissions on $bootconf: $PERM should be -rw-------"
+      ;;
+    *)
+      echo 1>&2 "$PRG: Warning: Incorrect permissions on $bootconf: $PERM should be -rw-------"
+      ;;
+esac
+}
+
+convertpath()
+{
+    ## figure out bootstrap device OF pathname if user did not supply it.
+    if [ -z "$ofboot" ] ; then
+	[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$boot'..."
+	ofboot="$(ofpath $boot)"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: Unable to find OpenFirmware path for boot=$boot"
+	    echo 1>&2 "$PRG: Please add ofboot=<path> where <path> is the OpenFirmware path to $boot to $CONF"
+	    local CONVERR=1
+	fi
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: ofboot set to \`$ofboot'"
+    fi
+
+    ## figure out OF device path for macos/macosx if user supplied a unix device node.
+    if [ -n "$bsd" ] ; then
+	case "$bsd" in
+	    /dev/*)
+		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$bsd'..."
+		local sbsd="$bsd"
+		bsd="$(ofpath $bsd)"
+		if [ $? != 0 ] ; then
+		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for bsd=$sbsd"
+		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for bsd=$sbsd in $CONF"
+		    local CONVERR=1
+		fi
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: bsd set to \`$bsd' from \`$sbsd'"
+		;;
+	    *)
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: bsd left alone: \`$bsd'"
+		;;
+	esac
+    fi
+
+    if [ -n "$macos" ] ; then
+	case "$macos" in
+	    /dev/*)
+		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$macos'..."
+		local smacos="$macos"
+		macos="$(ofpath $macos)"
+		if [ $? != 0 ] ; then
+		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for macos=$smacos"
+		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for macos=$smacos in $CONF"
+		    local CONVERR=1
+		fi
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: macos set to \`$macos' from \`$smacos'"
+		;;
+	    *)
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: macos left alone: \`$macos'"
+		;;
+	esac
+    fi
+
+    if [ -n "$macosx" ] ; then
+	case "$macosx" in
+	    /dev/*)
+		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$macosx'..."
+		local smacosx="$macosx"
+		macosx="$(ofpath $macosx)"
+		if [ $? != 0 ] ; then
+		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for macosx=$smacosx"
+		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for macosx=$smacosx in $CONF"
+		    local CONVERR=1
+		fi
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: macosx set to \`$macosx' from \`$smacosx'"
+		;;
+	    *)
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: macosx left alone: \`$macosx'"
+		;;
+	esac
+    fi
+
+    if [ -n "$darwin" ] ; then
+	case "$darwin" in
+	    /dev/*)
+		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$darwin'..."
+		local sdarwin="$darwin"
+		darwin="$(ofpath $darwin)"
+		if [ $? != 0 ] ; then
+		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for darwin=$sdarwin"
+		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for darwin=$sdarwin in $CONF"
+		    local CONVERR=1
+		fi
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: darwin set to \`$darwin' from \`$sdarwin'"
+		;;
+	    *)
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: darwin left alone: \`$darwin'"
+		;;
+	esac
+    fi
+
+    if [ "$CONVERR" = 1 ] ; then
+	return 1
+    else
+	return 0
+    fi
+}
+
+## make sure the hfsutils we need are installed and executable.
+checkhfsutils()
+{
+    if (command -v hmount > /dev/null 2>&1) ; then
+	[ -x `command -v hmount` ] || FAIL=1 ; else FAIL=1 ; fi
+    if (command -v humount > /dev/null 2>&1) ; then
+	[ -x `command -v humount` ] || FAIL=1 ; else FAIL=1 ; fi
+    if (command -v hcopy > /dev/null 2>&1) ; then
+	[ -x `command -v hcopy` ] || FAIL=1 ; else FAIL=1 ; fi
+    if (command -v hattrib > /dev/null 2>&1) ; then
+	[ -x `command -v hattrib` ] || FAIL=1 ; else FAIL=1 ; fi
+    if (command -v hformat > /dev/null 2>&1) ; then
+	[ -x `command -v hformat` ] || FAIL=1 ; else FAIL=1 ; fi
+
+    if [ "$FAIL" = 1 ] ; then
+	return 1
+    else
+	return 0
+    fi
+}
+
+## This is gross, IBM CHRP OF needs a .note added to the yaboot
+## binary, nobody knows whether this note will affect PowerMac OF or
+## not (or could in the future). 
+hack_yaboot()
+{
+    local YBDIR="${install%/*}"
+    if [ -x "$YBDIR/addnote" ] ; then
+	TMPYABOOT=`mktemp -q "$TMP/yaboot.XXXXXX"`
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: Could not create temporary file, aborting."
+	    return 1
+	else
+	    if (cat "$install" > "$TMPYABOOT" 2> /dev/null) ; then
+		install="$TMPYABOOT"
+	    else
+		echo 1>&2 "$PRG: Could not create temporary file, aborting."
+		return 1
+	    fi
+	fi
+	[ "$DEBUG" = 1 ] && echo "$PRG: Embedding CHRP note section in temp yaboot..."
+	"$YBDIR/addnote" "$install" > /dev/null 2>&1
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: Could not install note section required by your architecture"
+	    return 1
+	fi
+    else
+	echo 1>&2 "$PRG: Your architecture requires $YBDIR/addnote which cannot be found"
+	return 1
+    fi
+    return 0
+}
+
+## install using userspace utilities rather then kernel filesytem
+## support.  hfsutils only, mtools not supported.
+util_install()
+{
+    ## catch signals, and humount, cleanup done by trap 0.
+    trap "humount $boot ; exit 129" 1
+    trap "echo 1>&2 $SIGINT ; humount $boot ; exit 130" 2
+    trap "humount $boot ; exit 131" 3
+    trap "humount $boot ; exit 143" 15
+
+    ## filenames on bootstrap partition. ofboot hard codes yaboot.
+    local BTFILE=yaboot
+    local CFFILE=yaboot.conf
+
+    ## if there is a magicboot script to install we will give it the
+    ## hfstype (should be "tbxi") and give yaboot type "boot".
+    if [ "$magicboot" ] ; then
+	local BTTYPE=boot
+    else
+	local BTTYPE="$hfstype"
+    fi
+
+    if [ -n "$magicboot" ] ; then
+	local WRAP="${magicboot##*/}"
+    fi
+
+    ## set verbose messages here so they don't show temporary file paths
+    local INSTALLFIRST="$PRG: Installing first stage bootstrap $magicboot onto $boot..."
+    local INSTALLPRIMARY="$PRG: Installing primary bootstrap $install onto $boot..."
+
+    ## repoint magicboot as the real first stage loader if using the
+    ## modern automatic generating ofboot.b.
+    if [ -n "$FIRST" ] ; then	
+	magicboot="$FIRST"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: set magicboot to $FIRST"
+    fi
+
+    ## gross hack, add note section for IBM CHRP
+    if [ "$ADDNOTE" = yes ] ; then
+	hack_yaboot || return 1
+    fi
+
+    if [ "$fstype" = hfs ] ; then
+	if [ "$protect" = yes ] ; then
+	    local LOCK="+l"
+	fi
+	
+	if [ "$hide" = yes ] ; then
+	    local INVISIBLE="+i"
+	fi
+
+	## make sure the device is not mounted as a filesystem before
+	## we start mucking with it directly.
+	mount | grep "^$boot\>" > /dev/null
+	if [ $? = 0 ] ; then
+	    echo 1>&2 "$PRG: $boot appears to be mounted! aborting."
+	    return 1
+	fi
+
+	## hmount is really more of a way to make sure we have a valid HFS
+	## filesystem before proceding, and hcopy requires it...
+	hmount "$boot" > /dev/null
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: $boot appears to have never had a bootstrap installed, please run mkofboot"
+	    return 1
+	fi
+
+	## must be explicit with target filename to avoid hfsutils
+	## braindamage ("_" -> " " filename mangling) also avoid
+	## ambiguity in the bootstrap partition.
+	if [ -n "$magicboot" ] ; then
+	    [ "$VERBOSE" = 1 ] && echo "$INSTALLFIRST"
+	    hcopy -r "$magicboot" :ofboot.b
+	    if [ $? != 0 ] ; then
+	       echo 1>&2 "$PRG: An error occured while writing to $boot"
+	       return 1
+	    fi
+	fi
+
+	[ "$VERBOSE" = 1 ] && echo "$INSTALLPRIMARY"
+	hcopy -r "$install" :"$BTFILE"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: An error occured while writing to $boot"
+	    return 1
+	fi
+
+	[ "$VERBOSE" = 1 ] && echo "$PRG: Installing $bootconf to $boot..."
+	hcopy -r "$bootconf" :"$CFFILE"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: An error occured while writing to $boot"
+	    return 1
+	fi
+
+	## set all file's attributes, if a magicboot script exists it
+	## gets the configured hfstype instead of yaboot (should be
+	## "tbxi") so it gets booted by OF.
+	if [ "$magicboot" ] ; then
+	    [ "$VERBOSE" = 1 ] && echo "$PRG: Setting attributes on $WRAP..."
+	    hattrib -t "$hfstype" -c "$hfscreator" $INVISIBLE $LOCK :ofboot.b
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: Warning: error setting attributes on $WRAP"
+		echo 1>&2 "$PRG: This is probably bad but we'll ignore it."
+	    fi
+	fi
+
+	[ "$VERBOSE" = 1 ] && echo "$PRG: Setting attributes on $BTFILE..."
+	hattrib -t "$BTTYPE" -c "$hfscreator" $INVISIBLE $LOCK :"$BTFILE"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: Warning: error setting attributes on $BTFILE"
+	    echo 1>&2 "$PRG: This is probably bad but we'll ignore it"
+	fi
+
+	[ "$VERBOSE" = 1 ] && echo "$PRG: Setting attributes on $CFFILE..."
+	hattrib -t "conf" -c "$hfscreator" $INVISIBLE $LOCK :"$CFFILE"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: Warning: error setting attributes on $CFFILE"
+	    echo 1>&2 "$PRG: This is probably unimportant so we'll ignore it"
+	fi
+
+	## bless the root directory so OF will find the boot file
+	if [ "$bless" = yes ] ; then
+	    [ "$VERBOSE" = 1 ] && echo "$PRG: Blessing $boot with Holy Penguin Pee..."
+	    hattrib -b :
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: Warning: error blessing $boot"
+		echo 1>&2 "$PRG: This is probably bad but we'll ignore it"
+	    fi
+	fi
+
+	## clean up the ~/.hcwd file hmount creates
+	humount "$boot" > /dev/null
+	sync ; sync
+
+	## use explicit filename if we don't bless.
+	if [ "$bless" = yes ] ; then
+	    local OFFILE='\\:tbxi'
+	else
+	    if [ -n "$magicboot" ] ; then
+		local OFFILE=ofboot.b
+	    else
+		local OFFILE="$BTFILE"
+	    fi
+	fi
+
+	## update the boot-device variable in OF nvram.
+	if [ "$nonvram" = 0 ] ; then
+	    [ "$VERBOSE" = 1 ] && echo "$PRG: Updating OpenFirmware boot-device variable in nvram..."
+	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: boot-device=${ofboot},${OFFILE}"
+	    nvsetenv boot-device "${ofboot},${OFFILE}"
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: An error occured while updating nvram, we'll ignore it"
+	    fi
+	fi
+
+    else
+	echo 1>&2 "$PRG: mtools support is not implemented"
+	echo 1>&2 "$PRG: Use --mount or add \`usemount' to $CONF"
+	return 1
+    fi
+
+    return 0
+}
+
+## used by mnt_install so mntpoint= can be supported in a cleaner way.
+mnt()
+{
+    ## we can even create bootstrap filesystem images directly if you
+    ## ever wanted too.
+    if [ -f "$boot" ] ; then
+	local loop=",loop"
+    fi
+
+    if [ -e "$TMP/bootstrap.$$" ] ; then
+	echo 1>&2 "$PRG: $TMP/bootstrap.$$ exists, aborting."
+	return 1
+    fi
+
+    mkdir -m 700 "$TMP/bootstrap.$$"
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: Could not create mountpoint directory, aborting."
+	return 1
+    fi
+
+    mount | grep "^$boot\>" > /dev/null
+    if [ $? = 0 ] ; then
+	echo 1>&2 "$PRG: $boot appears to be mounted! aborting."
+	return 1
+    fi
+
+    [ "$VERBOSE" = 1 ] && echo "$PRG: Mounting $boot..."
+    mount -t "$fstype" -o rw,umask=077$loop "$boot" "$TMP/bootstrap.$$"
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: An error occured mounting $boot"
+	return 1
+    fi
+
+    ## catch signals, set here to avoid umounting something we did not
+    ## mount. cleanup done by trap 0.
+    trap "umount $boot ; exit 129" 1
+    trap "echo 1>&2 $SIGINT ; umount $boot ; exit 130" 2
+    trap "umount $boot ; exit 131" 3
+    trap "umount $boot ; exit 143" 15
+
+    TARGET="$TMP/bootstrap.$$"
+    return 0
+}
+
+## umnt funtion which checks whether we mounted anything or not, for
+## mntpoint= this makes the code below cleaner IMO.
+umnt()
+{
+    if [ -z "$mntpoint" ] ; then
+    	[ "$1" = failure ] && echo 1>&2 "$PRG: Attempting to umount $boot..."
+	umount "$2"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: umount of $boot failed!"
+	    return 1
+	else
+	    [ "$1" = failure ] && echo 1>&2 "$PRG: umount successfull"
+	    return 0
+	fi
+    else
+	return 0
+    fi
+}
+
+## Use kernel filesytem drivers to mount the bootstrap partition like
+## any other filesystem and copy the files there with standard un*x
+## utilities.
+mnt_install()
+{
+    local BTFILE=yaboot
+  
+    ## msdosfs is broken, yaboot may not support this filename.
+    if [ "$fstype" = msdos ] ; then
+	local CFFILE=yaboot.cnf
+    else
+	local CFFILE=yaboot.conf
+    fi
+
+    if [ "$magicboot" ] ; then
+	local WRAP="${magicboot##*/}"
+    fi
+
+    ## set verbose messages here so they don't show temporary file paths
+    local INSTALLFIRST="$PRG: Installing first stage bootstrap $magicboot onto $boot..."
+    local INSTALLPRIMARY="$PRG: Installing primary bootstrap $install onto $boot..."
+
+    ## repoint magicboot as the real first stage loader if using the
+    ## modern automatic generating ofboot.b.
+    if [ "$FIRST" ] ; then
+	magicboot="$FIRST"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: set magicboot to $FIRST"
+    fi
+
+    ## gross hack, add note section for IBM CHRP
+    if [ "$ADDNOTE" = yes ] ; then
+	hack_yaboot || return 1
+    fi
+
+    ## call mnt() function to take care of mounting filesystem if needed
+    if [ -z "$mntpoint" ] ; then
+	mnt || return 1
+    else
+	TARGET="$mntpoint"
+    fi
+
+    ## this is probably insecure on modern filesystems, but i think
+    ## safe on crippled hfs/dosfs. user should ensure mntpoint= is safe.
+    if [ -n "$magicboot" ] ; then
+	[ "$VERBOSE" = 1 ] && echo "$INSTALLFIRST"
+	cp -f "$magicboot" "$TARGET/ofboot.b"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: An error occured while writing to $boot"
+	    umnt failure "$TARGET"
+	    return 1
+	fi
+    fi
+
+    [ "$VERBOSE" = 1 ] && echo "$INSTALLFIRST"
+    cp -f "$install" "$TARGET/$BTFILE"
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: An error occured while writing to $boot"
+	umnt failure "$TARGET"
+	return 1
+    fi
+
+    [ "$VERBOSE" = 1 ] && echo "$PRG: Installing $bootconf on $boot..."
+    cp -f "$bootconf" "$TARGET/$CFFILE"
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: An error occured while writing to $boot"
+	umnt failure "$TARGET"
+	return 1
+    fi
+
+    if [ "$protect" = yes ] ; then
+        [ "$VERBOSE" = 1 ] && echo "$PRG: Setting read-only attributes..."
+	chmod a-w "$TARGET/$BTFILE"
+	chmod a-w "$TARGET/$CFFILE"
+	if [ "$magicboot" ] ; then
+	    chmod a-w "$TARGET/ofboot.b"
+	fi
+    fi
+
+    sync ; sync
+    umnt success "$TARGET" || return 1
+
+    ## make variable with a \ to avoid shell fsckage.  ugly ugly ugly.
+    local BS='\'
+    if [ -n "$magicboot" ] ; then
+	[ -n "$OFDIR" ] && OFDIR="${BS}${OFDIR}${BS}"
+	local OFFILE="${OFDIR}ofboot.b"
+    else
+	[ -n "$OFDIR" ] && OFDIR="${BS}${OFDIR}${BS}"
+	local OFFILE="${OFDIR}${BTFILE}"
+    fi
+
+    ## update the boot-device variable in OF nvram.
+    if [ "$nonvram" = 0 ] ; then
+	[ "$VERBOSE" = 1 ] && echo "$PRG: Updating OpenFirmware boot-device variable in nvram..."
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: boot-device=${ofboot},${OFFILE}"
+	nvsetenv boot-device "${ofboot},${OFFILE}"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: An error occured while updating nvram, we'll ignore it"
+	fi
+    else
+	echo 1>&2 "$PRG: Warning: You must manually configure OpenFirmware to boot."
+    fi
+
+    return 0
+}
+
+## raw installation, for IBM RS/6000 hardware, yaboot is dded to the
+## bootstrap partition. 
+raw_install()
+{
+    ## make sure the device is not mounted as a filesystem before
+    ## we start mucking with it directly.
+    mount | grep "^$boot\>" > /dev/null
+    if [ $? = 0 ] ; then
+	echo 1>&2 "$PRG: $boot appears to be mounted! aborting."
+	return 1
+    fi
+
+    ## set verbosity message before munging the yaboot pathname
+    local INSTALLPRIMARY="$PRG: Installing primary bootstrap $install onto $boot..."
+
+    ## gross hack, add note section for IBM CHRP
+    if [ "$ADDNOTE" = yes ] ; then
+	hack_yaboot || return 1
+    fi
+
+    [ "$VERBOSE" = 1 ] && echo "$INSTALLPRIMARY"
+    dd if=/dev/zero of="$boot" bs=512 count=1600 > /dev/null 2>&1
+    dd if="$install" of="$boot" bs=512 > /dev/null 2>&1
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: Installation failed."
+	return 1
+    fi
+    sync ; sync
+    [ "$VERBOSE" = 1 ] && echo "$PRG: Installation successful"
+}
+
+## make sure the first stage ofboot generator is compatible.
+checkfirststage()
+{
+    grep -q "^#%ybinscript-" "$magicboot" 2> /dev/null
+    if [ "$?" = 0 ] ; then
+	local magic=`grep "^#%ybinscript-" "$magicboot"`
+	local ver="${magic##*-}"
+	if [ "$ver" = "1.1" ] ; then
+	    FIRSTSTG=compat
+	    return 0
+	else
+	    echo 1>&2 "$PRG: Incompatible version of first stage loader $magicboot.  aborting..."
+	    return 1
+        fi
+    else
+	FIRSTSTG=old
+	return 0
+    fi
+}
+
+## build the first stage loader.
+mkfirststage()
+{
+    ## must have 7 backslashes to == \\ printf + shell = bizarre... or,
+    ## make special variable to contain a \ (need \\ to make \) to work
+    ## around echo -e -n brokeness.
+    local BS='\\'
+    local OS=1
+
+    ## deal with mntpoint=
+    [ -n "$OFDIR" ] && local OFDIR="${BS}${OFDIR}${BS}"
+
+    ## some misguided people insist on installing OSX on
+    ## HorribleFileSystem+ instead of UFS, as a result MacOS deblesses
+    ## OSX, making it unbootable. if apple localizes the filesystem hierarchy again screw it.
+    [ "$brokenosx" = yes ] && local OSXBOOT="${BS}System${BS}Library${BS}CoreServices${BS}BootX"
+    [ "$brokenosx" = no ] && local OSXBOOT="${BS}${BS}:tbxi"
+
+    ## assign variables for configured menu options.
+    [ "$usemount" = no -a "$bless" = yes ] && local YB="yaboot GNU l $ofboot ,${BS}${BS}yaboot"
+    [ "$usemount" = yes -o "$bless" = no ] && local YB="yaboot GNU l $ofboot ,${OFDIR}yaboot"
+    [ -n "$bsd" ] && OS="$(($OS + 1))" && local BSD="bsd BSD b $bsd ,${BS}ofwboot.elf"
+    [ -n "$macos" ] && OS="$(($OS + 1))" && local MAC="macos MacOS m $macos ,${BS}${BS}:tbxi"
+    [ -n "$macosx" ] && OS="$(($OS + 1))" && local MX="macosx MacOSX x $macosx ,${OSXBOOT}"
+    [ -n "$darwin" ] && OS="$(($OS + 1))" && local DW="darwin Darwin d $darwin ,${BS}${BS}:tbxi"
+    [ "$cdrom" = yes ] && OS="$(($OS + 1))" && local CD="cd CDROM c cd: ,${BS}${BS}:tbxi"
+    [ "$network" = yes ] && OS="$(($OS + 1))" && local NET="net Network n enet: 0"
+    [ "$of" = yes ] && OS="$(($OS + 1))" && local OF="of OpenFirmware o quit now"
+    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: OS=$OS"
+
+    ## call ofboot,
+    ## Usage: OS-count defaultos timeout fgc bgc osname oslabel oskey osdev osfile ...
+    [ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: /bin/sh $magicboot $OS $defaultos $delay $fbc $bgc $YB $BSD $MAC $MX $DW $CD $NET $OF\n"
+    FIRST="$(/bin/sh "$magicboot" "$OS" "$defaultos" "$delay" $fgc $bgc ${YB} ${BSD} ${MAC} ${MX} ${DW} ${CD} ${NET} ${OF})" || return 1
+
+    return 0
+}
+
+## mkofboot function.
+mkoffs()
+{
+    mount | grep "^$boot\>" > /dev/null
+    if [ $? = 0 ] ; then
+	echo 1>&2 "$PRG: $boot appears to be mounted! aborting."
+        return 1
+    fi
+
+    case "$fstype" in
+	hfs)
+	    [ "$VERBOSE" = 1 ] && echo "$PRG: Creating HFS filesystem on $boot..."
+	    if (command -v dd > /dev/null 2>&1) ; then
+		dd if=/dev/zero of="$boot" bs=512 count=1600 > /dev/null 2>&1
+	    fi
+	    hformat -l bootstrap "$boot" > /dev/null
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: HFS filesystem creation failed!"
+		return 1
+	    fi
+	    humount "$boot" ## otherwise we might get confused.
+	    return 0
+	    ;;
+	msdos)
+	    if (command -v mkdosfs > /dev/null 2>&1) ; then
+		[ -x `command -v mkdosfs` ] || FAIL=1 ; else FAIL=1 ; fi
+		if [ "$FAIL" = 1 ] ; then
+		    echo 1>&2 "$PRG: mkdosfs is not installed or cannot be found"
+		    return 1
+		fi
+
+	    [ "$VERBOSE" = 1 ] && echo "$PRG: Creating DOS filesystem on $boot..."
+            if (command -v dd > /dev/null 2>&1) ; then
+                dd if=/dev/zero of="$boot" bs=512 count=1600 > /dev/null 2>&1
+            fi  
+	    mkdosfs -n bootstrap "$boot" > /dev/null
+            if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: DOS filesystem creation failed!"
+		return 1
+	    fi
+	    return 0
+	    ;;
+    esac
+}
+
+confirm()
+{
+    if [ "$FORCE" = yes ] ; then
+	return 0
+    else
+	echo 1>&2
+	[ "$fstype" = raw ] && $PRINTF 1>&2 "$PRG: Overwrite contents of $boot with $install? [y/N] "
+	[ "$fstype" != raw ] && $PRINTF 1>&2 "$PRG: Create $fstype filesystem on $boot? [y/N] "
+	read ans
+	case "$ans" in
+	    y|Y)
+		return 0
+		;;
+	    *)
+		echo 1>&2 "$PRG: Abort."
+		return 2
+		;;
+	esac
+    fi
+}
+
+## for fstype=raw check if an ELF binary has already been dded.
+luserck()
+{
+    if [ "$(dd if="$boot" bs=1 skip=1 count=3 2>/dev/null)" = ELF ] ; then
+	return 0
+    else
+	echo 1>&2 "$PRG: This partition has never had yaboot installed before, please run mkofboot"
+	return 1
+    fi
+}
+
+mkconf()
+{
+## defaults for this are defined at the beginning of the script with
+## other variables.
+
+echo \
+"## yaboot configuration file generated by ybin $VERSION
+
+device=$device
+timeout=$timeout
+
+image=$image
+	label=$label
+	partition=$partition
+	root=$root
+	read-only
+" > "$TMPCONF" || return 1
+
+[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "\nDEBUG: autoconf:\n----\n" && cat "$TMPCONF" 1>&2 && echo 1>&2 "----"
+return 0
+}
+
+## take out the trash.
+cleanup()
+{
+    if [ -n "$TMPCONF" ] ; then rm -f "$TMPCONF" ; fi
+    if [ -n "$FIRST" ] ; then rm -f "$FIRST" ; fi
+    if [ -n "$TMPYABOOT" ] ; then rm -f "$TMPYABOOT" ; fi
+    if [ -d "$TMP/bootstrap.$$" -a "$usemount" = yes ] ; then rmdir "$TMP/bootstrap.$$" ; fi
+    return 0
+}
+
+##########
+## Main ##
+##########
+
+## absurdly bloated case statement to parse command line options.
+if [ $# != 0 ] ; then
+    while true ; do
+	case "$1" in 
+	    -V|--version)
+		version
+		exit 0
+		;;
+	    -h|--help)
+		usage
+		exit 0
+		;;
+	    --debug)
+		DEBUG=1
+		shift
+		;;
+	    -v|--verbose)
+		VERBOSE=1
+		shift
+		;;
+	    -f|--force)
+		FORCE=yes
+		shift
+		;;
+	    -b|--boot)
+		if [ -n "$2" ] ; then
+		    boot="$2"
+		    ARGBT=1
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    -o|--ofboot)
+		if [ -n "$2" ] ; then
+		    ofboot="$2"
+		    ARGOB=1
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    -i|--install)
+		if [ -n "$2" ] ; then
+		    install="$2"
+		    ARGBF=1
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    -C|--config)
+		if [ -n "$2" ] ; then
+		    CONF="$2"
+		    bootconf="$2"
+		    ERR=" Error in $CONF:"
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    -m|--magicboot)
+		if [ -n "$2" ] ; then
+		    magicboot="$2"
+		    ARGWP=1
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    --filesystem)
+		if [ -n "$2" ] ; then
+		    fstype="$2"
+		    ARGFS=1
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    --nobless)
+		bless=no
+		ARGBS=1
+		shift
+		;;
+	    -M|--mount)
+		usemount=yes
+		ARGMT=1
+		shift
+		;;
+	    --protect)
+		protect=yes
+		ARGPT=1
+		shift
+		;;
+	    --hide)
+		hide=yes
+		ARGHD=1
+		shift
+		;;
+	    --nonvram)
+		nonvram=1
+		ARGNV=1
+		shift
+		;;
+	    --device)
+		if [ -n "$2" ] ; then
+		    device="$2"
+		    bootconf=auto
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    --timeout)
+		if [ -n "$2" ] ; then
+		    timeout="$2"
+		    bootconf=auto
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    --image)
+		if [ -n "$2" ] ; then
+		    image="$2"
+		    bootconf=auto
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    --label)
+		if [ -n "$2" ] ; then
+		    label="$2"
+		    bootconf=auto
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    --partition)
+		if [ -n "$2" ] ; then
+		    partition="$2"
+		    bootconf=auto
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    --root)
+		if [ -n "$2" ] ; then
+		    root="$2"
+		    bootconf=auto
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
+	    "")
+		break
+		;;
+	    *)
+		echo 1>&2 "$PRG: unrecognized option \`$1'"
+		echo 1>&2 "Try \`$PRG --help' for more information."
+		exit 1
+		;;
+	esac
+    done
+fi
+
+## check that specified config file exists, unless its /dev/null in
+## which case we assume all options are done on the command line.
+if [ "$CONF" = /dev/null ] ; then
+    true
+else
+    confexist || exit 1
+fi
+
+## if there is no config file use the automatic generation to make a
+## generic yaboot.conf. do this before the confcheck to avoid wierd errors.
+if [ "$bootconf" = /dev/null ] ; then
+    if (command -v yabootconfig > /dev/null 2>&1) ; then
+	echo 1>&2 "$PRG: Warning: no /etc/yaboot.conf, running yabootconfig to make one"
+	yabootconfig --noinstall --quiet
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: yabootconfig failed, please supply a valid /etc/yaboot.conf"
+	    echo 1>&2 "$PRG: You may also use $PRG's --boot, --image, --partition, and --device switches"
+	    echo 1>&2 "$PRG: These switches will cause $PRG to generate a basic yaboot.conf on the fly"
+	    exit 1
+	else
+	    CONF=/etc/yaboot.conf
+	    bootconf=$CONF
+	    ERR=" Error in $CONF:"
+	    confexist || exit 1
+	fi
+    fi
+fi
+
+## Checks if each option was defined on the command line, and if so
+## don't read it from the configuration file. this avoids
+## configuration options from being set null, as well as command line
+## options from being clobbered.
+[ "$ARGBT" != 1 -a $(parseconf ck boot) = 0 ] && boot=`parseconf str boot`
+[ "$ARGOB" != 1 -a $(parseconf ck ofboot) = 0 ] && ofboot=`parseconf str ofboot`
+[ "$ARGBF" != 1 -a $(parseconf ck install) = 0 ] && install=`parseconf str install`
+[ "$ARGWP" != 1 -a $(parseconf ck magicboot) = 0 ] && magicboot=`parseconf str magicboot`
+[ "$ARGMT" != 1 -a $(parseconf flag usemount) = 0 ] && usemount=yes
+[ "$ARGFS" != 1 -a $(parseconf ck fstype) = 0 ] && fstype=`parseconf str fstype`
+[ "$ARGBS" != 1 -a $(parseconf flag nobless) = 0 ] && bless=no
+[ "$ARGPT" != 1 -a $(parseconf flag protect) = 0 ] && protect=yes
+[ "$ARGHD" != 1 -a $(parseconf flag hide) = 0 ] && hide=yes
+[ "$ARGNV" != 1 -a $(parseconf flag nonvram) = 0 ] && nonvram=1
+[ $(parseconf ck hfstype) = 0 ] && hfstype=`parseconf str hfstype`
+[ $(parseconf ck hfscreator) = 0 ] && hfscreator=`parseconf str hfscreator`
+[ $(parseconf ck mntpoint) = 0 ] && mntpoint=`parseconf str mntpoint`
+[ $(parseconf ck delay) = 0 ] && delay=`parseconf str delay`
+[ $(parseconf ck timeout) = 0 ] && timeout=`parseconf str timeout`
+[ $(parseconf ck bsd) = 0 ] && bsd=`parseconf str bsd`
+[ $(parseconf ck macos) = 0 ] && macos=`parseconf str macos`
+[ $(parseconf ck macosx) = 0 ] && macosx=`parseconf str macosx`
+[ $(parseconf ck darwin) = 0 ] && darwin=`parseconf str darwin`
+[ $(parseconf ck defaultos) = 0 ] && defaultos=`parseconf str defaultos`
+[ $(parseconf ck fgcolor) = 0 ] && fgcolor=`parseconf str fgcolor`
+[ $(parseconf ck bgcolor) = 0 ] && bgcolor=`parseconf str bgcolor`
+[ $(parseconf ck icon) = 0 ] && export YBINOFICON=`parseconf str icon`
+[ $(parseconf flag enablecdboot) = 0 ] && cdrom=yes
+[ $(parseconf flag enablenetboot) = 0 ] && network=yes
+[ $(parseconf flag enableofboot) = 0 ] && of=yes
+[ $(parseconf flag brokenosx) = 0 ] && brokenosx=yes
+
+## ffs!! rtfm! foad!
+if [ "$boot" = unconfigured ] ; then
+    echo 1>&2 "$PRG: You must specify the device for the bootstrap partition. (ie: boot=/dev/hdaX)"
+    echo 1>&2 "$PRG: Try \`$PRG --help' for more information."
+    exit 1
+fi
+
+## if there is still no config file use the automatic generation to make a
+## generic yaboot.conf. do this before the confcheck to avoid wierd errors.
+if [ "$bootconf" = /dev/null ] ; then
+    echo 1>&2 "$PRG: Warning: no yaboot.conf, using generic configuration."
+    bootconf=auto
+fi
+
+## mntpoint is incompatible with mkofboot.
+if [ "$PRG" = mkofboot -a -n "$mntpoint" ] ; then
+    echo 1>&2 "$PRG: Cannot be used with \`mntpoint='"
+    exit 1
+fi
+
+## validate configuration for sanity.
+checkconf || exit 1
+
+## check that we can use ofpath, its only needed for magicboot script
+## building and nvram updates.
+if [ -n "$magicboot" -o "$nonvram" = 0 ] ; then
+    if [ -z "$ofboot" -o -n "$macos" -o -n "$macosx" -o -n "$darwin" ] ; then
+	if (command -v ofpath > /dev/null 2>&1) ; then
+	    [ -x `command -v ofpath` ]
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: ofpath could not be found, aborting."
+		exit 1
+	    fi
+	else
+	    echo 1>&2 "$PRG: ofpath could not be found, aborting."
+	    exit 1
+	fi
+    fi
+fi
+
+## if password is set in yaboot.conf make sure permissions on that
+## file are safe, warn if not.
+if (grep -q '^[[:space:]]*password[[:space:]]*=' "$bootconf" > /dev/null 2>&1) ; then
+    permcheck
+fi
+
+## check if we are root if needed.
+if [ "$usemount" = yes -a -z "$mntpoint" ] ; then
+    if [ `id -u` != 0 ] ; then
+	echo 1>&2 "$PRG: \`usemount' requires root privileges, go away."
+	exit 1
+    fi
+fi
+
+if [ "$fstype" = hfs ] ; then
+    checkhfsutils
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: hfsutils is not installed or cannot be found"
+	echo 1>&2 "$PRG: Try --mount if `uname -sr` supports HFS"
+	exit 1
+    fi
+fi
+
+## convert unix device nodes to OpenFirmware pathnames
+if [ -n "$magicboot" -o "$nonvram" = 0 ] ; then
+    convertpath || exit 1
+fi
+
+## yaboot.conf autogeneration. MUST have secure mktemp to
+## avoid race conditions. Debian's mktemp qualifies.
+if [ "$bootconf" = auto ] ; then
+    TMPCONF=`mktemp -q "$TMP/$PRG.XXXXXX"`
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: Could not create temporary file, aborting."
+	exit 1
+    fi
+
+    mkconf
+    if [ $? != 0 ] ; then
+	echo 1>&2 "$PRG: An error occured generating yaboot.conf, aborting."
+	exit 1
+    fi
+
+    bootconf="$TMPCONF"
+fi
+
+if [ -n "$magicboot" ] ; then
+    checkfirststage || exit 1
+    if [ "$FIRSTSTG" = compat ] ; then
+	mkfirststage
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: An error occured while building first stage loader.  aborting..."
+	    exit 1
+	fi
+    fi
+fi
+
+case "$PRG" in
+    ybin)
+	case "$usemount" in
+	    no)
+		if [ "$fstype" = raw ] ; then
+		    luserck || exit 1
+		    raw_install || exit 1
+		else
+		    util_install || exit 1
+		fi
+		exit 0
+		;;
+	    yes)
+		mnt_install || exit 1
+		exit 0
+		;;
+	esac
+	;;
+    mkofboot)
+	case "$usemount" in
+	    no)
+		## its not nice to erase the partition and then bail!
+		if [ "$fstype" = msdos ] ; then
+		    echo 1>&2 "$PRG: mtools support is not implemented"
+		    echo 1>&2 "$PRG: Use --mount or add \`usemount' to $CONF"
+		    exit 1
+		fi
+		confirm || exit 2
+		if [ "$fstype" = raw ] ; then
+		    raw_install || exit 1
+		else
+		    mkoffs || exit 1
+		    util_install || exit 1
+		fi
+		[ "$VERBOSE" = 1 ] && echo "$PRG: Installation complete."
+		exit 0
+		;;
+	    yes)
+		confirm || exit 2
+		mkoffs || exit 1
+		mnt_install || exit 1
+		[ "$VERBOSE" = 1 ] && echo "$PRG: Installation complete."
+		exit 0
+		;;
+	esac
+	;;
+esac
+
+exit 0

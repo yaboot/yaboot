@@ -1,0 +1,26 @@
+This script is deprecated in favor of a much nicer and more robust
+script ofboot, see README.ofboot for more information. 
+
+This script was written by Benjamin Herrenschmidt, I added a X to the
+OpenFirmware pathnames, you should replace that X with the proper
+partition number. for the MacOS line add the partition number of your
+MacOS partition, for the yaboot line add the partition number of your
+bootstrap partition, which should be the same partition you configure
+ybin to install on.
+
+Remember that the Mac partition table is considered a partition in and
+of itself, so partition number 1 is always the partition table. If the
+disk is shared with MacOS it needs to have a MacOS disk driver
+partition in which case the first `real' partition will probably be
+number 4.
+
+Edit this script before running ybin or mkofboot.
+
+If you have G4 hardware then your OpenFirmware may already have a
+graphical boot selector built in, this selector can be accessed by
+holding down the option key when booting the machine.  You should see
+a screen with buttons for each bootable partition.  This version of
+ofboot.b includes a badge icon, the button with a penguin icon is your
+bootstrap partition.  If you decide to use this built in selector you
+really do not need to use dualboot.chrp.  Thanks to Nicholas Humfrey
+for creating the Badge icon.

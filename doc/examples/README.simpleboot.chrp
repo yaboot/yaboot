@@ -1,0 +1,37 @@
+This is the old basic ofboot.b wrapper, it has been replaced by a more
+robust CHRP script that is able to dual or tri-boot GNU/Linux, MacOS,
+and MacOS X.  See README.ofboot.b for more information.
+
+OpenFirmware on newworld macs by default searches for HFS partitions
+with a `blessed' directory, and then checks for a file with an HFS
+filetype of `tbxi' if found it loads this file. Unfortunately OF is
+being far to picky about the format of this file, while it will load a
+ELF executable just fine when directed to, if the tbxi file it finds
+is just a plain ELF executable, as yaboot is, then it refuses to load
+it.  
+
+The best longterm solution is to embed a small CHRP boot script to the
+head of of the yaboot executable, but until we can find the right way
+to do that we can use a small wrapper instead. The file included
+called simple_ofboot.b does nothing more then run the OF command "boot
+hd:,\\yaboot" which should load the yaboot executable on most machines
+if you use the stock internal hard disk.  You might have to change
+that device path (hd:) to match the device path to your bootstrap
+partition, such as hd:2,\\yaboot.  Or you can dispense with the
+wrapper altogether and reset the boot-device variable in OF to point
+directly at the yaboot executable and that will work too.  This
+wrapper just allows for most (hopefully) machines to boot
+transparently without any OF reconfiguration.
+
+If you have G4 hardware then your OpenFirmware may already have a
+graphical boot selector built in, this selector can be accessed by
+holding down the option key when booting the machine.  You should see
+a screen with buttons for each bootable partition.  This version of
+ofboot.b includes a badge icon, the button with a penguin icon is your
+bootstrap partition.  If you decide to use this built in selector you
+really do not need to use the menu_ofboot.b script provided in this
+package. Thanks to Nicholas Humfrey for creating the Badge icon.
+
+Hopefully soon these problems will have better solutions at some
+point. If you happen to know OF well and have any suggestions they are
+most welcome!

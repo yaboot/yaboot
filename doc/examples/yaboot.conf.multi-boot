@@ -1,0 +1,112 @@
+## Example yaboot.conf for ybin and yaboot >= 0.6
+## see man yaboot.conf for more details.
+
+## This example shows how to multi boot GNU/Linux, MacOS, MacOSX, and
+## Darwin with SCSI disks.  This example also creates menu items for
+## booting from the CDROM, the Network and into an OpenFirmware
+## prompt.
+
+## Change to your bootstrap partition ie: /dev/sda2
+boot=unconfigured
+
+## device is the OpenFirmware device path to the disk containing
+## kernel images.  if your disk is /dev/hda you can find the
+## OpenFirmware path by running the command:  ofpath /dev/hda
+
+device=/pci@80000000/pci-bridge@d/ADPT,2930CU@2/@1:
+
+## partition is the partition number where the kernel images are
+## located.  The kernel images should be on your root filesystem, so
+## this is usually the same partition number as your root filesystem.
+## so if root = /dev/hda3 (the 3rd partition) then you should have
+## partition=3  This *MUST* be set correct or yaboot won't boot!  This
+## option can be either set globally as shown here, or per image in
+## the image= sections.
+
+partition=3
+
+## delay is the amount of time in seconds the dual boot menu (if one
+## is configured, by the presense of macos, macosx, etc options here)
+## will wait before choosing the default OS (GNU/Linux or the value of
+## defaultos=).  If you omit this then the value of timeout=
+## (converted to seconds) will be used.
+
+delay=10
+
+## timeout is the amount of time in tenths of a second that yaboot
+## will wait before booting the default kernel image (the first image=
+## section in this config file or the value of default=).  
+
+timeout=20
+install=/usr/local/lib/yaboot/yaboot
+magicboot=/usr/local/lib/yaboot/ofboot
+
+## Change the default colors, fgcolor is the text color, bgcolor is
+## the screen background color. (default: fgcolor=white, bgcolor=black)
+fgcolor=black
+bgcolor=green
+
+## Password supplied in plaintext, required for yaboot to boot, unless
+## restricted is also present (see below).  Be sure to
+## chmod 600 /etc/yaboot.conf if you set this!
+
+#password=secret
+
+## Password supplied as an md5 hash, see above
+
+#password=$1$saltstri$WHZcnT3IOdSrMvizOq7Ht1
+
+## A password is only required to boot an image specified here if
+## parameters are specified on the command line or if the user enters
+## an image is not specified in the configuration file at all (ie.
+## arbitrary file load).  restricted can also be placed in an image
+## section in that case any image not including the restricted keyword
+## will be fully password protected.
+
+#restricted
+
+## image is the kernel itself, commonly kept in / but also commonly
+## found in /boot.  Note that /boot should generally not be its own
+## partition on powerpcs, its not necessary and complicates things.
+## Make sure /boot is on the partition specified by partition= see
+## above. /boot should never be an HFS filesystem.  You may point
+## image= to a symbolic link so long as the symlink does not cross
+## partition boundries.
+
+image=/vmlinux
+	label=Linux
+	root=/dev/sda3
+	read-only
+
+image=/vmlinux.old
+	label=Linux.old
+	root=/dev/sda3
+	read-only
+
+## The {macos,macosx,darwin} variables can be either a unix /dev node or an
+## OpenFirmware path, as shown here:
+
+## if you have the bsd bootloader installed on ybin bootstrap
+## partition as ofwboot.elf
+bsd=/dev/sda2
+
+## unix node
+macos=/dev/sda8
+
+## OpenFirmware path, this would likely be /dev/sda9 if you used a
+## unix node instead.
+macosx=/pci@80000000/pci-bridge@d/ADPT,2930CU@2/@1:9
+
+darwin=/pci@80000000/pci-bridge@d/ADPT,2930CU@2/@1:10
+
+## Add a menu entry to boot from the CDROM:
+
+enablecdboot
+
+## Add a menu entry to boot from the Network:
+
+enablenetboot
+
+## Add a menu entry to boot into an OpenFirmware prompt:
+
+enableofboot

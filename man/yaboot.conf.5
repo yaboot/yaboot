@@ -1,0 +1,635 @@
+.\" Copyright (c) 2001 Ethan Benson <erbenson@alaska.net>
+.\" Portions of this manual page from silo.conf documentation
+.\" Copyright (c) 1999 Jakub Jelinek <jakub@redhat.com>
+.\" Portions of this manual page from lilo.conf documentation
+.\" Copyright (c) 1992-1998 Werner Almesberger
+.\" This program is distributed according to the Gnu General Public License.
+.\" See the file COPYING in the ybin source distribution.
+.\"
+.TH YABOOT.CONF 5 "28 May 2001" "GNU/Linux PowerPC" "File Formats"
+.SH NAME
+.B yaboot.conf
+\- Configuration file format used by
+.BR yaboot (8)
+and
+.BR ybin (8).
+.SH SYNOPSIS
+.BI "/etc/yaboot.conf"
+.SH DESCRIPTION
+The \fByaboot.conf\fP file is a configuration file for \fByaboot\fP
+which is read during booting, and for \fBybin\fR(8) to generate a boot
+menu and to properly install \fByaboot\fP onto the \fBbootstrap\fP(8)
+partition. 
+
+\fByaboot.conf\fP provides instructions for \fByaboot\fP. This
+includes which kernels to load and what options to pass to them.
+\fByaboot\fP reads and parses its configuration file found on the
+\fBbootstrap\fR(8) partition on PowerMacs, and directly from the root
+filesystem on IBM PowerPC hardware.  On PowerMacs you must run the
+\fBybin\fR(8) command each time you modify \fB/etc/yaboot.conf\fR.
+
+\fByaboot\fP is able to boot kernels even without this configuration file or
+if this file is crippled or contains syntax errors, but the user has to
+enter full OpenFirmware names and full path of the images to load and all options
+required for them manually.
+.SH "FILE FORMAT"
+The file consists of comments and variable assignments.
+.TP
+Comments
+Start with a \fI#\fP character, and continue to
+the end of the line.
+.TP
+Flag variables
+Consist of a single keyword and are followed by whitespace
+or the end of the file.
+.TP
+String variables
+Consist of the variable name, optional whitespace, a
+\fI=\fP character, optional whitespace, the value and required
+newline.  IMPORTANT: \fBybin\fR(8) specific options do not support
+embedded spaces.  It is important that there be no trailing whitespace
+at the end of a line.
+.TP
+File names
+Some string variables are expecting file names. A file name format in \fByaboot\fP
+is:
+
+  [<devicename>][<part>]<absolute_pathname>
+
+  or
+
+  [<devicename>][<part>][\fB[\fP<m>\fB-\fP<n>\fB]\fP]
+
+The first form refers to a file or directory on some supported filesystem
+(currently \fIext2\fP, \fIhfs\fP, \fIhfs+\fP or \fIiso9660\fP), the latter
+refers to a range of 512B blocks on a device. For a device block range,
+either <devicename>, or <part>, or [<m>-<n>] must be given. 
+
+Optional <devicename> is the OpenFirmware name of the device the file or range
+is located on. See below for its syntax. For OpenFirmware the device
+name must be immediately followed by the \fI:\fP character. The default is
+the boot device yaboot was booted from, or the value of \fIdevice=\fR
+in \fB/etc/yaboot.conf\fR.
+
+Optional <part> is the 1 based partition number on the device. First
+partition is 1 (e.g. on \fI/dev/sda\fP in Linux is this \fI/dev/sda1\fP).
+The default is the default partition (the value of the \fIpartition\fP
+variable in the config file).  Note that on Apple partition tables the
+first partition is always the partition table itself (/dev/sda1 is the
+partition table).
+
+<absolute_pathname> must start with a \fI/\fP character and is the
+pathname from the root of the filesystem on that device (unless it is the
+root filesystem this is different to the pathname you will see in GNU/Linux).
+
+<m> is the first block number (in blocksize 512 bytes) of the range to
+be loaded and <n> is the last block number plus one.
+.TP
+Device name syntax is:
+
+  <fully_qualified_prom_device_name>[\fB:\fP<part_number>]
+
+where the fully qualified OpenFirmware device name starts with a
+\fI/\fP character for the root of the OpenFirmware device tree and
+contains all the nodes from the root in the tree up to the disk device
+node. If some node contains more than one child node with the same
+name and the path has to go through such node, a \fI@\fP character
+followed by hexadecimal address pair is desirable to resolve the
+ambiguity. Optional partition number is a number that follows the
+\fI:\fP character \fI1\fP (for first partition) \fI2\fP (for second,
+partition, etc). OpenFirmware device names might look like:
+
+  /pci@80000000/pci-bridge@d/ADPT,2930CU@2/@0:
+  /pci/@d/mac-io/ata-3@20000/disk@1:
+  /pci/@d/pci-ata@1/ata-4@0/disk@0:
+  /pci/@d/pci-ata@1/ata-4@0/disk@1:
+
+OpenFirmware device names if specified as part of the file name (see above)
+should be followed by the \fI:\fP character to separate the device name from
+the optional Linux partition number, as shown above.  For more information on
+this topic, consult
+.BR bootstrap (8).
+
+OpenFirmware also has some predefined aliases which are used instead
+of the longer canonical device names.  Standard aliases include:
+
+   hd: - The primary master IDE hard disk.
+   ultra1: - The primary slave IDE hard disk.
+   cd: - The secondary master device (usually CDROM).
+   zip: - The secondary slave device (usually zip drive).
+.PP
+Variable names are case sensitive, values of string variables are also
+case sensitive.
+
+Blanks and equal signs may only be part of a variable name or a value if
+they are escaped by a backslash or if the value is embedded in double
+quotes. An equal sign may not be the only character in a name or value.
+
+An escaped tab is converted to an escaped blank. An escaped newline is
+removed from the input stream. An escaped backslash (i.e. two
+backslashes) is converted to a backslash. Inside quoted strings, only
+double quotes, backslashes and newlines can be escaped.
+
+Example:
+
+  # Simple yaboot.conf
+  boot=/dev/hda2
+  device=hd:
+  partition=3
+  magicboot=/usr/local/lib/yaboot/ofboot
+  timeout=50
+  root=/dev/hda3
+  read-only
+  # End of global variables - begin image labels
+  image=/boot/vmlinux
+    label=linux
+  image=/boot/vmlinux.old
+    label=old
+
+This file contains options for two distinct programs: the
+\fBybin\fR(8) (and \fBmkofboot\fR(8)) \fBbootstrap\fR(8) installer, and the
+\fByaboot\fR(8) bootloader, each ignores the other's configuration
+options.
+
+The \fBybin\fR/\fBmkofboot\fR options are:
+.B boot=
+.B ofboot=
+.B install=
+.B magicboot=
+.B delay=
+.B bsd=
+.B macos=
+.B macosx=
+.B darwin=
+.B defaultos=
+.B usemount
+.B mntpoint=
+.B fstype=
+.B hfstype=
+.B nobless
+.B hide
+.B protect
+.B nonvram
+.B enablecdboot
+.B enablenetboot
+.B enableofboot
+.B brokenosx
+
+The remaining options belong to \fByaboot\fR(8).
+.SH "GLOBAL OPTIONS"
+\fB/etc/yaboot.conf\fP begins with a possibly empty global options section.
+This section contains all variable assignments up to the first \fIimage\fP
+setting.
+
+The following global options are recognized:
+.TP
+.BI "boot=" boot-device
+Specifies the \fBbootstrap\fR(8) partition \fBybin\fR(8) will install
+the boot loader on.  This partition needs to have an HFS or MSDOS
+filesystem created on it (except on IBM hardware).  \fBybin\fR(8) will
+not create a filesystem.  If a filesystem is not present run
+\fBmkofboot\fR(8) instead of \fBybin\fR(8) for the first time. The
+\fBbootstrap\fR(8) partition must have a partition type of
+Apple_Bootstrap to prevent MacOS[X] from mounting it.  If MacOS is able
+to mount the \fBbootstrap\fR(8) partition it will make it unbootable
+by removing the attributes \fBybin\fR(8) set to make the partition
+bootable by OpenFirmware.  The \fBbootstrap\fR partition must not be
+mounted anywhere on your filesystem, \fBybin\fR(8) and
+\fBmkofboot\fR(8) will refuse to operate on it if it is mounted.  On
+IBM hardware the \fBbootstrap\fR(8) should be a type 0x41 PReP Boot
+partition.
+.TP
+.BI "ofboot=" of-path
+This option defines the OpenFirmware device path to the
+\fBbootstrap\fR(8) partition.  This is needed so the first stage
+\fIofboot.b\fR loader can be configured properly.  It should include
+the OpenFirmware path including the partition number (but not a
+filename). Example: if your bootstrap partition is /dev/hda2 the OF
+path will likely be hd:2.  As of \fBybin\fR(8) 0.18 you no longer are
+required to (and should not) specify this option.  If left undefined
+\fBybin\fR(8) will attempt to figure out the OpenFirmware path
+automatically using the \fBofpath\fR(8) utility.  You should only need
+to define this option if \fBofpath\fR(8) fails.
+.TP
+.BI "install=" boot-loader
+Specifies the path to the \fByaboot\fR(8) OpenFirmware executable
+file.  This file is copied by \fBybin\fR(8) to the \fBbootstrap\fR(8)
+partition.  The default if this is not specified is
+\fI/usr/local/lib/yaboot/yaboot\fR or \fI/usr/lib/yaboot/yaboot\fR.
+.TP
+.BI "magicboot=" magicboot-script
+Specifies the path to an OpenFirmware CHRP script that \fBybin\fR(8)
+will copy to the \fBbootstrap\fR(8) partition.  Such a script contains
+Forth commands that can allow you to do interesting things such as
+creating a boot menu to choose between MacOS or GNU/Linux.  Currently
+you must use a magicboot script do to a bug in OpenFirmware.
+Eventually a CHRP header could be added to the \fByaboot\fR(8)
+executable so this can be optional.  When this option is defined the
+magicboot script will be executed by OF automatically at boot (instead
+of the \fBinstall\fR file.)  See man \fBbootstrap\fR(8) for more
+information on this.  As of ybin 0.22 you should set this to
+/usr/local/lib/yaboot/ofboot which is a autoconfiguring first stage
+loader for yaboot.  It is capable of presenting a dual boot menu for
+GNU/Linux, MacOS and MacOSX.  If dual booting is not required or
+configured it will simply load yaboot directly.  You must specify this
+for most PowerMacs or they will fail to boot.  You cannot use
+magicboot scripts with IBM hardware.
+.TP
+.BI "default=" name
+Uses the specified image as the default boot image. If `default' is omitted,
+the image appearing first in the configuration file is used.
+.TP
+.BI "defaultos=" linux|bsd|macos|macosx|darwin
+Defines the default OS for the first stage multiboot menu to load, by
+default this is linux, which really means \fByaboot\fR.
+Valid values are: linux, bsd, macos, macosx, and
+darwin.  This is only relevant if you have \fIbsd=\fR, \fImacos=\fR,
+\fImacosx=\fR, or \fIdarwin=\fR options defined.
+.TP
+.BI "message=" message_filename
+Specifies a file containing a message that is displayed before the boot
+prompt. [CURRENTLY UNIMPLEMENTED]
+.TP
+.BI "password=" password
+Protect booting by a password. The password is given in either
+cleartext or an md5 hash (of the same format as used in GNU/Linux
+passwd files)in the configuration file.  Because of that, the
+configuration file should be only readable by the superuser and the
+password should differ if possible from other passwords on the system.
+See
+.BR chmod (1)
+to set permissions on
+.BR yaboot.conf (5).
+Passwords currently do not affect the multiboot menu entries
+(\fImacos=\fR, \fImacosx=\fR, etc).
+.TP
+.BI "timeout=" tsecs
+Sets a timeout (in tenths of a second) for keyboard input. If no key is
+pressed for the specified time, the first image is automatically booted.
+.TP
+.BI "delay=" secs
+Sets a timeout (in seconds) for an OS choice in the first stage
+\fIofboot\fR loader.  If no key is pressed for the specified time, the
+default OS defined by \fIdefaultos=\fR (or GNU/Linux) is automatically
+booted.  If this is left unset, the value of \fItimeout=\fR (converted
+to seconds) will be used.
+.TP
+.BI "init-code=" string
+Specifies that \fByaboot\fR(8) should call OpenFirmware to
+execute the string given (a series of forth commands) before printing
+the boot prompt.
+.TP
+.BI "fgcolor=" string
+Specifies the foreground (text) color used by \fByaboot\fR(8) and the
+multiboot menu.  Available colors are: black, blue, light-blue, green,
+light-green, cyan, light-cyan, red, light-red, purple, light-purple,
+brown, light-gray, dark-gray, yellow, and white.  The default is white.
+.TP
+.BI "bgcolor=" string
+Specifies the background color used by \fByaboot\fR(8) and the
+mulitboot menu.  Available colors are: black, blue, light-blue, green,
+light-green, cyan, light-cyan, red, light-red, purple, light-purple,
+brown, light-gray, dark-gray, yellow, and white.  The default is
+black.
+.TP
+.BI "bsd=" of-path
+The OpenFirmware or Unix device path to a NetBSD or OpenBSD bootstrap
+partition, this partition must already have the BSD ofwboot.elf
+bootloader installed in the root directory..  When you define this
+option you will be presented with a simple menu at bootup allowing you
+to hit L to boot GNU/Linux or B to boot BSD (along with other choices
+if configured).  This will only work if you are using the new
+\fI/usr/local/lib/yaboot/ofboot\fR script.  When this is set to a unix
+device node (ie \fI/dev/hda11\fR) then ybin will use the
+\fBofpath\fR(8) utility to determine the OpenFirmware device path.
+.TP
+.BI "macos=" of-path
+The OpenFirmware or Unix device path to a MacOS 8.* or 9.* boot
+partition.  When you define this option you will be presented with a
+simple menu at bootup allowing you to hit L to boot GNU/Linux or M to
+boot MacOS (along with other choices if configured).  This will only
+work if you are using the new \fI/usr/local/lib/yaboot/ofboot\fR
+script.  When this is set to a unix device node (ie \fI/dev/hda11\fR)
+then ybin will use the \fBofpath\fR(8) utility to determine the
+OpenFirmware device path.
+.TP
+.BI "macosx=" of-path
+The OpenFirmware or unix device path to a MacOS X boot partition.
+When you define this option you will be presented with a simple menu
+at bootup allowing you to hit L to boot GNU/Linux or X to boot MacOSX
+(along with other choices if configured).  This will only work if you
+are using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When
+this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
+use the \fBofpath\fR(8) utility to determine the OpenFirmware device
+path.
+.TP
+.B "brokenosx"
+This option causes the menu entry for MacOSX to execute
+\\System\\Library\\CoreServices\\BootX from the macosx=device instead
+of the usual \\\\:tbxi.  This is necessary if OSX is installed onto an
+HFS+ filesystem instead of UFS. When OSX is installed on an HFS+
+filesystem MacOS will mount and debless the OSX partition.  Add this
+option if the OSX menu entry breaks after booting MacOS.  You should
+not use this option if OSX is installed on a UFS filesystem, for UFS
+installs you specify the OSX bootstrap partition which is protected
+against MacOS.  This option requires \fImacosx=\fR to be set.  
+.TP
+.BI "darwin=" of-path
+The OpenFirmware or unix device path to a Darwin boot partition.
+When you define this option you will be presented with a simple menu
+at bootup allowing you to hit L to boot GNU/Linux or D to boot Darwin
+(along with other choices if configured).  This will only work if you
+are using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When
+this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
+use the \fBofpath\fR(8) utility to determine the OpenFirmware device
+path.
+.TP
+.B "enablecdboot"
+This option adds an entry to the multiboot menu to boot from the CDROM drive. 
+.TP
+.B "enablenetboot"
+This option adds an entry to the multiboot menu to boot from the network.
+.TP
+.B "enableofboot"
+This option adds an entry to the multiboot menu to boot into an
+OpenFirmware prompt.
+.TP
+.B "usemount"
+This option causes \fBybin\fR to use the regular \fBmount\fR(8)
+utilities to access the filesystem on the \fBbootstrap\fR(8) partition
+instead of the userspace \fBhfsutils\fR(1).  This is not recommended
+for HFS filesystems since it is not possible to set all the attributes
+required for automatic OpenFirmware booting.  If you use this option
+you will have to modify OpenFirmware's boot-device variable to make
+your machine bootable (see man \fBbootstrap\fR(8)).  Without this option
+you can normally reset OpenFirmware to its default configuration and
+your system will boot automatically into GNU/Linux. (See
+\fBbootstrap\fR(8) for details) This option is required for MSDOS
+filesystems.
+.TP
+.BI "mntpoint=" /path/to/directory
+Requires \fIusemount\fR this works exactly like usemount does except it
+does not mount the \fBbootstrap\fR(8) partition but rather installs the
+bootloader into the directory defined as the mountpoint.  The pathname
+MUST be clean, ie no embedded spaces or metacharacters.  The directory
+may not be more then one subdirectory deep from the root of the
+partition (not necessarily the unix /).  You must not have a trailing
+/ either.  This option is NOT recommended since it has the same
+limitations as usemount, your system will not be bootable by
+OpenFirmware, it will only be manually bootable or bootable if you
+change the boot-device variable to the direct pathname to the
+bootloader (which \fBybin\fR(8) will attempt to do).  WARNING: This
+option is not secure if untrusted users can write to the value of
+\fImntpoint=\fR, and the filesystem supports links.
+.TP
+.BI "fstype=" hfs|msdos|raw
+Specifies what kind of filesystem is created on the \fBbootstrap\fR(8)
+partition by \fBmkofboot\fR(8).  It must be either \fIhfs\fR or
+\fImsdos\fR or \fIraw\fR.  For Apple PowerMacs HFS is the only
+workable option unless you have partitioned your disk with Intel
+partition tables. \fBYbin\fR(8) also uses this option to determine how
+to access the partition properly.  The \fIraw\fR type causes
+\fBybin\fR(8) or \fBmkofboot\fR(8) to copy the bootloader (value of
+\fIinstall=\fR) to the \fBbootstrap\fR(8) partition without any
+filesystem. CAUTION: this will destroy any data or filesystem on the
+\fBbootstrap\fR(8) partition (value of \fIboot=\fR) if you specify
+something like \fIboot=/dev/sda\fR you will destroy the partition
+table and lose ALL data on the disk. The default if omitted, is hfs.
+.TP
+.BI "hfstype=" type-code
+Specifies the four character HFS type code that is given to the boot
+loader (or magicboot script).  The default is \fItbxi\fR and should
+not be changed unless you really know what you are doing, OpenFirmware
+(on PowerMacs) looks for a file of this type to execute as a boot
+loader so if you change this your system will not boot automatically.
+This is only meant for users who must use a MacOS boot partition as
+the bootstrap partition, otherwise the conflict of two \fItbxi\fR
+files could potentially cause MacOS to fail to boot.  This code is
+only given to the file intended for OpenFirmware to boot.  This option
+is ignored on non-HFS filesystems.
+.TP
+.B "nobless"
+This prevents \fBybin\fR(8) from \*(lqblessing\*(rq the root directory of
+the \fBbootstrap\fR(8) partition.  Blessing the root directory is required
+for OpenFirmware to boot correctly.  This should only be used when a
+MacOS boot partition is being used as the \fBbootstrap\fR(8) in which case
+blessing the root directory would make MacOS unbootable.  If you use
+this option you must manually configure OpenFirmware to boot
+\fByaboot\fR(8).  (see \fBbootstrap\fR(8))
+.TP
+.B "hide"
+This causes \fBybin\fR(8) to set the HFS invisible bit on all the boot
+loader files.  OpenFirmware ignores this bit, but MacOS will not show
+invisible files in the Finder.  This is useful if the \fBbootstrap\fR(8)
+partition is MacOS mountable and you want to prevent annoying MacOS
+lusers from screwing up your GNU/Linux boot loader ;-). This option is
+ignored for non-HFS filesystems.
+.TP
+.B "protect"
+This causes \fBybin\fR(8) to set the HFS/MSDOS read-only bit on all the boot
+loader files.  MacOS will not allow a read-only file to be modified or
+deleted (but does not prevent anyone from removing this bit) This is
+only useful if the \fBbootstrap\fR(8) partition is MacOS mountable and
+you want to discourage modification/deletion of the boot loader.
+.TP
+.B "nonvram"
+This option prevents \fBybin\fR(8) from setting the OpenFirmware
+boot-device variable with \fBnvsetenv\fR(8).
+.PP
+In addition to these global options, per-image options \fIappend\fP,
+\fIdevice\fP, \fIimage\fP, \fIinitrd-prompt\fP, \fIinitrd-size\fP,
+\fIinitrd\fP, \fIpartition\fP, \fIpause-after\fP, \fIpause-message\fP,
+\fIramdisk\fP, \fIread-only\fP, \fIread-write\fP, \fIroot\fP and
+\fIrestricted\fR can be specified in the global section. They are used
+as defaults if they aren't specified in the configuration sections of
+the respective kernel images and will be used also for the arbitrary
+images specified on the input line and not mentioned in the
+configuration file (unless overridden by input line options).
+.SH "PER-IMAGE SECTIONS"
+A per-image section starts with either a line
+
+  \fBimage=\fP\fIfilename\fP
+
+(for booting from files)
+From the \fIimage\fP line on until next \fIimage\fP line are variable
+assignments and flags for this image's section. The following options
+and flags are recognized:
+.TP
+.BI "label=" name
+The bootloader uses the main file name (without its path) of each image
+specification to identify that image. A different name can be used by
+setting the variable `label'.
+.TP
+.BI "alias=" name
+A second name for the same entry can be used by specifying an alias.
+.TP
+.BI "partition=" part_no
+Specifies the default partition number (a digit, hda1 is part_no 1) to
+be used if some filename does not specify a partition number
+explicitly.  The kernel images should be located on the root
+filesystem, thus \fIpartition\fR should usually be set to the root
+partition number.  For example if the root partition is /dev/hda3 (the
+third partition), then \fIpartition\fR should be set to
+\fIpartition=3\fR.
+.TP
+.BI "device=" device_name
+Specifies the default device name to be used if some filename does not
+specify a device name explicitly. This defaults to the device
+\fByaboot\fP has been booted from if you don't specify \fIdevice\fP in either
+the global section or per-image section of the config file.
+.TP
+.BI "append=" string
+Appends the options specified to the parameter line
+passed to the kernel. This is typically used to
+specify parameters of hardware that can't be
+entirely auto-detected or for which probing may be
+dangerous. Example:
+
+  append = "video=ofonly"
+.TP
+.BI "literal=" string
+Like `append', but removes all other options (e.g. setting of the root
+device). Because vital options can be removed unintentionally with
+`literal', this option cannot be set in the global options section.
+.TP
+.BI "ramdisk=" size
+This specifies the size of the optional RAM disk. A value of zero indicates
+that no RAM disk should be created. If this variable is omitted, the RAM
+disk size configured into the boot image is used.
+.TP
+.BI "read-only"
+This specifies that the root file system should be mounted read-only.
+Typically, the system startup procedure re-mounts the root file system
+read-write later (e.g. after fsck'ing it).
+.TP
+.BI "read-write"
+This specifies that the root file system should be mounted read-write.
+.TP
+.BI "root=" root-device
+This specifies the device that should be mounted as root.
+.TP
+.BI "initrd=" filename
+Specifies the file that will be loaded at boot time as the initial RAM disk.
+Example:
+
+  initrd=/images/initrd.img
+
+yaboot will not decompress the initial ramdisk, the Linux kernel will do that.
+If the initial ramdisk does not fit on one media (usually floppy), you can
+split it into several pieces and separate the filenames in the list by
+\fI|\fP characters. In this case, you have to provide a non-zero
+\fIinitrd-size\fP and, if the images reside on different medias,
+\fIinitrd-prompt\fP as well.
+Example (on the first floppy is initrd1.img, on the second initrd2.img
+always in the root directory and the sum of both image sizes is 1700000
+bytes):
+
+  initrd=/initrd1.img|/initrd2.img
+  initrd-size=1700000
+  initrd-prompt
+.TP
+.BI "initrd-size=" size
+When more than one initial ramdisk part is specified in the \fIinitrd\fP
+setting, this option is required to be the sum of sizes of all the images
+mentioned on that line, in bytes. It is required so that yaboot can reserve
+space for the image, even though size of some parts has not been determined
+yet.
+.TP
+.BI "initrd-prompt"
+If more than one initial ramdisk part is specified, wait for user pressing a
+key between loading the different images, so that the user can exchange
+media. This flag is needed if some initrd parts reside on the same device,
+but different removable media. On the other side, if you e.g. load one part
+from a floppy and the second part from a hard disk, such option is not
+needed (the question is who'd write something like that into yaboot.conf).
+.TP
+.BI "pause-after"
+If this flag is specified, yaboot will stop after loading the kernel (and
+initial ramdisks if specified) and ask the user to press a key before
+continuing.
+.TP
+.BI "pause-message=" string
+If \fIpause-after\fP is specified, this variable specifies the string to
+print to the user when asking him to press a key. The default is:
+
+  Press ENTER to continue.
+.TP
+.BI "sysmap=" filename
+Specifies the path for the System.map file that goes with the kernel
+image (\fIimage=\fR).  This is for 2.4 kernels with a kernel debugger only.
+.TP
+.BI "single-key"
+Enables booting the image by hitting a single key when the cursor is at the
+first character in the input line, without the need to press <ENTER>
+afterwards. \fIsingle-key\fP requires that either the image's label or its
+alias (or both) is a single character. If you need to specify parameters for
+such an image, or if you want to boot some other image which happens to
+start with the same letter, then you need to start the input line with at
+least one space which will be removed before processing but will disable
+this single-key feature.
+.TP
+.BI "restricted"
+Restricted limits the ability to customize command line arguments.
+\fIrestricted\fR has no effect if \fIpassword=\fR is not specified.
+A password is only required to boot the image specified in
+\fB/etc/yaboot.conf\fP if parameters are specified on the command line
+or if the user enters an image that is not specified in the configuration
+file at all (arbitrary file load).  For an image not including
+the \fIrestricted\fR keyword (unless \fIrestricted\fR is in the global
+section), the password will be required.  If \fIrestricted\fR
+is in the global section, all boot labels act as above (duh:).
+.SH EXAMPLES
+Here is an example \fIyaboot.conf\fR file:
+.IP
+.nf
+boot=/dev/hda2
+device=hd:
+root=/dev/hda3
+partition=3
+timeout=20
+install=/usr/local/lib/yaboot/yaboot
+magicboot=/usr/local/lib/yaboot/ofboot
+fgcolor=black
+bgcolor=green
+default=Linux
+defaultos=linux
+password=secret
+
+image=/boot/vmlinux
+	label=Linux
+	read-only
+	restricted
+
+image=/boot/vmlinux.old
+	label=linux.old
+	read-only
+
+macos=hd:9
+macosx=/dev/hda10
+.fi
+.SH NOTES
+The format defined in this man page will not work with versions of
+\fByaboot\fR(8) older then 0.6.  The color options only work with
+yaboot 1.0 and later. 
+.SH BUGS
+Some
+.B yaboot
+options may not be implemented fully.
+.SH AUTHORS
+This man page was derived from \fBsilo.conf\fR(5) written by Jakub
+Jelinek and the SparcLinux team, and modified for
+\fByaboot\fR(8)/\fBybin\fR(8) by Ethan Benson.
+.P
+\fByaboot\fR(8) was written by Benjamin Herrenschmidt <benh@kernel.crashing.org>.
+.P
+\fBybin\fR(8) was written by Ethan Benson <erbenson@alaska.net>.
+.SH SEE ALSO
+.BR bootstrap (8),
+.BR chmod (1),
+.BR hfsutils (1),
+.BR mkofboot (8),
+.BR mount (8),
+.BR nvsetenv (8),
+.BR ofpath (8),
+.BR yaboot (8),
+.BR ybin (8).

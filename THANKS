@@ -1,0 +1,17 @@
+In no particular order:
+
+ * Daniel Jacobowitz <dan@debian.org> for Debian packaging, advice and busybox help.
+ * Benjamin Herrenschmidt <benh@kernel.crashing.org> for yaboot and great work on the kernel.
+ * Charles Stevenson <csteven@newhope.terraplex.com> for adding color config support to yaboot.
+ * Chris Emerson <cemerson@chiark.greenend.org.uk> for the Forth code in ofboot.
+ * iNOUE Koich! <inoue@ma.ns.musashi-tech.ac.jp> for advice and help [re]writing ofboot's Forth code.
+ * Segher Boessenkool <segher@chello.nl> for help with ofboot's Forth code, and the new penguin icon.
+ * Tom Rini <trini@kernel.crashing.org> for adding devfs support to ofpath.
+ * Eric Peden <ericpeden@homemail.com> for writing the yaboot FAQ.
+ * Nicholas Humfrey <njh399@ecs.soton.ac.uk> for the badge icons in ofboot.
+ * Hollis Blanchard <hollis+@andrew.cmu.edu> YellowDog/RPM packaging.
+ * Brad Midgley <brad@turbolinux.com> for Turbolinux/RPM packaging.
+ * Olaf Hering <olh@suse.de> for figuring out how to map SCSI /dev nodes to OF paths. 
+ * Josh Huber <huber@mclinux.com> for PowerBook1998 ofpath support.
+ * Ian the T <ian@iantheterrible.com> for donating shell access to add 8600 support to ofpath. 
+ * anyone i left out!

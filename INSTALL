@@ -1,0 +1,23 @@
+
+The fastest way to install ybin and yaboot is to run `make install'.
+
+This will install the man pages in /usr/local/man by default and
+ybin/mkofboot in /usr/local/sbin.  yaboot and ofboot will be
+installed in /usr/local/lib/yaboot/.
+
+you may change the install paths by setting variables ROOT, PREFIX and
+MANDIR to make.  ie make ROOT=/ PREFIX=/usr MANDIR=/share/man (this is only
+intended for package maintainers.)
+
+yaboot can be installed where you like but
+/usr/local/lib/yaboot/yaboot is the first default location ybin will
+look, followed by /usr/lib/yaboot/yaboot.
+
+ybin needs hfsutils version 3.2.6 or later.
+
+The man pages should be installed in /usr/local/man/man?/.  The *.8.gz
+pages should be in /usr/local/man/man8/ and the *.5.gz page should be
+in /usr/local/man/man5/.
+
+If you need to remove ybin (say if your installing a debian package or
+.rpm) you can do so by issuing the command `make deinstall'.

@@ -1,0 +1,831 @@
+#! /bin/sh
+
+###############################################################################
+##
+## ofpath: determine OpenFirmware path from unix device node
+## Copyright (C) 2000, 2001 Ethan Benson
+##
+## Portions based on show_of_path.sh:
+##
+## Copyright (C) 2000 Olaf Hering <olh@suse.de>
+## 
+## This program is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License
+## as published by the Free Software Foundation; either version 2
+## of the License, or (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+##
+###############################################################################
+
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+PRG="${0##*/}"
+VERSION=1.0.2
+DEBUG=0
+export LC_COLLATE=C
+
+## --version output.
+version()
+{
+echo \
+"$PRG $VERSION
+Written by Ethan Benson
+Portions based on show_of_path.sh written by Olaf Hering
+
+Copyright (C) 2000, 2001 Ethan Benson
+Portions Copyright (C) 2000 Olaf Hering
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+}
+
+## --help output.
+usage()
+{
+echo \
+"Usage: $PRG [OPTION]... FILE
+Find OpenFirmware device path from unix device node.
+
+      --debug                print boring junk only useful for debugging
+  -h, --help                 display this help and exit
+  -V, --version              output version information and exit"
+}
+
+## a small seq replacement, seq is not present on boot/rescue floppies.
+smallseq()
+{
+    local v="$1"
+    local n=1
+    echo 1
+    while [ "$v" -gt 1 ] ; do
+	echo "$(($n + 1))"
+	local n="$(($n + 1))"
+	local v="$(($v - 1))"
+    done
+    return 0
+}
+
+## a kludge to replace wc -l, wc is not present on boot/rescue
+## floppies. max file is 145 lines, 3 hosts * 16 devs each * 3 lines
+## per device, + 1 "Attached Devices:" line.
+linecount()
+{
+    if [ $# = 0 ] ; then
+	local file="$(cat)"
+	local v="$file"
+    else
+	local file="$(cat $1)"
+	local v="$file"
+    fi
+
+    if [ -z "$file" ] ; then
+	echo 0
+	return 0
+    fi
+
+    ## use real wc if available
+    if (command -v wc > /dev/null 2>&1) ; then
+	if [ -x `command -v wc` ] ; then
+	    lines="$(echo "$file" | wc -l)"
+	    if [ $? = 0 ] ; then
+		echo $lines
+		unset lines
+		return 0
+	    fi
+	fi
+    fi
+
+    while true ; do
+	for i in `smallseq 145` ; do
+	    local b="$(echo "$file" | tail -n $i)"
+	    if [ "$v" = "$b" ] ; then
+		echo "$i"
+		break 2
+	    fi
+	done
+    done
+    return 0
+}
+
+## small tr replacment which handles a specific need of this script.
+smalltr()
+{
+    case "$1" in 
+	a) echo 1 ;; b) echo 2 ;; c) echo 3 ;; d) echo 4 ;; e) echo 5 ;; f) echo 6 ;;
+	g) echo 7 ;; h) echo 8 ;; i) echo 9 ;; j) echo 10 ;; k) echo 11 ;; l) echo 12 ;;
+	m) echo 13 ;; n) echo 14 ;; o) echo 15 ;; p) echo 16 ;;
+	1) echo a ;; 2) echo b ;; 3) echo c ;; 4) echo d ;; 5) echo e ;; 
+	6) echo f ;; 7) echo g ;; 8) echo h ;; 9) echo i ;; 10) echo j ;;
+	11) echo k ;; 12) echo l ;; 13) echo m ;; 14) echo n ;; 15) echo o ;;
+	16) echo p ;;
+    esac
+    return 0
+}
+
+## replacment for grep -l which is not supported by busybox grep.
+## echo $(cat..) hack needed because busybox grep barfs with `line too
+## long' when fed /proc files.  the for loop is needed since busybox
+## grep seems to have somewhat broken regexp support.
+## usage: lgrep filename regexp regexp ...
+lgrep()
+{
+    local f="$1"
+    shift
+    for i in "$@" ; do
+	echo "$(cat "$f")" | grep -q "$i" && echo "$f" && break
+    done
+    return 0
+}
+
+## a function to print relevant scsi host path when there is more then
+## one.  this function also takes care of stripping off the trailing
+## /compatible.
+printhost()
+{
+    case "$1" in
+	1)
+	echo "${2%/*}"
+	;;
+	2)
+	echo "${3%/*}"
+	;;
+	3)
+	echo "${4%/*}"
+	;;
+	4)
+	echo "${5%/*}"
+	;;
+    esac
+    return 0
+}
+
+## this finds information we need on both newworld and oldworld macs.
+## mainly what scsi host a disk is attached to.
+scsiinfo()
+{
+    ## see if system has scsi at all
+    if [ ! -f /proc/scsi/scsi ] ; then
+	echo 1>&2 "$PRG: /dev/$DEVNODE: Device not configured"
+	return 1
+    fi
+
+    ## first we have to figure out the SCSI ID, have to do that
+    ## anyway [to] find the attached scsi disks = "Direct-Access" and
+    ## stop at sda=1 sdb=2 or whatever count in 3 lines steps
+
+    ## get last letter of device node, ie sda -> a
+    SUBNODE=${DEVNODE##*sd}
+
+    ## turn SUBNODE above into a number starting at 1, ie a -> 1
+    SUBDEV="$(smalltr $SUBNODE)"
+    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: SUBNODE=$SUBNODE SUBDEV=$SUBDEV"
+
+    DEVCOUNT=0
+
+    ## copy scsi file into a variable removing "Attached Devices"
+    ## which is the first line. this avoids a lot of
+    ## [incmopatible] crap later, and improves readability.
+
+    ## find number of lines once and recycle that number, to save
+    ## some time (linecount is a bit slow). subtract one line
+    ## to scrap Attached Devices:
+
+    SCSILINES="$(($(linecount /proc/scsi/scsi) - 1))"
+
+    if [ "$SUBDEV" -gt "$(cat /proc/scsi/scsi | grep Direct-Access | linecount)" ] ; then
+	echo 1>&2 "$PRG: /dev/$DEVNODE: Device not configured"
+	return 1
+    fi
+
+    PROCSCSI="$(cat /proc/scsi/scsi | tail -n $SCSILINES)"
+
+    for i in $(smallseq $(($SCSILINES / 3))) ; do
+
+	## put every scsi device into one single line
+	DEVINFO="$(echo "$PROCSCSI" | head -n $(($i * 3)) | tail -n 3)"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVINFO=$DEVINFO"
+
+	## cut the type field, expect "Direct-Access" later.
+	DEVTYPE="$(v=$(echo ${DEVINFO##*Type: }) ; echo ${v%% *})"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVTYPE=$DEVTYPE"
+
+	## get the device id.
+	DEVID="$(v=$(echo ${DEVINFO##*Id: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVID=$DEVID"
+
+	## get the scsi host id.
+	DEVHOST="$(v=$(echo ${DEVINFO##*Host: scsi}) ; echo ${v%% *})"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVHOST=$DEVHOST"
+
+	if [ "$DEVTYPE" = "Direct-Access" ] ; then
+	    DEVCOUNT="$(($DEVCOUNT + 1))"
+	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVCOUNT=$DEVCOUNT"
+	    if [ "$SUBDEV" = "$DEVCOUNT" ] ; then
+		DEVICE_HOST=$DEVHOST
+		DEVICE_ID=$DEVID
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVICE_HOST=$DEVICE_HOST"
+		break
+	    fi
+	fi
+    done
+
+    ## figure out what the scsi driver is, it is /proc/scsi/dirname.
+    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVICE_HOST=$DEVICE_HOST"
+    SCSI_DRIVER="$(x=`ls /proc/scsi/*/$DEVICE_HOST 2>/dev/null | cat` ; y=`echo ${x##*proc/scsi/}` ; echo ${y%%/*})"
+    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: SCSI_DRIVER=$SCSI_DRIVER"
+
+    ## figure out which host we found.
+    SCSI_HOSTNUMBER="$(v=`ls /proc/scsi/$SCSI_DRIVER/* 2>/dev/null | cat | grep -n "$DEVICE_HOST\>"` ; echo ${v%%:*})"
+    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: SCSI_HOSTNUMBER=$SCSI_HOSTNUMBER"
+
+    return 0
+}
+
+## generic function that can find OF device paths for scsi devices,
+## must be run after scsiinfo().
+scsi_ofpath()
+{
+    case "$SCSI_DRIVER" in
+	aic7xxx)
+	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
+			lgrep "$i" "^ADPT" "^pci900[45]" "^pciclass,01000" ; done)"
+	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
+	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
+	    ;;
+	sym53c8xx)
+	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
+			lgrep "$i" "^Symbios" "^pci1000" "^pciclass,01000" ; done)"
+	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
+	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
+	    ;;
+	mesh)
+	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
+			lgrep "$i" "mesh" ; done)"
+	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
+	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
+	    ;;
+	*)
+	    echo 1>&2 "$PRG: Driver: $SCSI_DRIVER is not supported"
+	    return 1
+	    ;;
+    esac
+    return 0
+}
+
+## figure out the OpenFirmware device path for newworld macs.
+## sd* scsi disks , hd* ide disks.
+newworld()
+{
+    case "$DEVNODE" in
+	sd*)
+	    if ls -l /proc/device-tree | grep -q ^lr ; then
+		true
+	    else
+		echo 1>&2 "$PRG: /proc/device-tree is broken.  Do not use BootX to boot, use yaboot."
+		echo 1>&2 "$PRG: The yaboot FAQ can be found here: http://www.alaska.net/~erbenson/doc"
+		return 1
+	    fi
+
+	    ## use common scsiinfo function to get info we need.
+	    scsiinfo || return 1
+
+	    ## now we have the data for /@$DEVID:$PARTITION
+	    ## find the actual OF path.	
+	    scsi_ofpath || return 1
+	    ;;
+	hda*)
+	    local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep hda)"
+	    if [ -z "$CDROM" ] ; then
+		echo "hd:$PARTITION"
+	    else
+		echo "cd:$PARTITION"
+	    fi
+	    ;;
+	hdb*)
+	    local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep hdb)"
+	    if [ -z "$CDROM" ] ; then
+		echo "ultra1:$PARTITION"
+	    else
+		echo "cd:$PARTITION"
+	    fi
+	    ;;
+	hd*)
+	    local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep $DEVNODE)"
+	    if [ -z "$CDROM" ] ; then
+		echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
+		return 1
+	    else
+		echo "cd:$PARTITION"
+	    fi
+	    ;;
+	*)
+	    echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
+	    return 1
+	    ;;
+    esac
+    return 0
+}
+
+oldworld()
+{
+    ## for some reason 2.4 kernels put OF aliases in aliases@0/ instead of plain aliases/
+    if [ -d "/proc/device-tree/aliases" ] ; then
+	local ALIASES="aliases"
+    elif [ -d "/proc/device-tree/aliases@0" ] ; then
+	local ALIASES="aliases@0"
+    else
+	echo 1>&2 "$PRG: Cannot find OpenFirmware aliases directory in /proc/device-tree/"
+	return 1
+    fi
+
+    local MODEL="$(cat /proc/device-tree/compatible)"
+    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: Oldworld subarch: $MODEL"
+
+    case "$MODEL" in
+	AAPL,7300*|AAPL,7500*|AAPL,8500*|AAPL,9500*|AAPL,\?\?\?\?*)
+	    case "$DEVNODE" in
+		sd*)
+		scsiinfo || return 1
+		case "$SCSI_DRIVER" in
+		    mesh)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi-int)/sd\@$DEVICE_ID:$PARTITION
+		    ;;
+		    53c94)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi)/sd\@$DEVICE_ID:$PARTITION
+		    ;;
+		    *)
+		    echo 1>&2 "$PRG: Driver $SCSI_DRIVER is not supported"
+		    return 1
+		    ;;
+		esac
+		;;
+		*)
+		echo 1>&2 "$PRG: Unsupported device: /dev/$DEVNODE"
+		return 1
+		;;
+	    esac
+	    ;;
+	AAPL,e407*)
+	    case "$DEVNODE" in
+		sd*)
+		scsiinfo || return 1
+		case "$SCSI_DRIVER" in
+		    mesh)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi)/sd\@$DEVICE_ID:$PARTITION
+		    ;;
+		    *)
+		    echo 1>&2 "$PRG: Driver $SCSI_DRIVER is not supported"
+		    return 1
+		    ;;
+		esac
+		;;
+		hda*)
+		echo $(cat /proc/device-tree/$ALIASES/ata)/ATA-Disk\@0:$PARTITION
+		;;
+		hdb*)
+		echo $(cat /proc/device-tree/$ALIASES/ata)/ATA-Disk\@1:$PARTITION
+		;;
+		hd*)
+		echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
+		;;
+	    esac
+	    ;;
+	AAPL,e826*)
+	    case "$DEVNODE" in
+		sd*)
+		scsiinfo || return 1
+		case "$SCSI_DRIVER" in
+		    mesh)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi)/sd\@$DEVICE_ID:$PARTITION
+		    ;;
+		    *)
+		    echo 1>&2 "$PRG: Driver $SCSI_DRIVER is not supported"
+		    return 1
+		    ;;
+		esac
+		;;
+		hda*)
+		echo $(cat /proc/device-tree/$ALIASES/ata)/ata-disk\@0:$PARTITION
+		;;
+		hdb*)
+		echo $(cat /proc/device-tree/$ALIASES/ata)/ata-disk\@1:$PARTITION
+		;;
+		hd*)
+		echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
+		;;
+	    esac
+	    ;;
+	AAPL,Gossamer*|AAPL,PowerMac\ G3*)
+	    case "$DEVNODE" in
+		sd*)
+		scsiinfo || return 1
+		case "$SCSI_DRIVER" in
+		    mesh)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi)/sd\@$DEVICE_ID:$PARTITION
+		    ;;
+		    *)
+		    echo 1>&2 "$PRG: Driver $SCSI_DRIVER is not supported"
+		    return 1
+		    ;;
+		esac
+		;;
+		hda*)
+		echo $(cat /proc/device-tree/$ALIASES/ide0)/ata-disk\@0:$PARTITION
+		;;
+		hdb*)
+		echo $(cat /proc/device-tree/$ALIASES/ide0)/ata-disk\@1:$PARTITION
+		;;
+		hdc*)
+		echo $(cat /proc/device-tree/$ALIASES/ide1)/ata-disk\@0:$PARTITION
+		;;
+		hdd*)
+		echo $(cat /proc/device-tree/$ALIASES/ide1)/ata-disk\@1:$PARTITION
+		;;
+		hd*)
+		echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
+		;;
+	    esac
+	    ;;
+	AAPL,PowerBook1998*)
+	    if [ -f  /proc/device-tree/$ALIASES/ata0 ] ; then
+		local ATA0=ata0
+	    else
+		local ATA0=ide0
+	    fi
+	    if [ -f  /proc/device-tree/$ALIASES/ata1 ] ; then
+		local ATA1=ata1
+	    else
+		local ATA1=bay-ata1
+	    fi
+	    case "$DEVNODE" in
+		sd*)
+		scsiinfo || return 1
+		case "$SCSI_DRIVER" in
+		    mesh)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi)/sd\@$DEVICE_ID:$PARTITON
+		    ;;
+		    *)
+		    echo 1>&2 "$PRG: Driver $SCSI_DRIVER is not supported"
+		    return 1
+		    ;;
+		esac
+		;;
+		hda*)
+		echo $(cat /proc/device-tree/$ALIASES/$ATA0)/ata-disk\@0:$PARTITION
+		;;
+		hdb*)
+		echo $(cat /proc/device-tree/$ALIASES/$ATA0)/ata-disk\@1:$PARTITION
+		;;
+		hdc*)
+		echo $(cat /proc/device-tree/$ALIASES/$ATA1)/atapi-disk\@0:$PARTITION
+		;;
+		hdd*)
+		echo $(cat /proc/device-tree/$ALIASES/$ATA1)/atapi-disk\@1:$PARTITION
+		;;
+		*)
+		echo 1>&2 "$PRG: Unsupported device: /dev/$DEVNODE"
+		return 1
+		;;
+	    esac
+	    ;;
+	AAPL,3400/2400*)
+	    case "$DEVNODE" in
+		sd*)
+		scsiinfo || return 1
+		case "$SCSI_DRIVER" in
+		    mesh)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi-int)/sd\@$DEVICE_ID:$PARTITON
+		    ;;
+		    53c94)
+		    echo $(cat /proc/device-tree/$ALIASES/scsi)/sd\@$DEVICE_ID:$PARTITON
+		    ;;
+		    *)
+		    echo 1>&2 "$PRG: Driver $SCSI_DRIVER is not supported"
+		    return 1
+		    ;;
+		esac
+		;;
+		hda*)
+		echo $(cat /proc/device-tree/$ALIASES/ata0)/ata-disk\@0:$PARTITION
+		;;
+		hdb*)
+		echo $(cat /proc/device-tree/$ALIASES/ata0)/ata-disk\@1:$PARTITION
+		;;
+		hdc*)
+		echo $(cat /proc/device-tree/$ALIASES/ata1)/atapi-disk\@0:$PARTITION
+		;;
+		hdd*)
+		echo $(cat /proc/device-tree/$ALIASES/ata1)/atapi-disk\@1:$PARTITION
+		;;
+		hde*)
+		echo $(cat /proc/device-tree/$ALIASES/ata2):$PARTITION
+		;;
+		hdf*)
+		echo $(cat /proc/device-tree/$ALIASES/ata3):$PARTITION
+		;;
+		*)
+		echo 1>&2 "$PRG: Unsupported device: /dev/$DEVNODE"
+		return 1
+		;;
+	    esac
+	    ;;
+	*)
+	    echo 1>&2 "$PRG: This machine is not supported: $MODEL"
+	    return 1
+	    ;;
+    esac
+    return 0
+}
+
+## find OpenFirmware device path for IBM CHRP hardware (scsi only)
+chrp()
+{
+    case "$DEVNODE" in
+	sd*)
+	    if ls -l /proc/device-tree | grep -q ^lr ; then
+		true
+	    else
+		echo 1>&2 "$PRG: /proc/device-tree is broken."
+		return 1
+	    fi
+
+	    ## use common scsiinfo function to get info we need.
+	    scsiinfo || return 1
+
+	    ## now we have the data for /@$DEVID:$PARTITION
+	    ## find the actual OF path.	
+	    scsi_ofpath || return 1
+	    ;;
+	*)
+	    echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
+	    return 1
+	    ;;
+    esac
+    return 0
+}
+
+## If we get lame devfs name, we need to make it foad
+ckdevfs()
+{
+    case "$1" in
+	/dev/ide/*|/dev/scsi/*|/dev/discs/*)
+	return 0
+	;;
+	*)
+	return 1
+	;;
+    esac
+}
+
+## convert devfs names into normal short ones, written by Tom Rini.
+fixdevfs()
+{
+    ## get partition number, if any
+    local PARTNUM="${1##*[a-z]}"
+    ## Find the bus type.
+    local TYPE="$(v=${1#/dev/} ; echo ${v%/host*})"
+    ## Find the host number.
+    local HOST="$(v=${1#/dev/*/host} ; echo ${v%/bus*})"
+    ## Find the bus number.
+    local BUS="$(v=${1#/dev/*/bus} ; echo ${v%/tar*})"
+    ## Find the target.
+    local TARGET="$(v=${1#/dev/*/target} ; echo ${v%/lun*})"
+
+    case "$TYPE" in
+	ide)
+	case "$HOST" in
+	    0)
+	    case "$TARGET" in
+		0)
+		local DEV=hda
+		;;
+		1)
+		local DEV=hdb
+		;;
+	    esac
+	    ;;
+	    1)
+	    case "$TARGET" in
+		0)
+	        local DEV=hdc
+	        ;;
+		1)
+		local DEV=hdd
+		;;
+	    esac
+	    ;;
+	    *)
+		echo 1>&2 "$PRG: $1: Unable to translate this device, try again without devfs."
+		return 1
+	esac
+	local DEV="${DEV}${PARTNUM}"
+	echo "/dev/$DEV"
+	return 0
+	;;
+	scsi)
+	local LUN="$(v=${1#/dev/*/lun} ; echo ${v%/*})"
+
+	## In this case, we need to figure out what number our device is
+	local DEVCOUNT=0
+
+	## copy scsi file into a variable removing "Attached Devices"
+	## which is the first line. this avoids a lot of
+	## [incmopatible] crap later, and improves readability.
+
+	## find number of lines once and recycle that number, to save
+	## some time (linecount is a bit slow). subtract one line
+	## to scrap Attached Devices:
+
+	local SCSILINES="$(($(linecount /proc/scsi/scsi) - 1))"
+	local PROCSCSI="$(cat /proc/scsi/scsi | tail -n $SCSILINES)"
+
+	for i in $(smallseq $(($SCSILINES / 3))) ; do
+
+	    ## put every scsi device into one single line
+	    local DEVINFO="$(echo "$PROCSCSI" | head -n $(($i * 3)) | tail -n 3)"
+	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVINFO=$DEVINFO"
+
+	    ## cut the type field, expect "Direct-Access" later.
+	    local DEVTYPE="$(v=$(echo ${DEVINFO##*Type: }) ; echo ${v%% *})"
+	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVTYPE=$DEVTYPE"
+
+	    if [ "$DEVTYPE" = "Direct-Access" ] ; then
+		## Lets find out some more information
+		## get the device id.
+		local DEVID="$(v=$(echo ${DEVINFO##*Id: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVID=$DEVID"
+
+		## get the device lun.
+		local DEVLUN="$(v=$(echo ${DEVINFO##*Lun: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVLUN=$DEVLUN"
+
+		## get the device channel.
+		local DEVCHAN="$(v=$(echo ${DEVINFO##*Channel: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVCHAN=$DEVCHAN"
+
+		## get the scsi host id.
+		local DEVHOST="$(v=$(echo ${DEVINFO##*Host: scsi}) ; echo ${v%% *})"
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVHOST=$DEVHOST"
+
+		local DEVCOUNT="$(($DEVCOUNT + 1))"
+		[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVCOUNT=$DEVCOUNT"
+		if [ "$DEVHOST" = "$HOST" -a "$DEVCHAN" = "$BUS" -a \
+		    "$DEVID" = "$TARGET" -a "$DEVLUN" = "$LUN" ] ; then
+		    local DEV="sd$(smalltr $DEVCOUNT)${PARTNUM}"
+		    echo "/dev/$DEV"
+		    return 0
+		fi
+	    fi
+	done
+	echo 1>&2 "$PRG: $1: Unable to translate this device, try again without devfs."
+	return 1
+	;;
+	*)
+	echo 1>&2 "$PRG: Unknown bus $TYPE"
+	return 1
+	;;
+    esac
+    ## we should never get here
+    return 1
+}
+
+## make sure that find, head and tail can be found.  otherwise the
+## script will silently give bogus paths.  these are the only /usr/*
+## utilities this script depends on.
+checkutils()
+{
+    if command -v find > /dev/null 2>&1 ; then
+        [ -x `command -v find` ] || FAIL=1 ; else FAIL=1 ; fi
+    if command -v head > /dev/null 2>&1 ; then
+        [ -x `command -v head` ] || FAIL=1 ; else FAIL=1 ; fi
+    if command -v tail > /dev/null 2>&1 ; then
+        [ -x `command -v tail` ] || FAIL=1 ; else FAIL=1 ; fi
+
+    if [ "$FAIL" = 1 ] ; then
+	echo 1>&2 "$PRG: \`find', \`head', or \`tail' could not be found, aborting."
+	return 1
+    else
+	return 0
+    fi
+}
+
+## parse command line switches.
+if [ $# != 0 ] ; then
+    while true ; do
+	case "$1" in
+	    -V|--version)
+		version
+		exit 0
+		;;
+	    -h|--help)
+		usage
+		exit 0
+		;;
+	    --debug)
+		DEBUG=1
+		shift
+		;;
+	    -*)
+		echo 1>&2 "$PRG: unrecognized option \`$1'"
+		echo 1>&2 "$PRG: Try \`$PRG --help' for more information."
+		exit 1
+		;;
+	    "")
+		echo 1>&2 "$PRG: You must specify a filename"
+		echo 1>&2 "Try \`$PRG --help' for more information."
+		exit 1
+		;;
+	    *)
+		device="$1"
+		break
+		;;
+	esac
+    done
+else
+    echo 1>&2 "$PRG: You must specify a /dev device"
+    echo 1>&2 "Try \`$PRG --help' for more information."
+    exit 1
+fi
+
+## check that FILE is a block device and exists.
+if [ ! -e "$device" ] ; then
+    echo 1>&2 "$PRG: $device: No such file or directory"
+    exit 1
+elif [ ! -b "$device" ] ; then
+    echo 1>&2 "$PRG: $device is not a block device"
+    exit 1
+fi
+
+## check that we are running on a GNU/Linux system, OSX/BSD does not
+## have the same /proc stuff
+if [ `uname -s` != Linux ] ; then
+    echo 1>&2 "$PRG: This utility will only work with GNU/Linux"
+    exit 1
+fi
+
+## check for ppc, i think uname -m is safe for this...
+if [ `uname -m` != ppc ] ; then
+    echo 1>&2 "$PRG: This utility will only work on PowerPC hardware"
+    exit 1
+fi
+
+## ofpath cannot live without procfs
+if [ ! -f /proc/uptime ] ; then
+    echo 1>&2 "$PRG: This utility requires the /proc filesystem"
+    exit 1
+fi
+
+## check for retarded devfs names and tell them to foad.
+if ckdevfs "$device" ; then
+    device="$(fixdevfs $device)" || exit 1
+fi
+
+## check for newworld mac. use cat hack due to /proc wierdness.
+if [ "$(v=`cat /proc/cpuinfo 2>/dev/null | grep pmac-generation` ; echo ${v##*:[ ]})" = NewWorld ] ; then
+    SUBARCH=NewWorld
+elif [ "$(v=`cat /proc/cpuinfo 2>/dev/null | grep pmac-generation` ; echo ${v##*:[ ]})" = OldWorld ] ; then
+    SUBARCH=OldWorld
+elif (cat /proc/cpuinfo 2>/dev/null | grep ^motherboard | grep -q AAPL) ; then
+    SUBARCH=OldWorld
+elif (cat /proc/cpuinfo 2> /dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
+    SUBARCH=CHRP
+else
+    echo 1>&2 "$PRG: This machine is not yet supported"
+    exit 1
+fi
+
+## make sure /proc/device-tree exists
+if [ ! -d /proc/device-tree ] ; then
+    echo 1>&2 "$PRG: /proc/device-tree does not exist"
+    echo 1>&2 "$PRG: Make sure you compiled your kernel with CONFIG_PROC_DEVICETREE=y"
+    exit 1
+fi
+
+## make sure we have what we need.
+checkutils || exit 1
+
+## get the base device node and scrap /dev/ ie /dev/hda2 -> hda
+DEVICE="${device##*/}"
+DEVNODE="${DEVICE%%[0-9]*}"
+PARTITION="${DEVICE##*[a-z]}"
+
+## use appropriate search for right sub arch.
+case "$SUBARCH" in
+    NewWorld)
+	newworld || exit 1
+	;;
+    OldWorld)
+	oldworld || exit 1
+	;;
+    CHRP)
+	chrp || exit 1
+	;;
+esac
+
+exit 0

@@ -1,0 +1,272 @@
+.\" Hey Emacs! This file is -*- nroff -*- source.
+.\" NewWorld section written by Ethan Benson OldWorld section taken
+.\" from bootstrap(8) from the quik package.
+.\"
+.TH BOOTSTRAP 8 "28 April 2001" "GNU/Linux PowerPC" "System Manager's Manual"
+.SH NAME
+.B bootstrap
+\- Disk boot process for PowerMac GNU/Linux
+.SH DESCRIPTION
+This man page describes the \fBbootstrap\fR process for both OldWorld and
+NewWorld PowerMacs.  OldWorld PowerMacs all have a hardware MacOS ROM
+and the case is beige in color.  NewWorld PowerMacs do not have a hardware
+MacOS ROM, and are in colored, translucent cases.  All G3s in colored
+cases are NewWorld, as are all G4s and later.  This man page is
+divided into three sections, OLDWORLD, NEWWORLD, and IBM.  Please read the
+section appropriate to your hardware.
+.SH OLDWORLD
+The process of booting PowerMac/Linux from a disk starts with Open
+Firmware loading the boot block from the first bootable partition of
+the boot disk into memory.  The user specifies which device is to be
+the boot disk by setting the \fBboot-device\fR environment variable to
+the Open Firmware name of the boot disk, or by giving it as an
+explicit argument to the Open Firmware \fBboot\fR command.  OldWorld
+PowerMacs typically do not require \fBbootstrap\fR partitions like
+NewWorld PowerMacs do.
+
+Open Firmware then transfers control to the first-stage bootstrap
+(\fBfirst.b\fR), located at the beginning of the boot block.  The boot
+block also contains the list of block numbers for the second-stage
+bootstrap.  \fBFirst.b\fR reads these blocks into memory, thus loading
+the second-stage bootstrap.
+
+The task of the second-stage bootstrap (\fBsecond.b\fR) is to load the
+Linux kernel into memory and pass it any arguments given by the user.
+\fBSecond.b\fR can also be used for loading other programs, such as
+diagnostic programs or other operating systems, as long as they are
+present as an ELF binary in an ext2 filesystem.
+
+\fBSecond.b\fR gets two string values from Open Firmware,
+called \fIbootpath\fR and \fIbootargs\fR.  \fIBootpath\fR is the Open
+Firmware name of the boot disk (i.e., the device that the first-stage
+bootstrap was loaded from).  If Open Firmware auto-booted, or if the
+\fBboot\fR command was given without arguments, then \fIbootpath\fR
+and \fIbootargs\fR are set to the values of the \fBboot-device\fR and
+\fBboot-file\fR variables, respectively.  If the \fBboot\fR command
+was given with arguments, the first argument becomes \fIbootpath\fR
+and any subsequent arguments are saved in \fIbootargs\fR.
+
+\fBSecond.b\fR uses the Open Firmware input and output devices for
+communicating with the user.  By default, the modem port is used for
+both, but this can be changed by setting the Open Firmware
+\fBinput-device\fR and \fBoutput-device\fR variables.
+
+\fBSecond.b\fR starts by printing a message to indicate
+that it has started, and then reads the configuration file.  By
+default, the configuration file is \fB/etc/quik.conf\fR(5) on the same
+partition as the boot block, but this can be overridden with \fBquik\fR(8).
+The configuration file must be on the same disk as the boot block.
+The format of the configuration file is described in \fBquik.conf\fR(5).
+
+Then \fBsecond.b\fR prints its \fBboot:\fR prompt and waits for the
+user to type a command line.  Normally the configuration file
+specifies a timeout, and if the user does not type anything within
+that period of time, \fBsecond.b\fR proceeds using the \fIbootargs\fR
+value as the command line.  If the timeout value is 0, \fBsecond.b\fR
+will always use the \fIbootargs\fR value, ignoring anything the user
+types.  This can be useful when a modem is connected to the
+modem port.
+
+Having obtained a command line, \fBsecond.b\fR takes the first word
+(whitespace-separated) as the name of the program to load.  Any
+remaining words on the line become arguments to be passed to the
+program when it is loaded.  If the command line is empty,
+\fBsecond.b\fR uses the value of the \fBdefault\fR keyword in the
+configuration file, or failing that, the first program specified in
+the configuration file.
+
+The configuration file can specify several alternative programs to
+load (referred to as \fIimages\fR in the configuration file syntax),
+along with shorthand labels for them and extra arguments to be
+prepended to those specified by the user.  The program name given in
+the command line can be either an explicit path name or a shorthand
+label.  If it is a shorthand label, the configuration file gives the
+corresponding path name.
+
+Path names are of the form
+
+.RS
+.RI [ device\fB: ][ partno ]\fB/ filepath
+.RE
+
+where \fIdevice\fR is the Open Firmware name of the disk, \fIpartno\fR
+is the (decimal) number of the partition on that disk, and
+\fIfilepath\fR is the path to the file in the ext2 filesystem on that
+partition.  The default for \fIdevice\fR is \fIbootpath\fR, and the
+default for \fIpartno\fR is the first bootable partition on
+\fIdevice\fR.  Alternatively, the \fB/\fIfilepath\fR section can be
+replaced by a span of 512-byte blocks to load using the syntax
+.BI [ start - end ]
+where \fIstart\fR and \fIend\fR are decimal block numbers.
+
+\fBSecond.b\fR will attempt to open the file identified by the path
+name and load it into memory as an ELF binary.  If the file cannot be
+found, or if it is not an ELF binary, \fBsecond.b\fR will print an
+error message and print its \fBboot:\fR prompt again.  In this case
+there is no timeout and \fBsecond.b\fR does not use the \fIbootargs\fR
+value.
+
+Once \fBsecond.b\fR has loaded the program into memory, it transfers
+control to it, passing it the list of arguments.
+.SH NEWWORLD
+The process of booting so called NewWorld PowerMacs from disk starts
+with OpenFirmware first attempting to execute the file specified in
+the \fIboot-device\fR variable.  Unlike older versions of OpenFirmware
+the NewWorld version will not attempt to read a boot sector.  By
+default OpenFirmware attempts to load a file with HFS file type
+\*(lqtbxi\*(rq in the \*(lqblessed\*(rq directory from each partition
+of each disk OpenFirmware is aware of, the first partition/disk that
+is found to be bootable is booted immediately. 
+
+.BR Ybin (8)
+configures a \fBbootstrap\fR partition to pass all of OpenFirmware's
+tests to determine if the partition is considered to be bootable or
+not.  The boot script is given file type \*(lqtbxi\*(rq and the root
+directory is marked as \*(lqblessed\*(rq, the blessing is important
+because OpenFirmware will immediately consider a partition unbootable
+if no directory is marked as blessed (you can still manually execute a
+loader such as \fByaboot\fR(8) with OpenFirmware even without a blessed
+directory but it will not happen automatically).
+
+The MacOS System Folder is always marked as blessed, this is required
+for MacOS as well as OpenFirmware.  The MacOS System Folder also
+contains its own boot loader which has the tbxi file type, this makes
+installing \fByaboot\fR(8) onto a MacOS partition is difficult.  The only way
+to install \fByaboot\fR(8) on a MacOS boot partition is to modify
+OpenFirmware to boot the CHRP script directly.  Given this it is
+highly recommended that you create a dedicated \fBbootstrap\fR
+partition for \fByaboot\fR(8).
+
+Since OpenFirmware boots the first partition it finds to be bootable
+it is important that the \fBbootstrap\fR partition be first on the
+disk before any MacOS partition, otherwise MacOS will be booted
+instead of a dual boot menu used with \fByaboot\fR(8).  
+
+The \fBbootstrap\fR partition should also NOT be mountable by MacOS,
+the reason is MacOS will (almost always) closely inspect any blessed
+directories to make sure its real MacOS, if it is not satisfied that
+the contents are a real copy of MacOS it will unbless the directory,
+resulting in OpenFirmware no longer considering it bootable.  The best
+way to protect against this is to create the \fBbootstrap\fR partition
+with the partition type \*(lqApple_Bootstrap\*(rq which OpenFirmware
+accepts as a valid HFS partition, but MacOS will ignore and refuse to
+mount.  The \fBbootstrap\fR partition need not be any larger then
+800K.  800K is the minimum size of an HFS filesystem, and is much more
+then enough for this purpose.  You need not, and should not keep
+kernels on this partition, \fByaboot\fR(8) will load them from your
+ext2fs root partition just fine, as well as from any HFS or HFS+
+partitions (\fByaboot\fR(8) uses OpenFirmware's HFS+ filesystem support).
+
+To create the \fBbootstrap\fR partition, use GNU \fBparted\fR(8) or
+\fBmac-fdisk\fR(8) to create a partiton of type \*(lqApple_Bootstrap\*(rq.
+This is documented better in \fBmac-fdisks-basics\fR
+(http://penguinppc.org/usr/ybin/doc/mac-fdisk-basics.shtml).
+
+The \fBbootstrap\fR need not and should not be mounted anywhere on
+your filesystem, especially not on top of /boot.  \fBYaboot\fR(8) is
+able to load the kernels from the ext2fs root partition so that is
+where they should be kept.
+
+OpenFirmware maintains a hierarchy of all the hardware it is aware of.
+To access or specify a boot device you must use the OpenFirmware path.
+For example: the path to a SCSI hard disk partition might look like
+this: /pci@80000000/pci-bridge@d/ADPT,2930CU@2/@2:2 . The first part,
+pci@80000000, shows that the target device is accessed through the PCI
+bus.  The next part is the PCI bridge, the next is the name of the SCSI host
+adapter installed (this name is provided by a BootROM on the card
+itself), and after that is the SCSI ID number.  The colon delimits the
+device from partition specification, so the last 2 means the second
+partition of this device.  After the partition number we can specify
+pathnames to files in two ways: lazy and absolute. The \*(lq,\*(rq delimits
+the OpenFirmware path from the location of the bootfile.  \*(lq,\e\e:tbxi\*(rq
+specifies the file that has a HFS file type of
+\*(lqtbxi\*(rq in the blessed directory.  If there is not blessed
+directory this will fail.  The second is to specify a absolute
+pathname to an arbitrary file on the disk, example: 2:,yaboot would
+load the file named \*(lqyaboot\*(rq in the root directory of the
+filesystem.  It is possible to load files in subdirectories but
+OpenFirmware does not always do this reliably, and any special
+characters such as an embedded space must be expressed like %20 (for a
+space) the directory separator used by OpenFirmware is the backslash
+\e.  Example: 2:,\eboot\eyaboot. Determining the OpenFirmware path to
+a given device is unfortunately not a trivial task.  If you are using
+the built in ATA hard disk you can use the alias \*(lqhd:\*(rq.
+
+\fBYbin\fR also includes a utility \fBofpath\fR(8) which can in most
+cases find the OpenFirmware device path from a unix device node (ie
+/dev/hda2).  
+
+In addition to binary executables OpenFirmware can also execute a CHRP
+script.  This is somewhat similar to a shell script.  A CHRP script is
+useful to create simple boot menus, among other things.  CHRP scripts
+are divided into sections in a way similar to HTML.  Here is a basic
+example of a CHRP script used as a wrapper to \fByaboot\fR(8) (since
+OpenFirmware will only load a file with type \*(lqtbxi\*(rq if it is a
+CHRP script).
+.IP
+.nf
+<CHRP-BOOT>
+<COMPATIBLE>
+MacRISC
+</COMPATIBLE>
+<DESCRIPTION>
+GNU/Linux PowerPC bootloader
+</DESCRIPTION>
+<BOOT-SCRIPT>
+boot hd:,\\\\yaboot
+</BOOT-SCRIPT>
+</CHRP-BOOT>
+.fi
+.P
+The \fICOMPATIBLE\fR section defines what machines this script is
+compatible with, if the machine name encoded into the ROM does not
+match one of these entries OpenFirmware will print out a lot of
+incomprehensible junk and fail to load the script.  The
+\fIDESCRIPTION\fR is ignored by OpenFirmware as far as I know.  The
+\fIBOOT-SCRIPT\fR section is where arbitrary OpenFirmware Forth
+commands may go.  They are executed the same way as you would enter
+them on the OpenFirmware command line.  The entire script is wrapped
+with the \fICHRP-BOOT\fR tags so that such a script may be attached as
+a header to a binary file.  Much more complicated and elaborate CHRP
+scripts are possible but that is beyond the scope of this document.
+
+\fBYbin\fR as of version 0.17 includes a more robust script that is
+automatically configured with the correct OpenFirmware paths based on
+/etc/yaboot.conf.  This new script need not and should not be edited
+by the user.
+
+If you have G4 hardware then your OpenFirmware may already have a
+graphical boot selector built in. This selector can be accessed by
+holding down the option key when booting the machine.  You should see
+a screen with buttons for each bootable partition.  The current
+version (as of \fBybin\fR(8) 0.13) of ofboot includes a badge icon,
+the button with a penguin icon is your \fBbootstrap\fR partition.  If
+you decide to use this built in selector you really do not need to use
+a CHRP script that provides a boot menu. Thanks to Nicholas Humfrey
+for creating the Badge icon.
+.SH IBM
+IBM hardware such as the RS/6000 require msdos style partition tables.
+In order to boot from the disk they require a type 0x41 PReP Boot
+\fBbootstrap\fR partition large enough to hold the bootloader
+(typically \fByaboot\fR(8)).  The bootloader is copied onto the raw
+partition as there is no filesystem.  This is done either with \fBdd\fR(1)
+or \fBmkofboot\fR(8).  
+.SH BUGS
+OpenFirmware
+.SH AUTHORS
+\fBybin\fR, and the NEWWORLD, and IBM sections of this man page
+written by Ethan Benson <erbenson@alaska.net>
+.P
+The OLDWORLD section of this man page was taken from the \fBquik\fR(8)
+package, which was written by Paul Mackerras.
+.P
+.B yaboot
+was written by Benjamin Herrenschmidt <benh@kernel.crashing.org>.
+.SH SEE ALSO
+.BR dd (1),
+.BR mkofboot (8),
+.BR ofpath (8),
+.BR quik (8),
+.BR quik.conf (5),
+.BR yaboot (8),
+.BR ybin (8).

@@ -1,0 +1,9 @@
+The file `large-penguin.mbicon' (mbicon == MultiBoot Icon) is an icon
+that will replace the disk-icon-with-small-penguin-badge in the
+OpenFirmware multi-boot screen (hold down option on AGP G4s and
+iBooks).  In order to use this copy an uncompressed copy somewhere,
+and add `icon=/path/to/large-penguin.mbicon' or whatever to
+/etc/yaboot.conf and run ybin.  You can add other types of icons so
+long as you put the proper bootinfo tags around them.
+
+This is unsupported and you are on your own.

@@ -1,0 +1,4 @@
+This patch is only meant to be used by package maintainers (debian or
+redhat), it changes references to /usr/local/lib/yaboot to
+/usr/lib/yaboot in the man pages.  This way the man pages will better
+reflect the real locations for packaged version of yaboot/ybin.
