@@ -24,9 +24,9 @@
 #define _MACH_walnut	0x00001000	/* IBM "Walnut" 405GP eval. board */
 
 struct bi_record {
-    unsigned long tag;			/* tag ID */
-    unsigned long size;			/* size of record (in bytes) */
-    unsigned long data[0];		/* data */
+     unsigned long tag;			/* tag ID */
+     unsigned long size;			/* size of record (in bytes) */
+     unsigned long data[0];		/* data */
 };
 
 #define BI_FIRST		0x1010  /* first record - marker */
@@ -39,3 +39,9 @@ struct bi_record {
 
 #endif /* _PPC_BOOTINFO_H */
 
+/* 
+ * Local variables:
+ * c-file-style: "K&R"
+ * c-basic-offset: 5
+ * End:
+ */

@@ -43,3 +43,10 @@
 #define DEBUG_OPEN
 #define DEBUG_SLEEP
 #endif
+
+/* 
+ * Local variables:
+ * c-file-style: "K&R"
+ * c-basic-offset: 5
+ * End:
+ */

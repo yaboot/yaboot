@@ -65,16 +65,5 @@ extern int
 parse_device_path(char *imagepath, char *defdevice, int defpart,
 		  char *deffile, struct boot_fspec_t *result);
 
-#if 0
-extern int validate_fspec(
-			struct boot_fspec_t*	spec,
-			char*			default_device,
-			int			default_part);
-extern char *parse_device_path(
-			char*			of_device,
-			char**			file_spec,
-			int*			partition);
-#endif
-
 
 #endif

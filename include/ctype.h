@@ -36,19 +36,26 @@ extern unsigned char _ctype[];
 
 static inline unsigned char __tolower(unsigned char c)
 {
-	if (isupper(c))
-		c -= 'A'-'a';
-	return c;
+     if (isupper(c))
+	  c -= 'A'-'a';
+     return c;
 }
 
 static inline unsigned char __toupper(unsigned char c)
 {
-	if (islower(c))
-		c -= 'a'-'A';
-	return c;
+     if (islower(c))
+	  c -= 'a'-'A';
+     return c;
 }
 
 #define tolower(c) __tolower(c)
 #define toupper(c) __toupper(c)
 
 #endif
+
+/* 
+ * Local variables:
+ * c-file-style: "K&R"
+ * c-basic-offset: 5
+ * End:
+ */

@@ -1,25 +1,8 @@
-2001-10-12  Ethan Benson  <erbenson@alaska.net>
+2001-10-13  Ethan Benson  <erbenson@alaska.net>
 
-	* Version 1.3.4pre3
+	* Version 1.3.4
 
 	* ybin: Correct a verbosity message.
-
-	* yaboot:
-	  - Add non-fatal warning when bootstrap partition has wrong type (pmac only).
-	  - Minor code rearrangment.
-
-2001-10-10  Ethan Benson  <erbenson@alaska.net>
-
-	* Version 1.3.4pre2
-
-	* yaboot:
-	  - Fix netboot when using the `n' key.
-	  - Make configuration file open error consistent with other file
-	    open errors.
-	
-2001-10-09  Ethan Benson  <erbenson@alaska.net>
-
-	* Version 1.3.4pre1
 
 	* yaboot:
 	  - Add SGI XFS filesystem support.
@@ -27,16 +10,21 @@
 	    many bugs and inconsistencies in yaboot's file loading.
 	  - Fix OpenFirmware filesystem support to automatically convert
 	    path separator from / to \.  CDROM authors no longer need to use
-	    hacks like image=\\install\\powermac\\vmlinux.
+	    kludges like image=\\install\\powermac\\vmlinux.
 	  - Fix kernel loading on some systems.
 	  - Allow for getting files from tftp server that does not run a
 	    bootpd/dhcpd.
+	  - Fix netboot when using the `n' key.
 	  - Fix a great deal of incorrect format strings which could cause
 	    yaboot crashes.
 	  - Fix all filesystems to properly return error conditions, and
 	    report those error conditions (instead of just saying `image not
 	    found').
+	  - Make configuration file open error consistent with other file
+	    open errors.
 	  - Add `help' command to yaboot which prints out basic usage information.
+	  - Add non-fatal warning when bootstrap partition has wrong type (pmac only).
+	  - Minor code rearrangement.
 	  - General cruft removal and code cleanup.
 
 	* Makefile cleanup, make filesystems configurable.

@@ -39,11 +39,11 @@ static int iso_close(	struct boot_file_t*	file);
 
 struct fs_t iso_filesystem =
 {
-    "iso9660",
-    iso_open,
-    iso_read,
-    iso_seek,
-    iso_close
+     "iso9660",
+     iso_open,
+     iso_read,
+     iso_seek,
+     iso_close
 };
 
 static int
@@ -52,7 +52,7 @@ iso_open(	struct boot_file_t*	file,
 		struct partition_t*	part,
 		const char*		file_name)
 {
-	return FILE_ERR_BAD_FSYS;
+     return FILE_ERR_BAD_FSYS;
 }
 
 static int
@@ -60,18 +60,25 @@ iso_read(	struct boot_file_t*	file,
 		unsigned int		size,
 		void*			buffer)
 {
-	return FILE_ERR_BAD_FSYS;
+     return FILE_ERR_BAD_FSYS;
 }
 
 static int
 iso_seek(	struct boot_file_t*	file,
 		unsigned int		newpos)
 {
-	return FILE_ERR_BAD_FSYS;
+     return FILE_ERR_BAD_FSYS;
 }
 
 static int
 iso_close(	struct boot_file_t*	file)
 {
-	return 0;
+     return 0;
 }
+
+/* 
+ * Local variables:
+ * c-file-style: "K&R"
+ * c-basic-offset: 5
+ * End:
+ */
