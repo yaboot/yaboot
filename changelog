@@ -1,3 +1,27 @@
+2001-10-09  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.4-pre1
+
+	* yaboot:
+	  - Add SGI XFS filesystem support.
+	  - Rewrite OpenFirmware device path parsing code.  This fixes
+	    many bugs and inconsistencies in yaboot's file loading.
+	  - Fix OpenFirmware filesystem support to automatically convert
+	    path separator from / to \.  CDROM authors no longer need to use
+	    hacks like image=\\install\\powermac\\vmlinux.
+	  - Fix kernel loading on some systems.
+	  - Allow for getting files from tftp server that does not run a
+	    bootpd/dhcpd.
+	  - Fix a great deal of incorrect format strings which could cause
+	    yaboot crashes.
+	  - Fix all filesystems to properly return error conditions, and
+	    report those error conditions (instead of just saying `image not
+	    found').
+	  - Add `help' command to yaboot which prints out basic usage information.
+	  - General cruft removal and code cleanup.
+
+	* Makefile cleanup, make filesystems configurable.
+	
 2001-09-25  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.3

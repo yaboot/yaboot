@@ -19,7 +19,7 @@ extern size_t strspn(const char *,const char *);
 extern int strcmp(const char *,const char *);
 extern int strncmp(const char *,const char *,size_t);
 extern int strnicmp(const char *, const char *, size_t);
-extern void *strdup(char *str);
+extern char *strdup(char const *str);
 
 extern void * memset(void *,int,size_t);
 extern void * memcpy(void *,const void *,size_t);

@@ -24,7 +24,7 @@
 #include "string.h"
 #include "partition.h"
 #include "fs.h"
-
+#include "errors.h"
 
 static int iso_open(	struct boot_file_t*	file,
 			const char*		dev_name,
@@ -52,7 +52,7 @@ iso_open(	struct boot_file_t*	file,
 		struct partition_t*	part,
 		const char*		file_name)
 {
-	return FILE_ERR_NOTFOUND;
+	return FILE_ERR_BAD_FSYS;
 }
 
 static int
@@ -60,14 +60,14 @@ iso_read(	struct boot_file_t*	file,
 		unsigned int		size,
 		void*			buffer)
 {
-	return FILE_ERR_NOTFOUND;
+	return FILE_ERR_BAD_FSYS;
 }
 
 static int
 iso_seek(	struct boot_file_t*	file,
 		unsigned int		newpos)
 {
-	return FILE_ERR_NOTFOUND;
+	return FILE_ERR_BAD_FSYS;
 }
 
 static int

@@ -62,9 +62,17 @@ int prom_getchar ();
 void prom_putchar (char);
 int prom_nbgetchar();
 
+#ifdef __GNUC__
+void prom_vprintf (char *fmt, va_list ap) __attribute__ ((format (printf, 1, 0)));
+void prom_fprintf (prom_handle dev, char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void prom_printf (char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+#else
 void prom_vprintf (char *fmt, va_list ap);
 void prom_fprintf (prom_handle dev, char *fmt, ...);
 void prom_printf (char *fmt, ...);
+#endif
+
+void prom_perror (int error, char *filename);
 void prom_readline (char *prompt, char *line, int len);
 int prom_set_color(prom_handle device, int color, int r, int g, int b);
 
@@ -87,6 +95,7 @@ void prom_setargs (char *args);
 
 void prom_exit ();
 void prom_abort (char *fmt, ...);
+void prom_sleep (int seconds);
 
 int prom_interpret (char *forth);
 

@@ -153,7 +153,7 @@ main(int ac, char **av)
 	exit(0);
 
  notelf:
-	fprintf(stderr, "%s does not appear to be an ELF file\n", av[0]);
+	fprintf(stderr, "%s does not appear to be an ELF file\n", av[1]);
 	exit(1);
 
  nospace:

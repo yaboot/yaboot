@@ -62,7 +62,6 @@ CONFIG cf_options[] =
     {cft_strg, "pause-message", NULL},
     {cft_strg, "init-code", NULL},
     {cft_strg, "init-message", NULL},
-    {cft_strg, "splash", NULL},
     {cft_strg, "fgcolor", NULL},
     {cft_strg, "bgcolor", NULL},
     {cft_end, NULL, NULL}};
@@ -88,7 +87,6 @@ CONFIG cf_image[] =
     {cft_flag, "pause-after", NULL},
     {cft_strg, "pause-message", NULL},
     {cft_flag, "novideo", NULL},
-    {cft_strg, "splash", NULL},
     {cft_strg, "sysmap", NULL},
     {cft_end, NULL, NULL}};
 
@@ -432,9 +430,7 @@ void cfg_print_images (void)
 	if (alias)
 	    printlabel (alias, 0);
     }
-    prom_printf ("\n\nYou can also type in custom image locations, in the form\n"
-	    "{prom_path;}partno/path_to_image or {prom_path;}{partno}[start-end]\n"
-	    "Example: hd:3,/vmlinux\n\n");
+    prom_printf("\n");
 }
 
 char *cfg_get_default (void)

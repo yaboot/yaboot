@@ -40,6 +40,7 @@ sys
 #include "stdlib.h"
 #include "prom.h"
 #include "file.h"
+#include "errors.h"
 #include "cfg.h"
 #include "cmdline.h"
 #include "yaboot.h"
@@ -48,10 +49,6 @@ sys
 
 #define CONFIG_FILE_NAME	"yaboot.conf"
 #define CONFIG_FILE_MAX		0x8000		/* 32k */
-
-#ifdef CONFIG_SPLASH_SCREEN
-#include "gui.h"
-#endif /* CONFIG_SPLASH_SCREEN */
 
 #ifdef USE_MD5_PASSWORDS
 #include "md5.h"
@@ -107,9 +104,10 @@ static void     setup_display(void);
 
 int useconf = 0;
 char bootdevice[1024];
-char *bootpath = NULL;
+//char *bootpath = NULL;
 char *password = NULL;
-int bootpartition = -1;
+//int bootpartition = -1;
+struct boot_fspec_t boot;
 int _machine = _MACH_Pmac;
 
 #ifdef CONFIG_COLOR_TEXT
@@ -191,25 +189,22 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 	/* Allocate some memory for malloc'ator */
 	malloc_base = prom_claim((void *)MALLOCADDR, MALLOCSIZE, 0);
 	if (malloc_base == (void *)-1) {
-		prom_printf("Can't claim malloc buffer (%d bytes at 0x%08lx)\n",
+		prom_printf("Can't claim malloc buffer (%d bytes at 0x%08x)\n",
 			MALLOCSIZE, MALLOCADDR);
 		return -1;
 	}
 	malloc_init(malloc_base, MALLOCSIZE);
-#if DEBUG
-	prom_printf("Malloc buffer allocated at 0x%x (%d bytes)\n",
+	DEBUG_F("Malloc buffer allocated at %p (%d bytes)\n",
 		malloc_base, MALLOCSIZE);
-#endif
 		
-	/* A few useless printf's */
-#if DEBUG
-	prom_printf("reloc_offset :  %ld         (should be 0)\n", reloc_offset());
-	prom_printf("test_bss     :  %d         (should be 0)\n", test_bss);
-	prom_printf("test_data    :  %d         (should be 0)\n", test_data);
-	prom_printf("&test_data   :  0x%08lx\n", &test_data);
-	prom_printf("&test_bss    :  0x%08lx\n", &test_bss);
-	prom_printf("linked at    :  0x%08lx\n", TEXTADDR);
-#endif	
+	/* A few useless DEBUG_F's */
+	DEBUG_F("reloc_offset :  %ld         (should be 0)\n", reloc_offset());
+	DEBUG_F("test_bss     :  %d         (should be 0)\n", test_bss);
+	DEBUG_F("test_data    :  %d         (should be 0)\n", test_data);
+	DEBUG_F("&test_data   :  %p\n", &test_data);
+	DEBUG_F("&test_bss    :  %p\n", &test_bss);
+	DEBUG_F("linked at    :  0x%08x\n", TEXTADDR);
+
 	/* ask the OF info if we're a chrp or pmac */
 	/* we need to set _machine before calling finish_device_tree */
 	root = prom_finddevice("/");
@@ -225,9 +220,8 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 		}
 	}
 	
-#if DEBUG
-	prom_printf("Running on _machine = %d\n", _machine);
-#endif
+	DEBUG_F("Running on _machine = %d\n", _machine);
+	DEBUG_SLEEP;
 
 	/* Call out main */
 	result = yaboot_main();
@@ -235,11 +229,8 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 	/* Get rid of malloc pool */
 	malloc_dispose();
 	prom_release(malloc_base, MALLOCSIZE);
-#if DEBUG
-	prom_printf("Malloc buffer released. Exiting with code %d\n",
+	DEBUG_F("Malloc buffer released. Exiting with code %d\n",
 		result);
-
-#endif
 
 	/* Return to OF */
 	prom_exit();
@@ -324,9 +315,7 @@ load_config_file(char *device, char* path, int partition)
 	goto bail;
     }
 
-#if DEBUG
-    prom_printf("Config file successfully parsed\n", sz);
-#endif
+    DEBUG_F("Config file successfully parsed, %d bytes\n", sz);
 
     /* Now, we do the initialisations stored in the config file */
     p = cfg_get_strg(0, "init-code");
@@ -338,9 +327,7 @@ load_config_file(char *device, char* path, int partition)
 #ifdef CONFIG_COLOR_TEXT
     p = cfg_get_strg(0, "fgcolor");
     if (p) {
-#if DEBUG       
-       prom_printf("fgcolor=%s\n", p);
-#endif
+       DEBUG_F("fgcolor=%s\n", p);
        fgcolor = check_color_text_ui(p);
        if (fgcolor == -1) {
 	  prom_printf("Invalid fgcolor: \"%s\".\n", p);
@@ -348,9 +335,7 @@ load_config_file(char *device, char* path, int partition)
     }
     p = cfg_get_strg(0, "bgcolor");
     if (p) {
-#if DEBUG      
-       prom_printf("bgcolor=%s\n", p);
-#endif
+       DEBUG_F("bgcolor=%s\n", p);
        bgcolor = check_color_text_ui(p);
        if (bgcolor == -1)
 	  prom_printf("Invalid bgcolor: \"%s\".\n", p);
@@ -361,7 +346,7 @@ load_config_file(char *device, char* path, int partition)
 	prom_interpret(temp); 
 #if !DEBUG
 	prom_printf("\xc");
-#endif	
+#endif /* !DEBUG */
     }
     if (fgcolor >= 0) {
        	char temp[64];
@@ -498,7 +483,7 @@ make_params(char *label, char *params)
 
 void check_password(char *str)
 {
-    int i, end;
+    int i;
 
     for (i = 0; i < 3; i++) {
 	 prom_printf ("\n%sassword: ", str);
@@ -512,16 +497,15 @@ void check_password(char *str)
 	 } 
 	 else if (!strcmp (password, passwdbuff))
 	    return;
-#else
+#else /* !MD5 */
 	 if (!strcmp (password, passwdbuff))
 	    return;
-#endif
+#endif /* USE_MD5_PASSWORDS */
 	 if (i < 2)
 	    prom_printf ("Password incorrect. Please try again...");
     }
     prom_printf ("Seems like you don't know the access password.  Go away!\n");
-    end = (prom_getms() + 3000);
-    while (prom_getms() <= end);
+    prom_sleep(3);
     prom_interpret("reset-all");
 }
 
@@ -541,9 +525,6 @@ int get_params(struct boot_param_t* params)
     static char imagepath[1024];
     static char initrdpath[1024];
     static char sysmappath[1024];
-#ifdef CONFIG_SPLASH_SCREEN
-    static char splashpath[1024];
-#endif /* CONFIG_SPLASH_SCREEN */
 
     pause_after = 0;
     memset(params, 0, sizeof(*params));
@@ -551,8 +532,7 @@ int get_params(struct boot_param_t* params)
     params->kernel.part = -1;
     params->rd.part = -1;
     params->sysmap.part = -1;
-    params->splash.part = -1;
-    defpart = bootpartition;
+    defpart = boot.part;
     
     cmdinit();
 
@@ -563,8 +543,7 @@ int get_params(struct boot_param_t* params)
 	word_split(&imagename, &params->args);
 	timeout = DEFAULT_TIMEOUT;
 	if (imagename) {
-	     prom_printf("Default supplied on the command line: ");
-	     prom_printf("%s ", imagename);
+	     prom_printf("Default supplied on the command line: %s ", imagename);
 	     if (params->args)
 		  prom_printf("%s", params->args);
 	     prom_printf("\n");
@@ -627,7 +606,7 @@ int get_params(struct boot_param_t* params)
 	imagename = cfg_get_default();
 
     label = 0;
-    defdevice = bootdevice;
+    defdevice = boot.dev;
 
     if (useconf) {
 	defdevice = cfg_get_strg(0, "device");
@@ -647,7 +626,7 @@ int get_params(struct boot_param_t* params)
 	    label = imagename;
 	    imagename = p;
 	    defdevice = cfg_get_strg(label, "device");
-	    if(!defdevice) defdevice=bootdevice;
+	    if(!defdevice) defdevice=boot.dev;
 	    p = cfg_get_strg(label, "partition");
 	    if (p) {
 		n = simple_strtol(p, &endp, 10);
@@ -664,6 +643,23 @@ int get_params(struct boot_param_t* params)
 	    }
 	    params->args = make_params(label, params->args);
 	}
+    }
+
+    if (!strcmp (imagename, "help")) {
+	 prom_printf(
+	      "\nPress the tab key for a list of defined images.\n"
+	      "The label marked with a \"*\" is is the default image, "
+	      "press <return> to boot it.\n\n"
+	      "To boot any other label simply type its name and press <return>.\n\n"
+	      "To boot a kernel image which is not defined in the yaboot configuration \n"
+	      "file, enter the kernel image name as [device:][partno],/path, where \n"
+	      "\"device:\" is the OpenFirmware device path to the disk the image \n"
+	      "resides on, and \"partno\" is the partition number the image resides on.\n\n"
+	      "If you omit \"device:\" and \"partno\" yaboot will use the values of \n"
+	      "\"device=\" and \"partition=\" in yaboot.conf, right now those are set to: \n"
+	      "device=%s\n"
+	      "partition=%d\n\n", defdevice, defpart);
+	 return 0;
     }
 
     if (!strcmp (imagename, "halt")) {
@@ -693,52 +689,36 @@ int get_params(struct boot_param_t* params)
     if (!label && password)
 	 check_password ("To boot a custom image you must enter the p");
 
-    params->kernel.dev = parse_device_path(imagepath, &params->kernel.file,
-    	&params->kernel.part);
-    if (validate_fspec(&params->kernel, defdevice, defpart) != FILE_ERR_OK) {
-	prom_printf(
-"Enter the kernel image name as [device:][partno]/path, where partno is a\n"
-"number from 0 to 16.  Instead of /path you can type [mm-nn] to specify a\n"
-"range of disk blocks (512B)\n"
-"Example: hd:3,/vmlinux\n");
-	return 0;
+    if (!parse_device_path(imagepath, defdevice, defpart,
+			   "/vmlinux", &params->kernel)) {
+	 prom_printf("%s: Unable to parse\n", imagepath);
+	 return 0;
     }
+    DEBUG_F("after parse_device_path: dev=%s part=%d file=%s\n", params->kernel.dev,
+	    params->kernel.part, params->kernel.file);
 
     if (useconf) {
  	p = cfg_get_strg(label, "initrd");
 	if (p && *p) {
-#if DEBUG
-	    prom_printf("parsing initrd path <%s>\n", p);
-#endif	    
+	    DEBUG_F("Parsing initrd path <%s>\n", p);
 	    strncpy(initrdpath, p, 1024);
-	    params->rd.dev = parse_device_path(initrdpath,
-	    	&params->rd.file, &params->rd.part);
-	    validate_fspec(&params->rd, defdevice, defpart);
+	    if (!parse_device_path(initrdpath, defdevice, defpart,
+				   "/root.bin", &params->rd)) {
+		 prom_printf("%s: Unable to parse\n", imagepath);
+		 return 0;
+	    }
 	}
  	p = cfg_get_strg(label, "sysmap");
 	if (p && *p) {
-#if DEBUG
-	    prom_printf("parsing sysmap path <%s>\n", p);
-#endif	    
+	    DEBUG_F("Parsing sysmap path <%s>\n", p);
 	    strncpy(sysmappath, p, 1024);
-	    params->sysmap.dev = parse_device_path(sysmappath,
-	    	&params->sysmap.file, &params->sysmap.part);
-	    validate_fspec(&params->sysmap, defdevice, defpart);
+	    if (!parse_device_path(sysmappath, defdevice, defpart,
+				   "/boot/System.map", &params->sysmap)) {
+		 prom_printf("%s: Unable to parse\n", imagepath);
+		 return 0;
+	    }
 	}
-#ifdef CONFIG_SPLASH_SCREEN
- 	p = cfg_get_strg(label, "splash");
-	if (p && *p) {
-#if DEBUG
-	    prom_printf("parsing splash path <%s>\n", p);
-#endif	    
-	    strncpy(splashpath, p, 1024);
-	    params->splash.dev = parse_device_path(splashpath,
-	    	&params->splash.file, &params->splash.part);
-	    validate_fspec(&params->splash, defdevice, defpart);
-	}
-#endif /* CONFIG_SPLASH_SCREEN */
-   }
-    
+    }
     return 0;
 }
 
@@ -779,121 +759,139 @@ yaboot_text_ui(void)
 	if (!params.kernel.file)
 	    continue;
 	
-#ifdef CONFIG_SPLASH_SCREEN
-	if (params.splash.file)
-        	fxDisplaySplash(&params.splash);
-#endif /* CONFIG_SPLASH_SCREEN */
 	prom_printf("Please wait, loading kernel...\n");
 
-	if(bootpath && !strcmp(bootpath,"\\\\") && params.kernel.file[0] != '/') {
-		loc=(char*)malloc(strlen(params.kernel.file)+3);
-		if (!loc) {
-			prom_printf ("malloc error\n");
-			goto next;
-		}
-		strcpy(loc,bootpath);
-		strcat(loc,params.kernel.file);
-		free(params.kernel.file);
-		params.kernel.file=loc;
+	memset(&file, 0, sizeof(file));
+
+	if (strlen(boot.file) && !strcmp(boot.file,"\\\\") && params.kernel.file[0] != '/'
+	    && params.kernel.file[0] != '\\') {
+	     loc=(char*)malloc(strlen(params.kernel.file)+3);
+	     if (!loc) {
+		  prom_printf ("malloc error\n");
+		  goto next;
+	     }
+	     strcpy(loc,boot.file);
+	     strcat(loc,params.kernel.file);
+	     free(params.kernel.file);
+	     params.kernel.file=loc;
 	}
         result = open_file(&params.kernel, &file);
         if (result != FILE_ERR_OK) {
-	    prom_printf("\nImage not found.... try again\n");
-	    goto next;
+	     prom_printf("%s:%d,", params.kernel.dev, params.kernel.part);
+	     prom_perror(result, params.kernel.file);
+	     goto next;
 	}
 
 	/* Read the Elf e_ident, e_type and e_machine fields to
 	 * determine Elf file type
 	 */
         if (file.fs->read(&file, sizeof(Elf_Ident), &loadinfo.elf) < sizeof(Elf_Ident)) {
-	    prom_printf("\nCan't read Elf e_ident/e_type/e_machine info\n");
-	    goto next;
+	     prom_printf("\nCan't read Elf e_ident/e_type/e_machine info\n");
+	     file.fs->close(&file);
+	     memset(&file, 0, sizeof(file));
+	     goto next;
 	}
 
-	if ( is_elf32(&loadinfo) ) {
-            if ( !load_elf32(&file, &loadinfo) )
-                goto next;
-            prom_printf("   Elf32 kernel loaded...\n");
-	} else if ( is_elf64(&loadinfo) ) {
-            if ( !load_elf64(&file, &loadinfo) )
-                goto next;
-            prom_printf("   Elf64 kernel loaded...\n");
+	if (is_elf32(&loadinfo)) {
+	     if (!load_elf32(&file, &loadinfo)) {
+		  file.fs->close(&file);
+		  memset(&file, 0, sizeof(file));
+		  goto next;
+	     }
+	     prom_printf("   Elf32 kernel loaded...\n");
+	} else if (is_elf64(&loadinfo)) {
+	     if (!load_elf64(&file, &loadinfo)) {
+		  file.fs->close(&file);
+		  memset(&file, 0, sizeof(file));
+		  goto next;
+	     }
+	     prom_printf("   Elf64 kernel loaded...\n");
 	} else {
-            prom_printf ("Not a valid ELF image\n");
-            goto next;
+	     prom_printf ("%s: Not a valid ELF image\n", params.kernel.file);
+	     file.fs->close(&file);
+	     memset(&file, 0, sizeof(file));
+	     goto next;
 	}
         file.fs->close(&file);
+	memset(&file, 0, sizeof(file));
 
 	/* If sysmap, load it. 
 	 */
 	if (params.sysmap.file) {
-	    prom_printf("Loading System.map ...\n");
-	    if(bootpath && !strcmp(bootpath,"\\\\") && params.sysmap.file[0] != '/') {
-		    if (loc) free(loc);
-		    loc=(char*)malloc(strlen(params.sysmap.file)+3);
-		    if (!loc) {
-			    prom_printf ("malloc error\n");
-			    goto next;
-		    }
-		    strcpy(loc,bootpath);
-		    strcat(loc,params.sysmap.file);
-		    free(params.sysmap.file);
-		    params.sysmap.file=loc;
-	    }
-
-	    result = open_file(&params.sysmap, &file);
-	    if (result != FILE_ERR_OK)
-		prom_printf("\nSystem.map file not found.\n");
-	    else {
-		sysmap_base = prom_claim(loadinfo.base+loadinfo.memsize, 0x100000, 0);
-		if (sysmap_base == (void *)-1) {
-		    prom_printf("claim failed for sysmap memory\n");
-		    sysmap_base = 0;
-		} else {
-	    	    sysmap_size = file.fs->read(&file, 0xfffff, sysmap_base);
-	    	    if (sysmap_size == 0)
-	    	        sysmap_base = 0;
-	    	    else
-	    	    	((char *)sysmap_base)[sysmap_size++] = 0;
-	    	}
-	    	file.fs->close(&file);
-	    }
-	    if (sysmap_base) {
-	    	prom_printf("System.map loaded at 0x%08lx, size: %d Kbytes\n",
-	    		sysmap_base, sysmap_size >> 10);
-	    	loadinfo.memsize += _ALIGN(0x100000, 0x1000);
-	    } else {
-	    	prom_printf("System.map load failed !\n");
-	    	prom_pause();
-	    }
+	     prom_printf("Loading System.map ...\n");
+	     if(strlen(boot.file) && !strcmp(boot.file,"\\\\") && params.sysmap.file[0] != '/'
+		&& params.sysmap.file[0] != '\\') {
+		  if (loc) free(loc);
+		  loc=(char*)malloc(strlen(params.sysmap.file)+3);
+		  if (!loc) {
+		       prom_printf ("malloc error\n");
+		       goto next;
+		  }
+		  strcpy(loc,boot.file);
+		  strcat(loc,params.sysmap.file);
+		  free(params.sysmap.file);
+		  params.sysmap.file=loc;
+	     }
+	     
+	     result = open_file(&params.sysmap, &file);
+	     if (result != FILE_ERR_OK) {
+		  prom_printf("%s:%d,", params.sysmap.dev, params.sysmap.part);
+		  prom_perror(result, params.sysmap.file);
+	     }
+	     else {
+		  sysmap_base = prom_claim(loadinfo.base+loadinfo.memsize, 0x100000, 0);
+		  if (sysmap_base == (void *)-1) {
+		       prom_printf("Claim failed for sysmap memory\n");
+		       sysmap_base = 0;
+		  } else {
+		       sysmap_size = file.fs->read(&file, 0xfffff, sysmap_base);
+		       if (sysmap_size == 0)
+			    sysmap_base = 0;
+		       else
+			    ((char *)sysmap_base)[sysmap_size++] = 0;
+		  }
+		  file.fs->close(&file);
+		  memset(&file, 0, sizeof(file));
+	     }
+	     if (sysmap_base) {
+		  prom_printf("System.map loaded at %p, size: %lu Kbytes\n",
+			      sysmap_base, sysmap_size >> 10);
+		  loadinfo.memsize += _ALIGN(0x100000, 0x1000);
+	     } else {
+		  prom_printf("System.map load failed !\n");
+		  prom_pause();
+	     }
 	}
 
 	/* If ramdisk, load it. For now, we can't tell the size it will be
 	 * so we claim an arbitrary amount of 4Mb
 	 */
 	if (params.rd.file) {
-	    if(bootpath && !strcmp(bootpath,"\\\\") && params.rd.file[0] != '/')
+	    if(strlen(boot.file) && !strcmp(boot.file,"\\\\") && params.rd.file[0] != '/'
+	       && params.kernel.file[0] != '\\')
 	    {
 		if (loc) free(loc);
 		loc=(char*)malloc(strlen(params.rd.file)+3);
 		if (!loc) {
-		    prom_printf ("malloc error\n");
+		    prom_printf ("Malloc error\n");
 		    goto next;
 		}
-		strcpy(loc,bootpath);
+		strcpy(loc,boot.file);
 		strcat(loc,params.rd.file);
 		free(params.rd.file);
 		params.rd.file=loc;
 	    }
 	    prom_printf("Loading ramdisk...\n");
 	    result = open_file(&params.rd, &file);
-	    if (result != FILE_ERR_OK)
-		prom_printf("\nRamdisk image not found.\n");
+	    if (result != FILE_ERR_OK) {
+		 prom_printf("%s:%d,", params.rd.dev, params.rd.part);
+		 prom_perror(result, params.rd.file);
+	    }
 	    else {
 #define INITRD_CHUNKSIZE 0x400000
 		initrd_base = prom_claim(loadinfo.base+loadinfo.memsize, INITRD_CHUNKSIZE, 0);
 		if (initrd_base == (void *)-1) {
-		    prom_printf("claim failed for initrd memory\n");
+		    prom_printf("Claim failed for initrd memory\n");
 		    initrd_base = 0;
 		} else {
 	    	    initrd_size = file.fs->read(&file, INITRD_CHUNKSIZE, initrd_base);
@@ -905,20 +903,19 @@ yaboot_text_ui(void)
 		      initrd_want = (void *)((unsigned long)initrd_more+INITRD_CHUNKSIZE);
 		      initrd_more = prom_claim(initrd_want, INITRD_CHUNKSIZE, 0);
 		      if (initrd_more != initrd_want) {
-			prom_printf("claim failed for initrd memory at %x rc=%x\n",initrd_want,initrd_more);
+			prom_printf("Claim failed for initrd memory at %p rc=%p\n",initrd_want,initrd_more);
 			break;
 		      }
 	    	    initrd_read = file.fs->read(&file, INITRD_CHUNKSIZE, initrd_more);
-#if DEBUG
-		    prom_printf("  block at %x rc=%x\n",initrd_more,initrd_read);
-#endif
+		    DEBUG_F("  block at %p rc=%lu\n",initrd_more,initrd_read);
 		    initrd_size += initrd_read;
 		    }
 	    	}
 	    	file.fs->close(&file);
+		memset(&file, 0, sizeof(file));
 	    }
 	    if (initrd_base)
-	    	prom_printf("ramdisk loaded at 0x%08lx, size: %d Kbytes\n",
+	    	prom_printf("ramdisk loaded at %p, size: %lu Kbytes\n",
 	    		initrd_base, initrd_size >> 10);
 	    else {
 	    	prom_printf("ramdisk load failed !\n");
@@ -926,17 +923,11 @@ yaboot_text_ui(void)
 	    }
 	}
 
-#if DEBUG
-	prom_printf("setting kernel args to: %s\n", params.args);
-#endif	
+	DEBUG_F("setting kernel args to: %s\n", params.args);
 	prom_setargs(params.args);
-#if DEBUG
-	prom_printf("flushing icache...");
-#endif	
+	DEBUG_F("flushing icache...");
 	flush_icache_range ((long)loadinfo.base, (long)loadinfo.base+loadinfo.memsize);
-#if DEBUG
-	prom_printf(" done\n");
-#endif	
+	DEBUG_F(" done\n");
 
 	/* 
 	 * Fill mew boot infos
@@ -952,14 +943,8 @@ yaboot_text_ui(void)
 	 * by the malloc pool
 	 */
 	prom_map (birec, birec, 0x10000);
-#if DEBUG
-	prom_printf("birec at 0x%08lx\n", birec);
-	{
-	    int i = prom_getms();
-	    while((prom_getms() - i) < 2000)
-		;
-	}
-#endif	
+	DEBUG_F("birec at %p\n", birec);
+	DEBUG_SLEEP;
 
 	birec->tag = BI_FIRST;
 	birec->size = sizeof(struct bi_record);
@@ -989,26 +974,21 @@ yaboot_text_ui(void)
 	/* compute the kernel's entry point. */
 	kernel_entry = loadinfo.base + loadinfo.entry - loadinfo.load_loc;
 
-#if DEBUG
-	prom_printf("Kernel entry point = 0x%08lx\n", kernel_entry);
-        prom_printf("kernel: arg1 = 0x%08lx,\n"
-                    "        arg2 = 0x%08lx,\n"
-                    "        prom = 0x%08lx,\n"
-                    "        arg4 = 0x%08lx,\n"
-                    "        arg5 = 0x%08lx\n\n",
+	DEBUG_F("Kernel entry point = %p\n", kernel_entry);
+        DEBUG_F("kernel: arg1 = %p,\n"
+		"        arg2 = 0x%08lx,\n"
+		"        prom = %p,\n"
+		"        arg4 = %d,\n"
+		"        arg5 = %d\n\n",
                 initrd_base + loadinfo.load_loc, initrd_size, prom, 0, 0);
 
-#endif	
+	DEBUG_F("Entering kernel...\n");
 
-#if DEBUG
-	prom_printf("entering kernel...\n");
-#endif
         /* call the kernel with our stack. */
         kernel_entry(initrd_base + loadinfo.load_loc, initrd_size, prom, 0, 0);
         continue;
 next:
-        if( file.fs != NULL )
-            file.fs->close(&file);    
+	; /* do nothing */
     }
 }
 
@@ -1027,30 +1007,28 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 	return 0;
     }
 
-#if DEBUG
-    prom_printf("Elf32 header:\n");
-    prom_printf(" e.e_type      = %d\n", (int)e->e_type);
-    prom_printf(" e.e_machine   = %d\n", (int)e->e_machine);
-    prom_printf(" e.e_version   = %d\n", (int)e->e_version);
-    prom_printf(" e.e_entry     = 0x%08x\n", (int)e->e_entry);
-    prom_printf(" e.e_phoff     = 0x%08x\n", (int)e->e_phoff);
-    prom_printf(" e.e_shoff     = 0x%08x\n", (int)e->e_shoff);
-    prom_printf(" e.e_flags     = %d\n", (int)e->e_flags);
-    prom_printf(" e.e_ehsize    = 0x%08x\n", (int)e->e_ehsize);
-    prom_printf(" e.e_phentsize = 0x%08x\n", (int)e->e_phentsize);
-    prom_printf(" e.e_phnum     = %d\n", (int)e->e_phnum);
-#endif	    
+    DEBUG_F("Elf32 header:\n");
+    DEBUG_F(" e.e_type      = %d\n", (int)e->e_type);
+    DEBUG_F(" e.e_machine   = %d\n", (int)e->e_machine);
+    DEBUG_F(" e.e_version   = %d\n", (int)e->e_version);
+    DEBUG_F(" e.e_entry     = 0x%08x\n", (int)e->e_entry);
+    DEBUG_F(" e.e_phoff     = 0x%08x\n", (int)e->e_phoff);
+    DEBUG_F(" e.e_shoff     = 0x%08x\n", (int)e->e_shoff);
+    DEBUG_F(" e.e_flags     = %d\n", (int)e->e_flags);
+    DEBUG_F(" e.e_ehsize    = 0x%08x\n", (int)e->e_ehsize);
+    DEBUG_F(" e.e_phentsize = 0x%08x\n", (int)e->e_phentsize);
+    DEBUG_F(" e.e_phnum     = %d\n", (int)e->e_phnum);
 
     loadinfo->entry = e->e_entry;
 
     if (e->e_phnum > MAX_HEADERS) {
-	prom_printf ("can only load kernels with one program header\n");
+	prom_printf ("Can only load kernels with one program header\n");
 	return 0;
     }
 
     ph = (Elf32_Phdr *)malloc(sizeof(Elf32_Phdr) * e->e_phnum);
     if (!ph) {
-	prom_printf ("malloc error\n");
+	prom_printf ("Malloc error\n");
 	return 0;
     }
 
@@ -1095,29 +1073,26 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
     /* leave some room (1Mb) for boot infos */
     loadinfo->memsize = _ALIGN(loadinfo->memsize,(1<<20)) + 0x100000;
     /* Claim OF memory */
-#if DEBUG
-    prom_printf("Before prom_claim, mem_sz: 0x%08lx\n", loadinfo->memsize);
-#endif    
+    DEBUG_F("Before prom_claim, mem_sz: 0x%08lx\n", loadinfo->memsize);
 
     /* On some systems, loadaddr may already be claimed, so try some
      * other nearby addresses before giving up.
      */
-    loadaddr = (e->e_entry == KERNEL_LINK_ADDR_PPC32) ? KERNELADDR : e->e_entry;
+    loadaddr = (e->e_entry == KERNEL_LINK_ADDR_PPC32 ||
+		e->e_entry == 0) ? KERNELADDR : e->e_entry;
     for(addr=loadaddr; addr <= loadaddr * 8 ;addr+=0x100000) {
 	loadinfo->base = prom_claim((void *)addr, loadinfo->memsize, 0);
 	if (loadinfo->base != (void *)-1) break;
     }
     if (loadinfo->base == (void *)-1) {
-	prom_printf("claim error, can't allocate kernel memory\n");
+	prom_printf("Claim error, can't allocate kernel memory\n");
 	return 0;
     }	
 
-#if DEBUG
-    prom_printf("After ELF parsing, load base: 0x%08lx, mem_sz: 0x%08lx\n",
+    DEBUG_F("After ELF parsing, load base: %p, mem_sz: 0x%08lx\n",
     	    loadinfo->base, loadinfo->memsize);
-    prom_printf("    wanted load base: 0x%08lx, mem_sz: 0x%08lx\n",
+    DEBUG_F("    wanted load base: 0x%08lx, mem_sz: 0x%08lx\n",
     	    loadaddr, loadinfo->memsize);
-#endif    
 
     /* Load the program segments... */
     p = ph;
@@ -1128,26 +1103,17 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 
 	    /* Now, we skip to the image itself */
 	    if ((*(file->fs->seek))(file, p->p_offset) != FILE_ERR_OK) {
-		    prom_printf ("seek error\n");
+		    prom_printf ("Seek error\n");
 		    prom_release(loadinfo->base, loadinfo->memsize);
 		    return 0;
 	    }
 	    offset = p->p_vaddr - loadinfo->load_loc;
-#ifdef CONFIG_SPLASH_SCREEN
-	    if (fxReadImage(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
-#else /* CONFIG_SPLASH_SCREEN */
 	    if ((*(file->fs->read))(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
-#endif /* CONFIG_SPLASH_SCREEN */
-		    prom_printf ("read failed\n");
-		    prom_release(loadinfo->base, loadinfo->memsize);
-		    return 0;
+		 prom_printf ("Read failed\n");
+		 prom_release(loadinfo->base, loadinfo->memsize);
+		 return 0;
 	    }
     }
-
-#if 0	/* to make editor happy */
-    }
-#endif	
-    (*(file->fs->close))(file);
 
     free(ph);
     
@@ -1170,41 +1136,39 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 	return 0;
     }
 
-#if DEBUG
-    prom_printf("Elf64 header:\n");
-    prom_printf(" e.e_type      = %d\n", (int)e->e_type);
-    prom_printf(" e.e_machine   = %d\n", (int)e->e_machine);
-    prom_printf(" e.e_version   = %d\n", (int)e->e_version);
-    prom_printf(" e.e_entry     = 0x%016lx\n", (long)e->e_entry);
-    prom_printf(" e.e_phoff     = 0x%016lx\n", (long)e->e_phoff);
-    prom_printf(" e.e_shoff     = 0x%016lx\n", (long)e->e_shoff);
-    prom_printf(" e.e_flags     = %d\n", (int)e->e_flags);
-    prom_printf(" e.e_ehsize    = 0x%08x\n", (int)e->e_ehsize);
-    prom_printf(" e.e_phentsize = 0x%08x\n", (int)e->e_phentsize);
-    prom_printf(" e.e_phnum     = %d\n", (int)e->e_phnum);
-#endif	    
+    DEBUG_F("Elf64 header:\n");
+    DEBUG_F(" e.e_type      = %d\n", (int)e->e_type);
+    DEBUG_F(" e.e_machine   = %d\n", (int)e->e_machine);
+    DEBUG_F(" e.e_version   = %d\n", (int)e->e_version);
+    DEBUG_F(" e.e_entry     = 0x%016lx\n", (long)e->e_entry);
+    DEBUG_F(" e.e_phoff     = 0x%016lx\n", (long)e->e_phoff);
+    DEBUG_F(" e.e_shoff     = 0x%016lx\n", (long)e->e_shoff);
+    DEBUG_F(" e.e_flags     = %d\n", (int)e->e_flags);
+    DEBUG_F(" e.e_ehsize    = 0x%08x\n", (int)e->e_ehsize);
+    DEBUG_F(" e.e_phentsize = 0x%08x\n", (int)e->e_phentsize);
+    DEBUG_F(" e.e_phnum     = %d\n", (int)e->e_phnum);
 
     loadinfo->entry = e->e_entry;
 
     if (e->e_phnum > MAX_HEADERS) {
-	prom_printf ("can only load kernels with one program header\n");
+	prom_printf ("Can only load kernels with one program header\n");
 	return 0;
     }
 
     ph = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * e->e_phnum);
     if (!ph) {
-	prom_printf ("malloc error\n");
+	prom_printf ("Malloc error\n");
 	return 0;
     }
 
     /* Now, we read the section header */
     if ((*(file->fs->seek))(file, e->e_phoff) != FILE_ERR_OK) {
-	prom_printf ("seek error\n");
+	prom_printf ("Seek error\n");
 	return 0;
     }
     if ((*(file->fs->read))(file, sizeof(Elf64_Phdr) * e->e_phnum, ph) !=
 	    sizeof(Elf64_Phdr) * e->e_phnum) {
-	prom_printf ("read error\n");
+	prom_printf ("Read error\n");
 	return 0;
     }
 
@@ -1238,9 +1202,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
     /* leave some room (1Mb) for boot infos */
     loadinfo->memsize = _ALIGN(loadinfo->memsize,(1<<20)) + 0x100000;
     /* Claim OF memory */
-#if DEBUG
-    prom_printf("Before prom_claim, mem_sz: 0x%08lx\n", loadinfo->memsize);
-#endif    
+    DEBUG_F("Before prom_claim, mem_sz: 0x%08lx\n", loadinfo->memsize);
 
     /* On some systems, loadaddr may already be claimed, so try some
      * other nearby addresses before giving up.
@@ -1251,16 +1213,14 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 	if (loadinfo->base != (void *)-1) break;
     }
     if (loadinfo->base == (void *)-1) {
-	prom_printf("claim error, can't allocate kernel memory\n");
+	prom_printf("Claim error, can't allocate kernel memory\n");
 	return 0;
     }	
 
-#if DEBUG
-    prom_printf("After ELF parsing, load base: 0x%08lx, mem_sz: 0x%08lx\n",
+    DEBUG_F("After ELF parsing, load base: %p, mem_sz: 0x%08lx\n",
     	    loadinfo->base, loadinfo->memsize);
-    prom_printf("    wanted load base: 0x%08lx, mem_sz: 0x%08lx\n",
+    DEBUG_F("    wanted load base: 0x%08lx, mem_sz: 0x%08lx\n",
     	    loadaddr, loadinfo->memsize);
-#endif    
 
     /* Load the program segments... */
     p = ph;
@@ -1271,26 +1231,17 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 
 	    /* Now, we skip to the image itself */
 	    if ((*(file->fs->seek))(file, p->p_offset) != FILE_ERR_OK) {
-		    prom_printf ("seek error\n");
+		    prom_printf ("Seek error\n");
 		    prom_release(loadinfo->base, loadinfo->memsize);
 		    return 0;
 	    }
 	    offset = p->p_vaddr - loadinfo->load_loc;
-#ifdef CONFIG_SPLASH_SCREEN
-	    if (fxReadImage(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
-#else /* CONFIG_SPLASH_SCREEN */
 	    if ((*(file->fs->read))(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
-#endif /* CONFIG_SPLASH_SCREEN */
-		    prom_printf ("read failed\n");
+		    prom_printf ("Read failed\n");
 		    prom_release(loadinfo->base, loadinfo->memsize);
 		    return 0;
 	    }
     }
-
-#if 0	/* to make editor happy */
-    }
-#endif	
-    (*(file->fs->close))(file);
 
     free(ph);
     
@@ -1356,32 +1307,25 @@ setup_display(void)
 	/* Try Apple's mac-boot screen ihandle */
   	result = (int)call_prom_return("interpret", 1, 2,
   		"\" _screen-ihandle\" $find if execute else 0 then", &scrn);
-#if DEBUG
-  	prom_printf("trying to get screen ihandle, result: 0x%x, scrn: 0x%x\n", result, scrn);
-#endif  	
+  	DEBUG_F("Trying to get screen ihandle, result: %d, scrn: %p\n", result, scrn);
+
   	if (scrn == 0 || scrn == PROM_INVALID_HANDLE) {
   		char type[32];
   		/* Hrm... check to see if stdout is a display */
   		scrn = call_prom ("instance-to-package", 1, 1, prom_stdout);
-#if DEBUG
-	  	prom_printf("instance-to-package of stdout is: 0x%x\n", scrn);
-#endif  	
+	  	DEBUG_F("instance-to-package of stdout is: %p\n", scrn);
   		if (prom_getprop(scrn, "device_type", type, 32) > 0 && !strncmp(type, "display", 7)) {
-#if DEBUG
-		  	prom_printf("got it ! stdout is a screen\n");
-#endif  	
+		  	DEBUG_F("got it ! stdout is a screen\n");
   			scrn = prom_stdout;
   		} else {
 	  		/* Else, we try to open the package */
 			scrn = (prom_handle)call_prom( "open", 1, 1, "screen" );
-#if DEBUG
-		  	prom_printf("Open screen result: 0x%x\n", scrn);
-#endif  	
+		  	DEBUG_F("Open screen result: %p\n", scrn);
 		}
   	}
   	
 	if (scrn == PROM_INVALID_HANDLE) {
-		prom_printf("no screen device found !/n");
+		prom_printf("No screen device found !/n");
 		return;
 	}
 	for(i=0;i<16;i++) {
@@ -1403,10 +1347,12 @@ setup_display(void)
 			ansi_color_table[i].name);
 	}
 	prom_printf("\x1b[1;37m\x1b[2;40m");	
-#endif
+#endif /* COLOR_TEST */
+
 #if !DEBUG
 	prom_printf("\xc");
-#endif	
+#endif /* !DEBUG */
+
 #endif /* CONFIG_SET_COLORMAP */
 }
 
@@ -1417,49 +1363,57 @@ yaboot_main(void)
 		setup_display();
 	
 	prom_get_chosen("bootpath", bootdevice, sizeof(bootdevice));
-#if DEBUG
-	prom_printf("/chosen/bootpath = %s\n", bootdevice);
-#endif	
+	DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
 	if (bootdevice[0] == 0)
 		prom_get_options("boot-device", bootdevice, sizeof(bootdevice));
 	if (bootdevice[0] == 0) {
 	    prom_printf("Couldn't determine boot device\n");
 	    return -1;
     	}
-    	parse_device_path(bootdevice, &bootpath, &bootpartition);
-#if DEBUG
-	prom_printf("after parse_device_path: device:%s, path: %s, partition: %d\n",
-		bootdevice, bootpath ? bootpath : NULL, bootpartition);
-#endif	
-  	if (bootpath) {
-		if (!strncmp(bootpath, "\\\\", 2))
-			bootpath[2] = 0;
-		else {
-			char *p, *last;
-			p = last = bootpath;
-			while(*p) {
-			    if (*p == '\\')
-			    	last = p;
-			    p++;
-			}
-			if (p)
-				*(last) = 0;
-			else
-				bootpath = NULL;
-			if (bootpath && strlen(bootpath))
-				strcat(bootpath, "\\");
-		}
+
+	if (!parse_device_path(bootdevice, (_machine == _MACH_Pmac) ? "hd" : "disc",
+			       -1, "", &boot)) {
+	     prom_printf("%s: Unable to parse\n", bootdevice);
+	     return -1;
 	}
-#if DEBUG
-	prom_printf("after path fixup: device:%s, path: %s, partition: %d\n",
-		bootdevice, bootpath ? bootpath : NULL, bootpartition);
-#endif	
-	useconf = load_config_file(bootdevice, bootpath, bootpartition);
+	DEBUG_F("After parse_device_path: dev=%s, part=%d, file=%s\n",
+		boot.dev, boot.part, boot.file);
+
+  	if (strlen(boot.file)) {
+	     if (!strncmp(boot.file, "\\\\", 2))
+		  boot.file = "\\\\";
+	     else {
+		  char *p, *last;
+		  p = last = boot.file;
+		  while(*p) {
+		       if (*p == '\\')
+			    last = p;
+		       p++;
+		  }
+		  if (p)
+		       *(last) = 0;
+		  else
+		       boot.file = "";
+		  if (strlen(boot.file))
+		       strcat(boot.file, "\\");
+	     }
+	}
+	DEBUG_F("After path fixup: dev=%s, part=%d, file=%s\n",
+		boot.dev, boot.part, boot.file);
+
+	useconf = load_config_file(boot.dev, boot.file, boot.part);
 
 	prom_printf("Welcome to yaboot version " VERSION "\n");
+	prom_printf("Enter \"help\" to get some basic usage information\n");
 	
 	yaboot_text_ui();
 	
 	prom_printf("Bye.\n");
 	return 0;
 }
+/* 
+ * Local variables:
+ * c-file-style: "K&R"
+ * c-basic-offset: 5
+ * End:
+ */

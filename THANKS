@@ -2,6 +2,7 @@ In no particular order:
 
  * Daniel Jacobowitz <dan@debian.org> for Debian packaging, advice and busybox help.
  * Benjamin Herrenschmidt <benh@kernel.crashing.org> for yaboot and great work on the kernel.
+ * Colin Walters <walters@verbum.org> for advice, help with XFS and general code auditing.
  * Charles Stevenson <csteven@newhope.terraplex.com> for adding color config support to yaboot.
  * Chris Emerson <cemerson@chiark.greenend.org.uk> for the Forth code in ofboot.
  * iNOUE Koich! <inoue@ma.ns.musashi-tech.ac.jp> for advice and help [re]writing ofboot's Forth code.

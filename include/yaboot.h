@@ -7,7 +7,6 @@ struct boot_param_t {
 	struct boot_fspec_t	kernel;
 	struct boot_fspec_t	rd;
 	struct boot_fspec_t	sysmap;
-	struct boot_fspec_t	splash;
 
 	char*	args;
 };

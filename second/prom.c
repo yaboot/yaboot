@@ -29,6 +29,7 @@
 #include "types.h"
 #include "ctype.h"
 #include "asm/processor.h"
+#include "errors.h"
 
 #define READ_BLOCKS_USE_READ	1
 
@@ -124,7 +125,7 @@ call_method_1 (char *method, prom_handle h, int nargs, ...)
 
   if (prom_args.args[2+nargs] != 0)
     {
-      prom_printf ("method '%s' failed %d\n", method, prom_args.args[2+nargs]);
+      prom_printf ("method '%s' failed %p\n", method, prom_args.args[2+nargs]);
       return 0;
     }
   return prom_args.args[2+nargs+1];
@@ -384,7 +385,7 @@ prom_puts (prom_handle file, char *s)
 void
 prom_vfprintf (prom_handle file, char *fmt, va_list ap)
 {
-  static char printf_buf[1024];
+  static char printf_buf[1536];
   vsprintf (printf_buf, fmt, ap);
   prom_puts (file, printf_buf);
 }
@@ -392,7 +393,7 @@ prom_vfprintf (prom_handle file, char *fmt, va_list ap)
 void
 prom_vprintf (char *fmt, va_list ap)
 {
-  static char printf_buf[1024];
+  static char printf_buf[1536];
   vsprintf (printf_buf, fmt, ap);
   prom_puts (prom_stdout, printf_buf);
 }
@@ -413,6 +414,37 @@ prom_printf (char *fmt, ...)
   va_start (ap, fmt);
   prom_vfprintf (prom_stdout, fmt, ap);
   va_end (ap);
+}
+
+void
+prom_perror (int error, char *filename)
+{
+     if (error == FILE_ERR_EOF)
+	  prom_printf("%s: Unexpected End Of File\n", filename);
+     else if (error == FILE_ERR_NOTFOUND)
+	  prom_printf("%s: No such file or directory\n", filename);
+     else if (error == FILE_CANT_SEEK)
+	  prom_printf("%s: Seek error\n", filename);
+     else if (error == FILE_IOERR)
+	  prom_printf("%s: Input/output error\n", filename);
+     else if (error == FILE_BAD_PATH)
+	  prom_printf("%s: Path too long\n", filename); 
+     else if (error == FILE_ERR_BAD_TYPE)
+	  prom_printf("%s: Not a regular file\n", filename);
+     else if (error == FILE_ERR_NOTDIR)
+	  prom_printf("%s: Not a directory\n", filename);
+     else if (error == FILE_ERR_BAD_FSYS)
+	  prom_printf("%s: Unknown or corrupt filesystem\n", filename);
+     else if (error == FILE_ERR_SYMLINK_LOOP)
+	  prom_printf("%s: Too many levels of symbolic links\n", filename);
+     else if (error == FILE_ERR_LENGTH)
+	  prom_printf("%s: File too large\n", filename);
+     else if (error == FILE_ERR_FSBUSY)
+	  prom_printf("%s: Filesystem busy\n", filename);
+     else if (error == FILE_ERR_BADDEV)
+	  prom_printf("%s: Unable to open file, Invalid device\n", filename);
+     else
+	  prom_printf("%s: Unknown error\n", filename);
 }
 
 void
@@ -471,6 +503,14 @@ prom_abort (char *fmt, ...)
   prom_vfprintf (prom_stdout, fmt, ap);
   va_end (ap);
   prom_exit ();
+}
+
+void
+prom_sleep (int seconds)
+{
+     int end;
+     end = (prom_getms() + (seconds * 1000));
+     while (prom_getms() <= end);
 }
 
 void *

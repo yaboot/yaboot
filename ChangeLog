@@ -2,6 +2,44 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-25 15:13:19 GMT	Ethan Benson <erbenson@alaska.net>	patch-5
+
+    Summary:
+      Commit yaboot 1.3.4-pre1
+    Revision:
+      yaboot--devel--1.3--patch-5
+
+    Commit yaboot 1.3.4-pre1.
+
+    new files:
+     include/xfs/.arch-ids/=id include/xfs/.arch-ids/xfs.h.id
+     include/.arch-ids/errors.h.id second/.arch-ids/fs_xfs.c.id
+     .arch-ids/Config.id include/xfs/xfs.h include/errors.h
+     second/fs_xfs.c Config
+
+    removed files:
+     include/.arch-ids/gui.h.id include/.arch-ids/video.h.id
+     second/gui/.arch-ids/=id second/gui/.arch-ids/colormap.c.id
+     second/gui/.arch-ids/effects.c.id
+     second/gui/.arch-ids/pcx.c.id second/gui/.arch-ids/video.c.id
+     include/gui.h include/video.h second/gui/colormap.c
+     second/gui/effects.c second/gui/pcx.c second/gui/video.c
+
+    modified files:
+     ChangeLog Makefile THANKS changelog include/file.h
+     include/fs.h include/prom.h include/string.h include/yaboot.h
+     lib/malloc.c second/cfg.c second/file.c second/fs.c
+     second/fs_ext2.c second/fs_iso.c second/fs_of.c
+     second/fs_reiserfs.c second/partition.c second/prom.c
+     second/yaboot.c util/addnote.c ybin/ybin
+
+    new directories:
+     include/xfs/.arch-ids include/xfs
+
+    removed directories:
+     second/gui/.arch-ids second/gui
+
+
 2002-03-25 14:50:10 GMT	Ethan Benson <erbenson@alaska.net>	patch-4
 
     Summary:

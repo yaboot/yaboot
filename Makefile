@@ -1,21 +1,16 @@
-## Configuration section
+## Setup
 
-VERSION = 1.3.3
-# Debug mode (verbose)
+include Config
+
+VERSION = 1.3.4pre1
+# Debug mode (spam/verbose)
 DEBUG = 0
+# make install vars
 ROOT =
 PREFIX = usr/local
 MANDIR = man
+# command used to get root (needed for tarball creation)
 GETROOT = fakeroot
-
-# Enable text colors
-CONFIG_COLOR_TEXT = y
-# Enable colormap setup
-CONFIG_SET_COLORMAP = y
-# Enable splash screen
-CONFIG_SPLASH_SCREEN = n
-# Enable md5 passwords
-USE_MD5_PASSWORDS = y
 
 # We use fixed addresses to avoid overlap when relocating
 # and other trouble with initrd
@@ -33,29 +28,33 @@ KERNELADDR	= 0x01400000
 #
 CROSS = 
 
-# The flags for the target compiler.
+# The flags for the yaboot binary.
 #
-CFLAGS = -Os -nostdinc -Wall -isystem `gcc -print-file-name=include` -fsigned-char
-CFLAGS += -DVERSION=\"${VERSION}\"	#"
-CFLAGS += -DTEXTADDR=$(TEXTADDR) -DDEBUG=$(DEBUG)
-CFLAGS += -DMALLOCADDR=$(MALLOCADDR) -DMALLOCSIZE=$(MALLOCSIZE)
-CFLAGS += -DKERNELADDR=$(KERNELADDR)
-CFLAGS += -I ./include
+YBCFLAGS = -Os $(CFLAGS) -nostdinc -Wall -isystem `gcc -print-file-name=include` -fsigned-char
+YBCFLAGS += -DVERSION=\"${VERSION}\"	#"
+YBCFLAGS += -DTEXTADDR=$(TEXTADDR) -DDEBUG=$(DEBUG)
+YBCFLAGS += -DMALLOCADDR=$(MALLOCADDR) -DMALLOCSIZE=$(MALLOCSIZE)
+YBCFLAGS += -DKERNELADDR=$(KERNELADDR)
+YBCFLAGS += -I ./include
 
 ifeq ($(CONFIG_COLOR_TEXT),y)
-CFLAGS += -DCONFIG_COLOR_TEXT
+YBCFLAGS += -DCONFIG_COLOR_TEXT
 endif
 
 ifeq ($(CONFIG_SET_COLORMAP),y)
-CFLAGS += -DCONFIG_SET_COLORMAP
-endif
-
-ifeq ($(CONFIG_SPLASH_SCREEN),y)
-CFLAGS += -DCONFIG_SPLASH_SCREEN
+YBCFLAGS += -DCONFIG_SET_COLORMAP
 endif
 
 ifeq ($(USE_MD5_PASSWORDS),y)
-CFLAGS += -DUSE_MD5_PASSWORDS
+YBCFLAGS += -DUSE_MD5_PASSWORDS
+endif
+
+ifeq ($(CONFIG_FS_XFS),y)
+YBCFLAGS += -DCONFIG_FS_XFS
+endif
+
+ifeq ($(CONFIG_FS_REISERFS),y)
+YBCFLAGS += -DCONFIG_FS_REISERFS
 endif
 
 # Link flags
@@ -65,26 +64,33 @@ LFLAGS = -Ttext $(TEXTADDR) -Bstatic
 # Libraries
 #
 LLIBS = lib/libext2fs.a
-#LLIBS = -l ext2fs
+
+# For compiling userland utils
+#
+UCFLAGS = -Os $(CFLAGS) -Wall -I/usr/include
 
 # For compiling build-tools that run on the host.
 #
 HOSTCC = gcc
-HOSTCFLAGS = -I/usr/include $(CFLAGS)
+HOSTCFLAGS = -O2 $(CFLAGS) -Wall -I/usr/include
 
 ## End of configuration section
 
 OBJS = second/crt0.o second/yaboot.o second/cache.o second/prom.o second/file.o \
 	second/partition.o second/fs.o second/cfg.o second/setjmp.o second/cmdline.o \
-	second/fs_of.o second/fs_ext2.o second/fs_reiserfs.o second/fs_iso.o second/iso_util.o \
+	second/fs_of.o second/fs_ext2.o second/fs_iso.o second/iso_util.o \
 	lib/nosys.o lib/string.o lib/strtol.o lib/vsprintf.o lib/ctype.o lib/malloc.o lib/strstr.o
-
-ifeq ($(CONFIG_SPLASH_SCREEN),y)
-OBJS += second/gui/effects.o second/gui/colormap.o second/gui/video.o second/gui/pcx.o
-endif
 
 ifeq ($(USE_MD5_PASSWORDS),y)
 OBJS += second/md5.o
+endif
+
+ifeq ($(CONFIG_FS_XFS),y)
+OBJS += second/fs_xfs.o
+endif
+
+ifeq ($(CONFIG_FS_REISERFS),y)
+OBJS += second/fs_reiserfs.o
 endif
 
 CC = $(CROSS)gcc
@@ -92,16 +98,16 @@ LD = $(CROSS)ld
 AS = $(CROSS)as
 OBJCOPY = $(CROSS)objcopy
 
-all: yaboot addnote mkofboot
-
 lgcc = `$(CC) -print-libgcc-file-name`
+
+all: yaboot addnote mkofboot
 
 yaboot: $(OBJS)
 	$(LD) $(LFLAGS) $(OBJS) $(LLIBS) $(lgcc) -o second/$@
 	chmod -x second/yaboot
 
 addnote:
-	$(HOSTCC) $(HOSTCFLAGS) -o util/addnote util/addnote.c
+	$(CC) $(UCFLAGS) -o util/addnote util/addnote.c
 
 elfextract:
 	$(HOSTCC) $(HOSTCFLAGS) -o util/elfextract util/elfextract.c
@@ -110,10 +116,10 @@ mkofboot:
 	ln -sf ybin ybin/mkofboot
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(YBCFLAGS) -c -o $@ $<
 
 %.o: %.S
-	$(CC) $(CFLAGS) -D__ASSEMBLY__  -c -o $@ $<
+	$(CC) $(YBCFLAGS) -D__ASSEMBLY__  -c -o $@ $<
 
 dep:
 	makedepend -Iinclude *.c lib/*.c util/*.c gui/*.c

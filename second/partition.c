@@ -223,7 +223,7 @@ partitions_lookup(const char *device)
 	if (prom_blksize <= 1)
 		prom_blksize = 512;
 	if (prom_blksize > MAX_BLOCK_SIZE) {
-		prom_printf("block_size %d not supported !\n");
+		prom_printf("block_size %d not supported !\n", prom_blksize);
 		goto bail;
 	}
 	
@@ -246,7 +246,7 @@ partitions_lookup(const char *device)
 				prom_blksize);
 		prom_printf("ISO9660 disk\n");
 	} else {
-		prom_printf("Not a macintosh-formatted disk !\n");
+		prom_printf("No supported partition table detected\n");
 		goto bail;
 	}
 

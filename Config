@@ -1,0 +1,30 @@
+# Configuration variables, y == enabled n == disabled
+
+# Enable text color configurability: the fgcolor= and bgcolor= config
+# options (see yaboot.conf(5))
+#
+CONFIG_COLOR_TEXT 	:=	y
+
+# Enable colormap setup.  Required on PowerMacs for text coloring to
+# work right.
+#
+CONFIG_SET_COLORMAP 	:=	y
+
+# Enable md5 passwords, allows value of password= to be an MD5 hash as
+# well as cleartext.  When set to n only cleartext passwords are accepted.
+#
+USE_MD5_PASSWORDS 	:=	y
+
+# Filesystem support
+#
+# Enable SGI XFS
+#
+CONFIG_FS_XFS 		:=	y
+
+# Enable ReiserFS
+#
+CONFIG_FS_REISERFS 	:=	y
+
+# Local Variables:
+# mode: makefile
+# End:

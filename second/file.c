@@ -25,6 +25,7 @@
 #include "string.h"
 #include "partition.h"
 #include "fs.h"
+#include "errors.h"
 
 extern char bootdevice[1024];
 
@@ -33,6 +34,60 @@ extern char bootdevice[1024];
    the string passed in parameters is changed since 0 are put in place
    of some separators to terminate the various strings
  */
+
+int
+parse_device_path(char *imagepath, char *defdevice, int defpart,
+		  char *deffile, struct boot_fspec_t *result)
+{
+     char *ptr;
+     char *ipath = strdup(imagepath);
+     char *defdev = strdup(defdevice);
+
+     result->dev = NULL;
+     result->part = -1;
+     result->file = NULL;
+
+     if (!strstr(defdev, "ethernet") && !strstr(defdev, "enet")) {
+	  if ((ptr = strchr(defdev, ':')) != NULL)
+	       *ptr = 0; /* remove trailing : from defdevice if necessary */
+     }
+
+     if (!imagepath)
+	  goto punt;
+
+     if ((ptr = strrchr(ipath, ',')) != NULL) {
+	  result->file = strdup(ptr+1);
+	  /* Trim the filename off */
+	  *ptr = 0;
+     }
+
+     if (strstr(ipath, "ethernet") || strstr(ipath, "enet"))
+	  result->dev = strdup(ipath);
+     else if ((ptr = strchr(ipath, ':')) != NULL) {
+	  *ptr = 0;
+	  result->dev = strdup(ipath);
+	  if (*(ptr+1))
+	       result->part = simple_strtol(ptr+1, NULL, 10);
+     } else if (strlen(ipath)) {
+          result->file = strdup(ipath);
+     } else {
+	  return 0;
+     }
+     
+ punt:
+     if (!result->dev)
+	  result->dev = strdup(defdev);
+     
+     if (result->part < 0)
+	  result->part = defpart;
+     
+     if (!result->file)
+	  result->file = strdup(deffile);
+     free(ipath);
+     return 1;
+}
+
+#if 0
 char *
 parse_device_path(char *of_device, char **file_spec, int *partition)
 {
@@ -43,30 +98,41 @@ parse_device_path(char *of_device, char **file_spec, int *partition)
 	if (partition)
 		*partition = -1;
 
+	DEBUG_F("of_device before parsing: %s\n", of_device);
 	p = strchr(of_device, ':');
-	if (p)
-		*p = 0;
-	else
-		return of_device;
-	
-	last = ++p;
+	DEBUG_F("of_device after parsing: %s\n", p);
+
+	if (!p) {                          /* if null terminated we are finished */
+	     DEBUG_F("of_device: %s\n", of_device);
+	     return of_device;
+	}
+#if 0 /* this is broken crap, breaks netboot entirely */
+	else if (strstr(of_device, "ethernet") != NULL)
+	     p = strchr(of_device, ',');  /* skip over ip all the way to the ',' */
+	else if (strstr(of_device, "enet") != NULL)
+	     p = strchr(of_device, ',');  /* skip over ip all the way to the ',' */
+#endif
+	*p = 0;
+	last = ++p;                       /* sets to start of second part */
 	while(*p && *p != ',') {
         if (!isdigit (*p)) {
-			p = last;
-			break;
-		}
-		++p;
+	     p = last;
+	     break;
+	}
+	++p;
 	}
 	if (p != last) {
-		*(p++) = 0;
-		if (partition)
-            *partition = simple_strtol(last, NULL, 10);
+	     *(p++) = 0;
+	     if (partition)
+		  *partition = simple_strtol(last, NULL, 10);
 	}
 	if (*p && file_spec)
-		*file_spec = p;
-		
-	return of_device;
+	     *file_spec = p;
 
+	DEBUG_F("of_device: %s\n", of_device);
+	strcat(of_device, ":");
+	DEBUG_F("of_device after strcat: %s\n", of_device);
+	return of_device;
 }
 
 int
@@ -90,6 +156,8 @@ validate_fspec(		struct boot_fspec_t*	spec,
     return FILE_ERR_OK;
 }
 
+#endif
+
 static int
 file_block_open(	struct boot_file_t*	file,
 			const char*		dev_name,
@@ -110,10 +178,8 @@ file_block_open(	struct boot_file_t*	file,
 		prom_printf("no partitions found.\n");
 #endif
 	for (p = parts; p && !found; p=p->next) {
-#if DEBUG
-		prom_printf("number: %02d, start: 0x%08lx, length: 0x%08lx\n",
+		DEBUG_F("number: %02d, start: 0x%08lx, length: 0x%08lx\n",
 			p->part_number, p->part_start, p->part_size );
-#endif
 		if (partition == -1) {
                         file->fs = fs_open( file, dev_name, p, file_name );
 			if (file->fs != NULL)
@@ -130,14 +196,14 @@ file_block_open(	struct boot_file_t*	file,
 	/* Note: we don't skip when found is NULL since we can, in some
 	 * cases, let OF figure out a default partition.
 	 */
-        DEBUG_F( "Using OF defaults.. (found = 0x%x)\n", found );
+        DEBUG_F( "Using OF defaults.. (found = %p)\n", found );
         file->fs = fs_open( file, dev_name, found, file_name );
 
 bail:
 	if (parts)
 		partitions_free(parts);
 
-	return file->fs ? FILE_ERR_OK : FILE_ERR_NOTFOUND;
+	return fserrorno;
 }
 
 static int
@@ -186,10 +252,10 @@ static struct fs_t fs_default =
 int open_file(	const struct boot_fspec_t*	spec,
 		struct boot_file_t*		file)
 {
-	static char	temp[1024];
+//	static char	temp[1024];
 	static char	temps[64];
-	char		*dev_name;
-	char		*file_name = NULL;
+//	char		*dev_name;
+//	char		*file_name = NULL;
 	phandle		dev;
 	int		result;
 	int		partition;
@@ -201,6 +267,7 @@ int open_file(	const struct boot_fspec_t*	spec,
 	/* First, see if a device was specified for the kernel
 	 * if not, we hope that the user wants a kernel on the same
 	 * drive and partition as yaboot itself */
+#if 0 /* this is crap */
 	if (!spec->dev)
 		strcpy(spec->dev, bootdevice);
 	strncpy(temp,spec->dev,1024);
@@ -208,30 +275,30 @@ int open_file(	const struct boot_fspec_t*	spec,
 	if (file_name == NULL)
 		file_name = (char *)spec->file;
 	if (file_name == NULL) {
-		prom_printf("booting without a file name not yet supported !\n");
-		return FILE_ERR_NOTFOUND;
+	     prom_printf("Configuration error: null filename\n");
+	     return FILE_ERR_NOTFOUND;
 	}
 	if (partition == -1)
+#endif
 		partition = spec->part;
 
-#if DEBUG
-	prom_printf("dev_path = %s\nfile_name = %s\npartition = %d\n",
-		dev_name, file_name, partition);
-#endif	
+
+	DEBUG_F("dev_path = %s\nfile_name = %s\npartition = %d\n",
+		spec->dev, spec->file, partition);
+
 	/* Find OF device phandle */
-	dev = prom_finddevice(dev_name);
+	dev = prom_finddevice(spec->dev);
 	if (dev == PROM_INVALID_HANDLE) {
-		prom_printf("device not found !\n");
-		return FILE_ERR_NOTFOUND;
+		return FILE_ERR_BADDEV;
 	}
-#if DEBUG
-	prom_printf("dev_phandle = %08lx\n", dev);
-#endif	
+
+	DEBUG_F("dev_phandle = %p\n", dev);
+
 	/* Check the kind of device */
 	result = prom_getprop(dev, "device_type", temps, 63);
 	if (result == -1) {
 		prom_printf("can't get <device_type> for device\n");
-		return FILE_ERR_NOTFOUND;
+		return FILE_ERR_BADDEV;
 	}
 	temps[result] = 0;
 	if (!strcmp(temps, "block"))
@@ -240,20 +307,23 @@ int open_file(	const struct boot_fspec_t*	spec,
 		file->device_kind = FILE_DEVICE_NET;
 	else {
 		prom_printf("Unkown device type <%s>\n", temps);
-		return FILE_ERR_NOTFOUND;
+		return FILE_ERR_BADDEV;
 	}
 	
 	switch(file->device_kind) {
 	    case FILE_DEVICE_BLOCK:
-#if DEBUG
-		prom_printf("device is a block device\n");
-#endif
-	  	return file_block_open(file, dev_name, file_name, partition);
+		DEBUG_F("device is a block device\n");
+	  	return file_block_open(file, spec->dev, spec->file, partition);
 	    case FILE_DEVICE_NET:
-#if DEBUG
-		prom_printf("device is a network device\n");
-#endif
-	  	return file_net_open(file, dev_name, file_name);
+		DEBUG_F("device is a network device\n");
+	  	return file_net_open(file, spec->dev, spec->file);
 	}
 	return 0;
 }
+
+/* 
+ * Local variables:
+ * c-file-style: "K&R"
+ * c-basic-offset: 5
+ * End:
+ */
