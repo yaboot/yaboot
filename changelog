@@ -1,3 +1,13 @@
+2004-04-17  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.12
+
+	* ofpath: Support for 2.6 kernels (2.6.3 or later required).
+
+	* yaboot-howto: Add caveat regarding OSX UFS filesystems
+	  (Thanks to Brian Sammon, and to Stefan Pfetzing for the German
+	  translation).
+
 2003-11-20  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.11

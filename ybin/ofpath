@@ -27,7 +27,7 @@
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 PRG="${0##*/}"
-VERSION=1.0.6-pre2
+VERSION=1.0.6
 DEBUG=0
 export LC_COLLATE=C
 
@@ -348,7 +348,7 @@ ide_ofpath()
 
     if [ ! -f "$OF1275IDE" ] ; then
 	case "$(cat /proc/device-tree/model)" in
-	    PowerMac3*|PowerMac4*|PowerMac5*|PowerMac6*|PowerMac7*|X*)
+	    PowerMac3*|PowerMac4*|PowerMac5*|PowerMac6*|PowerMac7*|RackMac*)
 		local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep $DEVNODE)"
 		if [ -z "$CDROM" ] ; then
 		    echo 1>&2 "$PRG: WARNING: Your kernel is too old for proper support, device may be innaccurate."
