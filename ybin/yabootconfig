@@ -390,6 +390,21 @@ if [ -z "$ROOT" ] ; then
     fi
 fi
 
+## dereference label or uuid if necessary
+case "$ROOT" in
+    LABEL=*|UUID=*)
+	if ! (command -v findfs > /dev/null 2>&1) ; then
+	    echo 1>&2 "$PRG: Unable to locate findfs, aborting..."
+	    exit 1
+	fi
+	ROOT="$(findfs "$ROOT")"
+	if [ -z "$ROOT" -o $? != 0 ] ; then
+	    echo 1>&2 "$PRG: Could not determine root partition, aborting..."
+	    exit 1
+	fi
+	;;
+esac
+
 ## make sure root device exists
 if [ ! -e "$ROOT" ] ; then
     echo 1>&2 "$PRG: $ROOT: No such file or directory"

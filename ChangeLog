@@ -2,6 +2,20 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2004-07-11 19:52:17 GMT	Ethan Benson <erbenson@alaska.net>	patch-72
+
+    Summary:
+      Add LABEL/UUID support to yabootconfig
+    Revision:
+      yaboot--devel--1.3--patch-72
+
+    * ybin/yabootconfig: Add support for LABEL= and UUID= in
+      /etc/fstab. (Colin Watson)
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/yabootconfig
+
+
 2004-05-08 22:04:51 GMT	Ethan Benson <erbenson@alaska.net>	patch-71
 
     Summary:
