@@ -2,6 +2,22 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2004-02-22 13:15:30 GMT	Ethan Benson <erbenson@alaska.net>	patch-65
+
+    Summary:
+      Add caveat regarding UFS to yaboot howto
+    Revision:
+      yaboot--devel--1.3--patch-65
+
+    * Add caveat regarding UFS to temporary bootloader setup chapter of
+      the yaboot-howto (Thanks to Brian Sammon, and to Stefan Pfetzing for
+      the German translation).
+
+    modified files:
+     0arch-timestamps0 ChangeLog doc/yaboot-howto.de.sgml
+     doc/yaboot-howto.sgml
+
+
 2004-01-04 12:37:38 GMT	Ethan Benson <erbenson@alaska.net>	patch-64
 
     Summary:

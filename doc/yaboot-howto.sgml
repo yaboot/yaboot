@@ -20,7 +20,7 @@
       <author>
 	<name>Chris Tillman</name>
       </author>
-      <version>Version 1.03, Sep 14 2002</version>
+      <version>Version 1.04, Feb 22 2004</version>
       <abstract>
 This document contains installation and usage instructions for
 <prgn>yaboot</prgn>, the GNU/Linux PowerPC bootloader.
@@ -679,6 +679,14 @@ four lines:
 If you create <file>yaboot.conf</file> in the MacOS, you must convert
 it to use Unix newlines (linefeeds only). If you use MacOS newlines
 (just carriage returns), <prgn>yaboot</prgn> will be unable to read the file.
+
+<p>
+You must pick a partition that is formatted with either HFS or HFS+.  If 
+you have Mac OS X installed on a UFS partition (You can use the OS X "Disk
+Utility" app to check this), you will have to find another partition to use.
+If Mac OS X is installed on UFS, you probably have one or two partitions 
+of the "Apple_Boot" type.  They have HFS filesystems on them.  Pick one,
+mount it under MacOS X, and store the files there.
 
 <p>
 Boot into OpenFirmware, and type at the prompt:
