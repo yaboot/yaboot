@@ -2,6 +2,21 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-08-15 07:26:38 GMT	Ethan Benson <erbenson@alaska.net>	patch-26
+
+    Summary:
+      Bump yabootconfig version
+    Revision:
+      yaboot--devel--1.3--patch-26
+
+    * Bump yabootconfig version number.
+    
+    
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/yabootconfig
+
+
 2002-08-15 07:24:35 GMT	Ethan Benson <erbenson@alaska.net>	patch-25
 
     Summary:
