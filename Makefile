@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.6pre1
+VERSION = 1.3.6pre2
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars
@@ -138,6 +138,7 @@ bindist: all
 	mkdir -p -m 755 ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot
 	cp -a COPYING ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/COPYING
 	cp -a README ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/README
+	cp -a doc/README.rs6000 ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/README.rs6000
 	cp -a doc/yaboot-howto.html ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/yaboot-howto.html
 	cp -a doc/yaboot-howto.sgml ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/yaboot-howto.sgml
 	mv ../yaboot-binary-${VERSION}/etc/yaboot.conf ../yaboot-binary-${VERSION}/usr/local/share/doc/yaboot/

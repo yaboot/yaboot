@@ -83,14 +83,19 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 	  }
      }
 
-     if ((ptr = strrchr(ipath, ',')) != NULL) {
-	  char *colon = strrchr(ipath, ':');
-	  /* If a ':' occurs *after* a ',', then we assume that there is
-	     no filename */
-	  if (!colon || colon < ptr) {
-	       result->file = strdup(ptr+1);
-	       /* Trim the filename off */
-	       *ptr = 0;
+     /* if there is no : then there is no filename or partition.  must
+        use strrchr() since enet:,10.0.0.1,file is legal */
+
+     if (strchr(ipath, ':') != NULL) {
+	  if ((ptr = strrchr(ipath, ',')) != NULL) {
+	       char *colon = strrchr(ipath, ':');
+	       /* If a ':' occurs *after* a ',', then we assume that there is
+		  no filename */
+	       if (!colon || colon < ptr) {
+		    result->file = strdup(ptr+1);
+		    /* Trim the filename off */
+		    *ptr = 0;
+	       }
 	  }
      }
 

@@ -542,8 +542,9 @@ void check_password(char *str)
 {
      int i;
 
+     prom_printf("\n%s", str);
      for (i = 0; i < 3; i++) {
-	  prom_printf ("\n%sassword: ", str);
+	  prom_printf ("\nPassword: ");
 	  passwdbuff[0] = 0;
 	  cmdedit ((void (*)(void)) 0, 1);
 	  prom_printf ("\n");
@@ -558,11 +559,15 @@ void check_password(char *str)
 	  if (!strcmp (password, passwdbuff))
 	       return;
 #endif /* USE_MD5_PASSWORDS */
-	  if (i < 2)
-	       prom_printf ("Password incorrect. Please try again...");
+	  if (i < 2) {
+	       prom_sleep(1);
+	       prom_printf ("Incorrect password.  Try again.");
+	  }
      }
-     prom_printf ("Seems like you don't know the access password.  Go away!\n");
-     prom_sleep(3);
+     prom_printf(" ___________________\n< Permission denied >\n -------------------\n"
+		 "        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n"
+		 "                ||----w |\n                ||     ||\n");
+     prom_sleep(4);
      prom_interpret("reset-all");
 }
 
@@ -694,15 +699,18 @@ int get_params(struct boot_param_t* params)
 		    restricted = 1;
 	       if (label) {
 		    if (params->args && password && restricted)
-			 check_password ("To specify image arguments you must enter the p");
+			 check_password ("To specify arguments for this image "
+					 "you must enter the password.");
 		    else if (password && !restricted)
-			 check_password ("P");
+			 check_password ("This image is restricted.");
 	       }
 	       params->args = make_params(label, params->args);
 	  }
      }
 
      if (!strcmp (imagename, "help")) {
+          /* FIXME: defdevice shouldn't need to be reset all over the place */
+	  if(!defdevice) defdevice = boot.dev;
 	  prom_printf(
 	       "\nPress the tab key for a list of defined images.\n"
 	       "The label marked with a \"*\" is is the default image, "
@@ -723,13 +731,13 @@ int get_params(struct boot_param_t* params)
 
      if (!strcmp (imagename, "halt")) {
 	  if (password)
-	       check_password ("P");
+	       check_password ("Restricted command.");
 	  prom_pause();
 	  return 0;
      }
      if (!strcmp (imagename, "bye")) {
 	  if (password) {
-	       check_password ("P");
+	       check_password ("Restricted command.");
 	       return 1;
 	  }
 	  return 1; 
@@ -738,7 +746,7 @@ int get_params(struct boot_param_t* params)
      if (imagename[0] == '$') {
 	  /* forth command string */
 	  if (password)
-	       check_password ("P");
+	       check_password ("OpenFirmware commands are restricted.");
 	  prom_interpret(imagename+1);
 	  return 0;
      }
@@ -746,7 +754,7 @@ int get_params(struct boot_param_t* params)
      strncpy(imagepath, imagename, 1024);
 
      if (!label && password)
-	  check_password ("To boot a custom image you must enter the p");
+	  check_password ("To boot a custom image you must enter the password.");
 
      if (!parse_device_path(imagepath, defdevice, defpart,
 			    "/vmlinux", &params->kernel)) {

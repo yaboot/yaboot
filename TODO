@@ -1,8 +1,8 @@
 * Interactive shell mode for yaboot, similar to the grub shell.
 
 * Add nvram updating support for IBM hardware.  This requires ofpath
-  to support these machines.  It also requires a compatible nvsetenv
-  or equivilent. 
+  to support these machines (ofpath done, or mostly so).  It also
+  requires a compatible nvsetenv or equivilent. 
 
 * Validate yaboot options before proceeding. (need better config parsing)
 
@@ -14,4 +14,6 @@
 * Figure out all the crap with CHRP netbooting, probably have to remove
   hard-coding of ":0" after a net device path (done as of 1.3.4?)
 
-* Support for compressed images
+* JFS support.
+
+* Support for compressed images (this will probably be solved in the kernel)
