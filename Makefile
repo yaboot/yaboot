@@ -148,18 +148,22 @@ bindist: all
 
 clean:
 	rm -f second/yaboot util/addnote util/elfextract $(OBJS)
-	find . -name '#*' | xargs rm -f
-	find . -name '.#*' | xargs rm -f
-	find . -name '*~' | xargs rm -f
-	find . -name '*.swp' | xargs rm -f
+	find . -path './{arch}' -prune -o -name '#*' | xargs rm -f
+	find . -path './{arch}' -prune -o -name '.#*' | xargs rm -f
+	find . -path './{arch}' -prune -o -name '*~' | xargs rm -f
+	find . -path './{arch}' -prune -o -name '*.swp' | xargs rm -f
 	-gunzip man/*.gz
 	rm -rf man.deb
-	chmod 755 ybin/ybin ybin/ofpath ybin/yabootconfig
-	chmod -R u+rwX,go=rX .
-	chmod a-w COPYING
 
 cleandocs:
 	make -C doc clean
+
+## removes arch revision control crap, only to be called for making
+## release tarballs.  arch should have a export command like cvs...
+
+archclean:
+	rm -rf '{arch}'
+	find . -type d -name .arch-ids | xargs rm -rf
 
 maintclean: clean cleandocs
 

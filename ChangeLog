@@ -2,6 +2,30 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-31 05:00:26 GMT	Ethan Benson <erbenson@alaska.net>	patch-17
+
+    Summary:
+      Update clean targets
+    Revision:
+      yaboot--devel--1.3--patch-17
+
+    * Remove chmod calls from make clean, arch is supposed to keep track
+      of permissions correctly so they shouldn't be needed now.
+    
+    * Add '-path './{arch}' -prune -o ' to all the find calls so cleaning
+      doesn't recurse into arch's revision control directories and possibly
+      corrupt them.
+    
+    * Add archclean target which removes all of arch's cruft so release
+      tarballs won't be ridiculously bloated (arch keeps a complete
+      duplicate copy of the source making the tarball twice the size it
+      should be, no good for release tarballs).  If people want a `archable'
+      tree they should just use arch to check one out.
+
+    modified files:
+     ChangeLog Makefile
+
+
 2002-03-27 14:10:34 GMT	Ethan Benson <erbenson@alaska.net>	patch-16
 
     Summary:
