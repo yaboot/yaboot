@@ -2,6 +2,22 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-10-27 00:57:19 GMT	Ethan Benson <erbenson@alaska.net>	patch-35
+
+    Summary:
+      Change ofpath to use /proc/ide/of1275 instead of /proc/ide/pmac
+    Revision:
+      yaboot--devel--1.3--patch-35
+
+    * ofpath: the current incarnation of /proc/ide/pmac is not supported
+      by ofpath, and I believe this file should be renamed since it should
+      not be inherently pmac specific.  When the format of this file is
+      updated it can be renamed at the same time.
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/ofpath
+
+
 2002-10-27 00:40:09 GMT	Ethan Benson <erbenson@alaska.net>	patch-34
 
     Summary:

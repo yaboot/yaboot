@@ -296,7 +296,7 @@ scsi_ofpath()
 
 ide_ofpath()
 {
-    local OF1275IDE=/proc/ide/pmac
+    local OF1275IDE=/proc/ide/of1275
 
     if [ ! -f "$OF1275IDE" ] ; then
 	case "$(cat /proc/device-tree/model)" in
