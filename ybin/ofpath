@@ -27,7 +27,7 @@
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 PRG="${0##*/}"
-VERSION=1.0.3-DEVEL_DO_NOT_DISTRIBUTE-patch-37
+VERSION=1.0.3-DEVEL_DO_NOT_DISTRIBUTE-patch-38
 DEBUG=0
 export LC_COLLATE=C
 
@@ -332,19 +332,37 @@ ide_ofpath()
 		;;
 	esac
     else
-	local DEVSPEC="$OF1275IDE"
+	local DEVSPEC="$(cat $OF1275IDE)"
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVSPEC=$DEVSPEC"
 	if [ -z "$DEVSPEC" ] ; then
 	    echo 1>&2 "$PRG: KERNEL BUG: $OF1275IDE exists, but is empty"
 	    return 1
 	fi
+
+	case "$(cat /proc/device-tree${DEVSPEC}/device_type 2> /dev/null)" in
+	    ata)
+		local CHANNEL=""
+		;;
+	    pci-ata)
+		if [ ! -f "/proc/ide/${IDEBUS}/channel" ] ; then
+		    echo 1>&2 "$PRG: KERNEL BUG: /proc/ide/${IDEBUS}/channel does not exist"
+		    return 1
+		fi
+		local CHANNEL="/@$(cat /proc/ide/${IDEBUS}/channel)"
+		;;
+	    *)
+		echo 2>&1 "$PRG: Unsupported IDE device type: \"$(cat /proc/device-tree${DEVSPEC}/device_type 2> /dev/null)\""
+		return 1
+		;;
+	esac
+
 	case "$DEVNODE" in
 	    hda|hdc|hde|hdg|hdi)
-		echo "${DEVSPEC}/disk@0:$PARTITION"
+		echo "${DEVSPEC}${CHANNEL}/disk@0:$PARTITION"
 		return 0
 		;;
 	    hdb|hdd|hdf|hdh|hdj)
-		echo "${DEVSPEC}/disk@1:$PARTITION"
+		echo "${DEVSPEC}${CHANNEL}/disk@1:$PARTITION"
 		return 0
 		;;
 	    *)
