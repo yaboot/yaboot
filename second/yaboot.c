@@ -291,8 +291,10 @@ load_config_file(char *device, char* path, int partition)
     fspec.part = partition;
     result = open_file(&fspec, &file);
     if (result != FILE_ERR_OK) {
-    	prom_printf("Can't open config file '%s', err: %d\n", conf_path, result);
-	goto bail;
+	 prom_printf("%s:%d", fspec.dev, fspec.part);
+	 prom_perror(result, fspec.file);
+	 prom_printf("Can't open config file\n");
+	 goto bail;
     }
     opened = 1;
 

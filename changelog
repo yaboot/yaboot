@@ -1,6 +1,15 @@
+2001-10-10  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.4pre2
+
+	* yaboot:
+	  - Fix netboot when using the `n' key.
+	  - Make configuration file open error consistent with other file
+	    open errors.
+	
 2001-10-09  Ethan Benson  <erbenson@alaska.net>
 
-	* Version 1.3.4-pre1
+	* Version 1.3.4pre1
 
 	* yaboot:
 	  - Add SGI XFS filesystem support.

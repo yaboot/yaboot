@@ -48,7 +48,7 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      result->file = NULL;
 
      if (!strstr(defdev, "ethernet") && !strstr(defdev, "enet")) {
-	  if ((ptr = strchr(defdev, ':')) != NULL)
+	  if ((ptr = strrchr(defdev, ':')) != NULL)
 	       *ptr = 0; /* remove trailing : from defdevice if necessary */
      }
 
@@ -62,6 +62,10 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      }
 
      if (strstr(ipath, "ethernet") || strstr(ipath, "enet"))
+	  if ((ptr = strstr(ipath, "bootp")) != NULL) { /* `n' key booting boots enet:bootp */
+	       *ptr = 0;
+	       result->dev = strdup(ipath);
+	  } else
 	  result->dev = strdup(ipath);
      else if ((ptr = strchr(ipath, ':')) != NULL) {
 	  *ptr = 0;
