@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.7-pre1
+VERSION = 1.3.7
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars

@@ -19,6 +19,16 @@ directory. For documentation about all the options available, see the
 man pages (bootstrap, yaboot, yaboot.conf, ybin, mkofboot, ofpath,
 yabootconfig).
 
+Mailing lists
+-------------------------------------------------------------------
+The following mailing lists exist for yaboot:
+
+yaboot-announce   Announcements regarding yaboot (read-only)
+yaboot-users      User related questions/discussion regarding yaboot
+yaboot-devel      Technical and development discussion regarding yaboot
+
+Please see http://lists.penguinppc.org/LISTNAME where LISTNAME is one
+of the above named lists.
 
 -------------------------------------------------------------------
 Bootloader Installation Utilities  

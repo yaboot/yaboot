@@ -1,6 +1,6 @@
-2002-9-14  Ethan Benson  <erbenson@alaska.net>
+2002-9-28  Ethan Benson  <erbenson@alaska.net>
 
-	* Version 1.3.7-pre1
+	* Version 1.3.7
 
 	* Documentation:
 	  - Add German translation of yaboot-howto.
@@ -8,15 +8,20 @@
 	  - No longer tell people to send bugs to benh in yabootconfig(8).
 
 	* yaboot:
-	  - Fix file search so IBM CHRP will work if there is more then
+	  - Fix file search so IBM CHRP will work if there is more than
 	    one type 0x83 partition.
 	  - Fix possible reiserfs symlink resolution failure.
 
 	* yabootconfig:
-	  - Fix corner case /etc/fstab parsing failure.
+	  - Fix corner case /etc/fstab parsing failure. (Debian bug#156742).
 
-	* Small build system modifcations (mostly to accomidate the use of
+	* Small build system modifcations (mostly to accommodate the use of
 	  the arch revision control system.
+
+	* yaboot now includes two changelogs: "ChangeLog" which is a
+	  detailed automatically generated list of changes, and "changelog"
+	  (this file) which is a hand written understandable summery of
+	  changes between releases.
 
 2001-12-01  Ethan Benson  <erbenson@alaska.net>
 
