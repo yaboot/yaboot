@@ -194,8 +194,8 @@ scsiinfo()
 		    -n "$(ls /sys/bus/scsi/devices 2>/dev/null)" ] ; then
 		    echo 1>&2 "$PRG: /proc/scsi/scsi does not exist"
 		    echo 1>&2 "$PRG: Make sure you compiled your kernel with CONFIG_SCSI_PROC_FS=n"
+		    return 1
 		fi
-		return 1
 		;;
 	esac
 	echo 1>&2 "$PRG: /dev/$DEVNODE: Device not configured"
