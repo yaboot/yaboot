@@ -312,7 +312,7 @@ TMPBOOT=`mktemp -q "$TMP/ofboot.XXXXXX"`
 $PRINTF \
 "<CHRP-BOOT>
 <COMPATIBLE>
-MacRISC MacRISC3
+MacRISC MacRISC3 MacRISC4
 </COMPATIBLE>
 <DESCRIPTION>
 PowerPC GNU/Linux First Stage Bootstrap
