@@ -165,6 +165,7 @@ cleandocs:
 archclean:
 	rm -rf '{arch}'
 	find . -type d -name .arch-ids | xargs rm -rf
+	rm -f 0arch-timestamps0
 
 maintclean: clean cleandocs
 
