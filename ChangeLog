@@ -2,6 +2,20 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2003-11-10 08:52:02 GMT	Ethan Benson <erbenson@alaska.net>	patch-57
+
+    Summary:
+      Detect lack of CONFIG_SCSI_PROC_FS in ofpath on 2.6 systems
+    Revision:
+      yaboot--devel--1.3--patch-57
+
+    * ybin/ofpath: Under 2.6 systems detect lack of CONFIG_SCSI_PROC_FS in
+      kernel configuration and print error message indicating its required.
+
+    modified files:
+     ./0arch-timestamps0 ./ChangeLog ./ybin/ofpath
+
+
 2003-11-06 07:28:26 GMT	Ethan Benson <erbenson@alaska.net>	patch-56
 
     Summary:
