@@ -4,11 +4,6 @@
 ## Change `unconfigured' to your bootstrap partition ie: /dev/hda2
 boot=unconfigured
 
-## fstype=raw is what makes ybin dd yaboot to the bootstrap partition
-## instead of using a filesystem. 
-
-fstype=raw
-
 ## device is the OpenFirmware device path to the disk containing
 ## kernel images.  if your disk is /dev/hda you can find the
 ## OpenFirmware path by running the command: ofpath /dev/hda DO NOT
@@ -47,7 +42,7 @@ nonvram
 
 ## Password supplied as an md5 hash, see above
 
-#password=$1$saltstri$WHZcnT3IOdSrMvizOq7Ht1
+#password=$1$saltstrg$HnJ/gcM3oKhNbnzUPgXTD/
 
 ## A password is only required to boot an image specified here if
 ## parameters are specified on the command line or if the user enters

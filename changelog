@@ -1,3 +1,24 @@
+2001-11-21  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.6pre1
+
+	* The "IBM needs to test prereleases" release.
+
+	* New IGNORE^H^H^H^H^H^HREADME, thanks to Chris Tillman for
+	  cleaning up the pile of cruft that this thing was.
+
+	* ybin:
+	  - Automatically use fstype=raw on IBM CHRP, it no longer needs
+	    to be explicitly set in /etc/yaboot.conf.
+	  - Deprecate ybin's yaboot.conf auto-generation, use yabootconfig
+	    instead.
+
+	* yaboot:
+	  - Fix device path parsing to support devices containing a comma,
+	    but not including a filename.
+	  - Fix IBM CHRP support.
+	  - Add support for zImage.initrd (Peter Bergner).
+
 2001-10-28  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.5

@@ -3,8 +3,6 @@ RS/6000 yaboot Notes
 
 A. System Partitioning:
    1. Only FDISK partitioning has been tested on the RS/6000.
-      However, yaboot does support mac partitions on a mac, so they should
-      work on an RS/6000 if you really want to go that route.
    2. Extended FDISK partitions have not been tested and are not expected to
       work at this time.
    3. yaboot must be installed by itself in a bootable partition of type 0x41.

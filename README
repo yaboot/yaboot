@@ -1,233 +1,204 @@
 Yaboot  -- PowerPC GNU/Linux OpenFirmware bootloader
---------------------------------------------
+-------------------------------------------------------------------
 
 Please read the "COPYING" file for licence informations.
 
-   Copyright (C) 2000 Benjamin Herrenschmidt
-
-   portions based on "poof"
-
-   Copyright (C) 1999 Marius Vollmer
-
-   portions based on "quik"
-   
-   Copyright (C) 1996 Paul Mackerras.
-
-   PPC64 support & Misc fixes by Peter Bergner, David Engebretsen
-   
-
---------------------------------------------
+-------------------------------------------------------------------
 
 Yaboot is an OpenFirmware bootloader for Open Firmware based
-machines. It is known to work on "NewWorld" class powermacs
-(iMac and all machines released after it), RS/6000, and possibly
-other OF based CHRP machines.
-"OldWorld" PowerMacs (with the old MacOS ROM buit-in) are not
-supported.
+machines. It is known to work on "NewWorld" class powermacs (iMac and
+all machines released after it), RS/6000, and possibly other OF based
+CHRP machines. "OldWorld" PowerMacs (with the built-in MacOS ROM)
+are not supported.
 
-ybin Written by Ethan Benson <erbenson@alaska.net>
+This README serves as a quick-start introduction to yaboot and its
+installation utilities. For a more complete usage and installation
+guide, see yaboot-howto.html/index.en.html in the same folder where
+this README is located, or else inside the doc folder in this
+directory. For documentation about all the options available, see the
+man pages (bootstrap, yaboot, yaboot.conf, ybin, mkofboot, ofpath,
+yabootconfig).
 
-ybin (YaBoot INstaller) was created so that there could be a lilo/quik
-style bootloader installer for PowerPC based machines which require
-bootstrap partitions rather then a traditional bootblock (ie all
-`NewWorld' Macintoshes).  It is designed to install yaboot, an
-OpenFirmware bootloader for GNU/Linux written by Benjamin
-Herrenschmidt.  When ybin is configured correctly you can simply type
-ybin, and the bootloader and its configuration file will be
-installed/updated on the bootstrap partition without any further user
-intervention.
 
-ybin also supports IBM PowerPC hardware which requires a slightly
-different bootstrap partition setup, yaboot is directly dded to the
-partition instead of copied to a filesystem on the partition.  For
-these machines add fstype=raw to your /etc/yaboot.conf.  See
-examples/yaboot.conf.rs6k for an example configuration.
+-------------------------------------------------------------------
+Bootloader Installation Utilities  
+ybin, mkofboot, ofpath, yabootconfig
+Written by Ethan Benson <erbenson@alaska.net>
+-------------------------------------------------------------------
 
-Both ybin and mkofboot are shell scripts (compatible with ash, sh,
-bash).  These are the first real scripts that I have written with any
-sort of complexity, so don't be too brutal if they are ugly and
-inefficient. ;-) Suggestions on how to do things better are welcome.
+ybin (YaBoot INstaller) and mkofboot
+-------------------------------------------------------------------
 
-ybin can update a bootstrap filesystem either on a block device or a
-ordinary file (as in a image of a filesystem.) 
+ybin is a lilo/quik style bootloader installer for PowerPC based
+machines which require a bootstrap partition rather than a traditional
+bootblock (i.e. all `NewWorld' Macintoshes). When ybin is configured
+correctly you can simply type ybin at the command line as root, and
+the bootloader and its configuration file will be installed or updated
+on the bootstrap partition without any further user intervention.
 
-Unless you use the usemount (or --mount) option it does not
-necessarily need to be run as root, but it probably will, unless you
-changed device permissions or are only updating an image.
+ybin also supports IBM PowerPC hardware which requires a slightly different
+bootstrap partition setup. For these machines, ybin uses dd to write yaboot
+directly to the partition instead of copying it to a filesystem on the
+partition. ybin will add the requisite .note section to yaboot prior to
+installation (IBM CHRP only).
 
-mkofboot is a companion script (actually a symlink to ybin) to
-initialise the bootstrap partition and then run ybin to install the
-bootloader on it.  It uses the same configuration file as ybin to find
-the device to use. It will validate the configuration file before
-actually creating the filesystem. It will also confirm you want to
-continue before proceeding unless called with the -f or --force
-switch.
+mkofboot is a companion script (actually a symlink to ybin) which
+initializes the bootstrap partition prior to running ybin to install
+the bootloader on it. mkofboot will confirm you want to continue
+before proceeding unless called with the -f or --force switch. This
+is in contrast to ybin, which is non destructive except that it
+overwrites any existing yaboot files (yaboot and yaboot.conf) at the
+root level of the bootstrap filesystem.
 
-(>= 0.18): ofpath utility now included which can usually find the
-OpenFirmware device path that corresponds with a unix device node in
-/dev/.  Ybin will use this utility automatically to find the path to
-the bootstrap partition and to any defined macos/macosx partitions.
-NOTE: ofpath may not work with all SCSI cards/drivers. 
-IMPORTANT: ofpath will NOT work if you boot your machine with BootX.
-
-ofpath is based on the utility `show_of_path.sh' written by Olaf
-Hering. 
-
-(>= 0.20): ybin will now check for the new nvsetenv that is
-compatible with Newworld PowerMacs, and if found it will automatically
-update the boot-device variable in nvram to that of the bootstrap
-partition.  This feature can be disabled by passing the --nonvram
-switch to ybin or by adding `nonvram' to /etc/yaboot.conf.  This
-feature works in both the userland and `usemount' modes.  In userland
-mode ybin sets the boot-device variable to <path>,\\:tbxi, for example
-if your bootstrap partition is /dev/hda2 boot-device will be set to
-hd:2,\\:tbxi, in `usemount' mode it would be set to hd:2,ofboot (or
-hd:2,yaboot if you don't have magicboot= set.)
-
-NEW (>= 0.31): The ofboot script now has configurable colors, you can
-change the foreground (text) and background colors it will use with
-the fgcolor= and bgcolor= options in yaboot.conf, see below for
-details.  Yaboot 1.0 and later also supports these options. 
+mkofboot and ybin both refer to the same configuration file (normally
+yaboot.conf) to determine where the bootstrap files will be placed. 
 
 IMPORTANT: The bootstrap partition should never be mounted anywhere on
 your filesystem, ybin and mkofboot will check if it is and refuse to
-operate on it if its mounted.  It is not necessary to keep anything
+operate on it if it is mounted.  It is not necessary to keep anything
 but the boot loader on the bootstrap partition, yaboot will load the
-kernel from your ext2fs root partition so do not mount the bootstrap
-partition on top of /boot.
+kernel from your root partition (which can be an ext2/3, XFS, or
+ReiserFS filesystem). Do not mount the bootstrap partition on top of
+/boot.
 
-ybin now fully supports command line switches, see ybin --help for
-information on these.
-
-NEW: ybin can now generate a basic yaboot.conf on the fly that you may
-customise with command line options:
-
-      --device               yaboot auto configuration: sets the OF boot device
-                               default: hd:
-      --partition            yaboot auto configuration: sets the partition 
-                               number of the root partition. default: 3
-      --timeout              yaboot auto configuration: sets the time yaboot
-                               will wait for user input before booting default
-                               image default: 20 (2 seconds)
-      --image                yaboot auto configuration: sets the path to the 
-                               kernel image. default: /vmlinux
-      --label                yaboot auto configuration: sets the image label
-                               default: Linux
-      --root                 yaboot auto configuration: sets the root device
-                               default: /dev/hda3
-
-This is experimental but appears to work ok. 
-
-A much better method of generating an /etc/yaboot.conf is to run
-yabootconfig however.
+ybin can update a bootstrap filesystem either on a block device or in
+an ordinary file (as in an image of a filesystem.) 
 
 NOTE: You must have a secure mktemp program otherwise ybin will be
 vulnerable to race conditions.  Debian's mktemp qualifies I don't know
 about the other distributions, you have been warned. The temp file is
 created in /tmp by default but ybin will respect the $TMPDIR
-environment variable. 
+environment variable.
 
-Configuration file documentation:
 
-ybin will verify the configuration file is sane and valid
-before proceeding.
+ofpath
+-------------------------------------------------------------------
 
-IMPORTANT: The configuration file format as of version 0.12 has
-changed, see below for the current format, note some options have been
-removed. as with version 0.11 ybin allows you to put spaces around the
-= eg: boot = /dev/hda3 (however this prevents spaces from being
-embedded in the options themselves) As of version 0.12 the separate
-ybin.conf file is deprecated, instead ybin's options should be placed
-in /etc/yaboot.conf, you must have yaboot 0.6 or later for this to
-work.  Ybin will no longer use the obsolete /etc/ybin.conf.
+The included ofpath utility can usually determine the OpenFirmware
+device path that corresponds with a unix device node in /dev/.  Ybin
+uses this utility to find the path to the bootstrap partition and to
+any defined macos/macosx partitions. ofpath is based on the utility
+`show_of_path.sh' written by Olaf Hering.
 
-The kludge, and kludgedir options have been removed. The bootconf
-option has been deprecated since yaboot and ybin both use
-/etc/yaboot.conf (or whatever config file is specified to the -C
-switch).
 
-boot= (same as -b or --boot)
+NOTE: ofpath may not work with all SCSI cards/drivers.
 
-This option defines what device the bootstrap partition is.  It also
-be a regular file if you are creating a filesystem image for some
-reason. It is safe to specify a MacOS boot partition as long as you DO
-NOT use mkofboot.  ybin is non destructive except that is overwrites
-any existing yaboot files (yaboot and yaboot.conf) at the root level
-of the bootstrap filesystem. The default config file has this set to
-"unconfigured which will cause ybin to complain about you not reading
-the docs, it is the only option you should need to change for ybin to
-work. Example boot=/dev/hda2
+IMPORTANT: ofpath will NOT work on NewWorld Powermacs if the machine
+was booted with BootX.
 
-ofboot= (same as -o or --ofboot) 
 
-This option defines the OpenFirmware device path to the bootstrap
-partition.  This is needed so the first stage ofboot loader can be
-configured properly.  It should include the OpenFirmware path
-including the partition number (but not a filename). Example: if your
-bootstrap partition is /dev/hda2 the OF path will likely be hd:2.
-As of ybin 0.18 you no longer are required to specify this option, if
-left undefined ybin will attempt to figure out the OpenFirmware path
-automatically using the ofpath utility.  You should only need to
-define this option if ofpath fails.
+yabootconfig
+-------------------------------------------------------------------
 
-install= (same as -i or --install)
+Yabootconfig creates a default configuration file and then runs mkofboot to
+complete the bootloader installation. yabootconfig reads the running
+system's /etc/fstab to determine the kernel location, and detects the
+location of the 800k Apple_Bootstrap partition. It will also find IBM
+CHRP bootstrap partitions (type 0x41 PReP Boot).
 
-The full pathname to the yaboot OpenFirmware executable file.  This
-file will be copied to the root level of the bootstrap partition, its
-filename will not be changed. The default is
-/usr/local/lib/yaboot/yaboot, or if that does not exist
-/usr/lib/yaboot/yaboot.
+
+
+Yaboot.conf Configuration File
+-------------------------------------------------------------------
+
+yaboot.conf configuration file settings are covered in detail in `man
+yaboot.conf'. Avoid the use of spaces in the config file, except in
+comment lines or inside quotes. Here are the essential settings.
+
+
+boot=
+Example:   boot=/dev/hda2
+
+This required setting defines the bootstrap partition device.  It can
+also be a regular file if you are creating a filesystem image for some
+reason. The default config file has this set to ``unconfigured'' which
+will cause ybin to complain about you not reading the docs, it is the
+only option you should need to change for ybin to work. Be sure you
+include the partition number at the end, it should never be something
+like /dev/hda. 
+
+
+install= 
+Example:  install=/usr/lib/yaboot/yaboot or /usr/local/lib/yaboot/yaboot
+
+The full pathname to the yaboot OpenFirmware executable file. The
+default is shown above. This file will be copied to the root level of
+the bootstrap partition. Note: If you are installing an alternative
+bootloader, its filename will be changed to yaboot when it is copied
+(to match what the first stage bootloader expects to be loading).
+
+
+partition=
+Example:   partition=3
+
+The partition number on which the kernel image is located. By default,
+this partition is assumed to be on the same device from which yaboot
+was loaded. If needed, device= can be used to explicitly specify the 
+device.
+
+
+image=
+Examples:  image=/vmlinux  or  image=/boot/vmlinux-2.2.19-pmac
+
+The path to the image from the root level of the partition (remember
+that yaboot is unaware of mountpoints).  Don't forget to include the
+leading slash when specifying the image path (image=vmlinux will
+probably fail).
+
+
+root=
+Example:   root=/dev/hda3
+
+The Linux device name for the root partition. This parameter is
+passed to the kernel when it starts up to let it know where its root
+filesystem is located. Refer to the yaboot.conf man page for details
+on kernel image options such as append=, initrd=, and initrd-size=.
+
 
 magicboot= (same as -m or --magicboot)
+Example:   /usr/local/lib/yaboot/ofboot 
 
-The full pathname to any OF CHRP script file. If this is defined then
-it will be given the HFS filetype defined below and the bootfile will
-be given type "boot" instead, if we set two files to `tbxi' we may get
-unpredictable results from OF.  A wrapper file would generally only be
-needed if you have a OF script that creates a nice boot menu or
-possibly adds a option to the newer ibook boot screens. IMPORTANT: it
-appears that OF will only load `tbxi' files if they have a CHRP script
-embedded, so this option is now on by default and will install the
-included basic script that just loads the yaboot executable. (at least
-until/if yaboot gets a embedded script) If you later change your mind
-about using an OF wrapper you will have to delete it manually from the
-bootstrap partition, ybin will not and cannot do it for you. If the
-partition is a dedicated bootstrap partition you can run mkofboot to
-remove it (and anything else).  This should be set to
-/usr/local/lib/yaboot/ofboot which is the new first stage loader
-configured automatically by ybin from options in /etc/yaboot.conf.
+Identifies the first stage loader. The example shown is the default. The
+ofboot script it refers to is included with and configured automatically by
+ybin from options in /etc/yaboot.conf. The magicboot= can be the full
+pathname to any OF CHRP script file. Since some newer OpenFirmware
+implementations appear to require a CHRP script, the magicboot= setting is
+highly recommended. If you don't include magicboot=, then yaboot itself will
+be the active bootfile.  magicboot= cannot be used on IBM CHRP.
 
-bsd= 
 
-The OpenFirmware or unix device path to a NetBSD or OpenBSD bootstrap
-partition, this partition must already have the BSD ofwboot.elf
-bootloader installed in the root directory.  When you define this
-option you will be presented with a simple menu at bootup allowing you
-to hit L to boot GNU/Linux or B to boot BSD (along with other choices
-if configured).  This will only work if you are using the new
-/usr/local/lib/yaboot/ofboot script.  When this is set to a unix
-device node (ie /dev/hda11) then ybin will use the ofpath utility to
-determine the OpenFirmware device path.
+Boot Menu Options
+-------------------------------------------------------------------
 
-macos= 
+The following options work only if you have specified the magicboot= option.
+Each option specifies an OpenFirmware or unix device path to another
+operating system's boot partition.  When you define one of these options you
+will be presented with a simple menu at bootup allowing you to hit `l' to
+boot GNU/Linux or another letter to boot the other OS (see below). These
+letters are typed without a shift key (the boot menu is case sensitive).
+When set to a unix device node such as /dev/hda11 then ybin will use the
+ofpath utility to determine the OpenFirmware device path.
 
-The OpenFirmware or unix device path to a MacOS 8.* or 9.* boot
-partition.  When you define this option you will be presented with a
-simple menu at bootup allowing you to hit L to boot GNU/Linux or M to
-boot MacOS (along with other choices if configured).  This will only
-work if you are using the new /usr/local/lib/yaboot/ofboot script.
-When this is set to a unix device node (ie /dev/hda11) then ybin will
-use the ofpath utility to determine the OpenFirmware device path.
+  Option       Letter  Operating System Type
+  ---------    ------  ---------------------------------------------
+  bsd=           b     NetBSD or OpenBSD root partition (you must 
+                          have the BSD ofwboot bootloader 
+                          installed at /usr/local/lib/yaboot/ofwboot)
 
-macosx= 
+  macos=         m     MacOS 8.* or 9.* bootable partition
 
-The OpenFirmware or unix device path to a MacOS X boot partition.
-When you define this option you will be presented with a simple menu
-at bootup allowing you to hit L to boot GNU/Linux or X to boot MacOSX
-(along with other choices if configured).  This will only work if you
-are using the new /usr/local/lib/yaboot/ofboot script.  
-When this is set to a unix device node (ie /dev/hda11) then ybin will
-use the ofpath utility to determine the OpenFirmware device path.
+  macosx=        x     MacOS X boot partition (also see brokenosx)
+
+  darwin=        d     Darwin boot partition
+
+  enablecdboot   c     Boot from the CDROM drive
+
+  enablenetboot  n     Boot from the network
+
+  enableofboot   o     Display an OpenFirmware prompt
+
+  defaultos=           The default OS to load (linux, bsd, macos, 
+                          darwin or macosx.
 
 brokenosx
 
@@ -241,149 +212,21 @@ this option if OSX is installed on a UFS filesystem, for UFS installs
 you specify the OSX bootstrap partition which is protected against
 MacOS.
 
-darwin=
-
-The OpenFirmware or unix device path to a Darwin boot partition.  When
-you define this option you will be presented with a simple menu at
-bootup allowing you to hit L to boot GNU/Linux or D to boot Darwin
-(along with other choices if configured).  This will only work if you
-are using the new /usr/local/lib/yaboot/ofboot script.  When this is
-set to a unix device node (ie /dev/hda11) then ybin will use the
-ofpath utility to determine the OpenFirmware device path.
-
-enablecdboot
-
-This option adds an entry to the multiboot menu to boot from the CDROM
-drive.
-
-enablenetboot
-
-This option adds an entry to the mulitboot menu to boot from the
-network.
-
-enableofboot
-
-This option adds an entry to the multiboot menu to boot into an
-OpenFirmware prompt.
-
-defaultos= 
-
-The name of the default OS to load.  This can be linux, bsd, macos or
-macosx. This option controls what the first stage ofboot loader will
-boot by default after the delay elapses.  This is only relevant if you
-are using the new /usr/local/lib/yaboot/ofboot script and you have
-defined bsd= and/or macos= and/or macosx= in /etc/yaboot.conf.
-
 delay= 
+Example:  delay=5
 
 The time in seconds that the first stage ofboot loader will wait for
-you to choose L for GNU/Linux,M for MacOS, or X for MacOSX before
-booting the default OS defined in defaultos=.  If not set the value of
-timeout= (converted to seconds) will be used.
+you to choose a letter before booting the default OS defined in
+defaultos=.  If not set, the value of timeout= (converted to seconds)
+will be used.
 
-usemount (same as -M or --mount)
 
-Whether or not to use the standard mount and umount utilities (and
-thus kernel space filesystem drivers instead of userspace utilities
-that manipulate the partition directly (through the device file). If
-this option is present ybin will insist that you be root. Note that
-using this option will prevent ybin from setting HFS attributes on the
-boot files (such as type and creator).  This option is here mainly to
-allow ybin's use even if you do not have hfsutils. Default: no
-IMPORTANT: It is not possible to bless the filesystem when mounted
-this way, you will thus have to manually configure OF to make your
-system bootable.
-
-mntpoint= 
-
-Requires `usemount' this works exactly like usemount does except it
-does not mount the bootstrap partition but rather installs the
-bootloader into the directory defined as the mountpoint.  The pathname
-MUST be clean, ie no embedded spaces or metacharacters.  The directory
-may not be more then one subdirectory deep from the root of the
-partition (not necessarily the unix /).  You must not have a trailing
-/ either.  This option is NOT recommended since it has the same
-limitations as usemount, your system will not be bootable by
-OpenFirmware, it will only be manually bootable or bootable if you
-change the boot-device variable to the direct pathname to the
-bootloader (which ybin will attempt to do). 
-
-fstype= (same as --filesystem)
-
-This defines what kind of filesystem exists (or created by mkofboot)
-on the bootstrap partition.  Possible options are hfs and msdos (if
-anyone can figure out how to get OF to execute a file on a ISO
-filesystem I will add that too) Note that if you use msdos filesystem
-you must have a DOS style partition table and not a Apple partition
-map. (it also requires that usemount be yes) yaboot may not yet
-support this configuration.  The "raw" type causes ybin or mkofboot to
-copy the bootloader (value of install=) to the bootstrap without any
-filesystem. CAUTION: this will destroy any data or filesystem on the
-bootstrap partition (value of boot=) if you specify something like
-boot=/dev/sda you will destroy the partition table and lose ALL data
-on the disk.  Default: hfs
-
-hfstype=
-
-This defines the 4 character code that should be given to the bootfile
-(the bootconf file will always be given type "conf") The main purpose
-of this is to make OF think its loading a MacOSROM image file and boot
-the system into GNU/Linux from the bootstrap partition as
-automatically as it would MacOS.  In order for this to work you should
-set this to `tbxi' (the default in the included config file). If you
-have specified a OF wrapper (see above) then it will be given this
-filetype and the bootfile will be given type "boot" instead.  NOTE:
-This appears to not work unless the bootfile has a CHRP boot script
-embedded in the header, at the moment yaboot lacks this script, see
-README.ofboot for more details. Default: tbxi
-
-hfscreator=
-
-This defines the 4 character creator code that should be given to both
-the bootfile and the bootconf files. This is largely pointless but if
-you use MacOS you could configure it so you have a pretty icon on the
-bootloader files. Default: UNIX
-
-nobless (same as --nobless)
-
-This prevents ybin from "blessing" the root directory of the bootstrap
-partition.  This is Macspeak for "bootable directory" on the MacOS the
-System Folder is "blessed".  Blessing the root directory will allow OF
-to find the bootstrap partition and load the bootloader automatically
-without reconfiguration (assuming the bootstrap partition is on the
-default disk (internal IDE in most cases). You should probably only
-set this if you are keeping the bootloader on a MacOS boot partition.
-
-protect (same as --protect)
-
-This defines whether the read-only bit should be set on the boot
-files, this is mostly pointless but slightly discourages
-tampering/deleting of the bootloader files if the bootstrap partition
-is mounted by MacOS.  (hide below really would do a better job of
-that) This option will work with both msdos and hfs filesystems.  It
-also works whether you have the usemount option set or not. 
-
-hide (same as --hide)
-
-This defines whether or not the HFS invisible bit should be set on the
-boot files. This is a stronger way to make sure nobody fscks up your
-bootloader on the MacOS side of things.  (A better option is a
-dedicated bootstrap partition with its partition type set to
-Apple_Bootstrap which is acceptable to OF but MacOS will refuse to mount
-it.) This option is ignored for msdos filesystems and will only work
-if usemount is not set.
-
-nonvram (same as --nonvram)
-
-This option prevents ybin from using nvsetenv to set the OpenFirmware
-boot-device variable in nvram.  This is currently required for IBM
-machines.  NOTE: you should not use this option when dual booting
-MacOS, it will cause the MacOS boot menu entries to fail on some
-machines.
+Colors
+-------------------------------------------------------------------
 
 fgcolor=string
 
-Specifies the foreground (text) color used by yaboot(8) and the
+Specifies the foreground (text) color used by yaboot and the
 multiboot menu.  Available colors are: black, blue, light-blue, green,
 light-green, cyan, light-cyan, red, light-red, purple, light- purple,
 brown, light-gray, dark-gray, yellow, and white.  The default is
@@ -391,18 +234,14 @@ white.
 
 bgcolor=string
 
-Specifies the background color used by yaboot(8) and the mulitboot
-menu.  Available colors are: black, blue, light-blue, green,
-light-green, cyan, light-cyan, red, light-red, purple, light-purple,
-brown, light-gray, dark-gray, yellow, and white.  The default is
+Specifies the background color used by yaboot and the multiboot
+menu.  Available colors are the same as fgcolor. The default is
 black.
 
-ybin does not make any validations of the yaboot specific options,
-that is up to you to make sure yaboot is configured correctly.
 
 ===========================================================================
 
-Copyright (C) 2001 Ethan Benson
+Copyright (C) 2000, 2001 Ethan Benson
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License

@@ -28,7 +28,7 @@ if [ -n "$PATH_PREFIX" ] ; then
 fi
 PRG="${0##*/}"
 SIGINT="$PRG: Interrupt caught ... exiting"
-VERSION=1.3.5
+VERSION=1.3.6pre1
 DEBUG=0
 VERBOSE=0
 TMP="${TMPDIR:-/tmp}"
@@ -65,7 +65,11 @@ fi
 
 ## defaults
 usemount=no
-fstype=hfs
+if (cat /proc/cpuinfo 2> /dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
+    fstype=raw
+else
+    fstype=hfs
+fi
 hfstype=tbxi
 hfscreator=UNIX
 bless=yes
@@ -166,19 +170,6 @@ Update/install bootloader onto a bootstrap partition.
                                this is useful of you don't want them to be
                                visible from MacOS.
       --nonvram              do not update the boot-device variable in nvram.
-      --device               yaboot auto configuration: sets the OF boot device
-			       default: hd:
-      --partition            yaboot auto configuration: sets the partition
-			       number of the root partition. default: 3
-      --timeout              yaboot auto configuration: sets the time yaboot
-			       will wait for user input before booting default
-                               image default: 40 (4 seconds)
-      --image                yaboot auto configuration: sets the path to the
-			       kernel image. default: /vmlinux
-      --label                yaboot auto configuration: sets the image label
-                               default: Linux
-      --root                 yaboot auto configuration: sets the root device
-                               default: /dev/hda3
       --force                don't ever ask for confirmation
   -v, --verbose              make $PRG more verbose
       --debug                print boring junk only useful for debugging
@@ -1440,6 +1431,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    device="$2"
 		    bootconf=auto
+		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1451,6 +1443,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    timeout="$2"
 		    bootconf=auto
+		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1462,6 +1455,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    image="$2"
 		    bootconf=auto
+		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1473,6 +1467,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    label="$2"
 		    bootconf=auto
+		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1484,6 +1479,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    partition="$2"
 		    bootconf=auto
+		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1495,6 +1491,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    root="$2"
 		    bootconf=auto
+		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"

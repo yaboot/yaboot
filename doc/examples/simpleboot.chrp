@@ -6,7 +6,8 @@ MacRISC
 GNU/Linux PPC bootloader
 </DESCRIPTION>
 <BOOT-SCRIPT>
-boot hd:,\\yaboot
+load-base release-load-area
+boot hd:2,\\yaboot
 </BOOT-SCRIPT>
 <OS-BADGE-ICONS>
 1010

@@ -17,7 +17,7 @@
 .\" along with this program; if not, write to the Free Software                
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 .\"
-.TH YBIN 8 "27 April 2001" "GNU/Linux PowerPC" "System Manager's Manual"
+.TH YBIN 8 "21 November 2001" "GNU/Linux PowerPC" "System Manager's Manual"
 .SH NAME
 .B ybin
 \- install the yaboot boot loader to a bootstrap partition.
@@ -34,12 +34,6 @@
 .RB [ \ \-\-hide\  ]
 .RB [ \ \-\-protect\  ]
 .RB [ \ \-\-nonvram\  ]
-.RB [ \ \-\-device\ \fIOF-dev\  ]
-.RB [ \ \-\-partition\ \fIroot-part-#\  ]
-.RB [ \ \-\-timeout\ \fItimeout\  ]
-.RB [ \ \-\-image\ \fIkernel\  ]
-.RB [ \ \-\-label\ \fIlabel\  ]
-.RB [ \ \-\-root\ \fIroot-dev\  ]
 .RB [ \ \-\-force\  ]
 .RB [ \ \-v | \-\-verbose\  ]
 .RB [ \ \-\-debug\  ]
@@ -73,7 +67,7 @@ NewWorld compatible version of \fBnvsetenv\fR(8) is available.
 .B Ybin 
 requires that the 
 .BR bootstrap (8)
-partition have an HFS or MSDOS filesystem already on it.  For IBM
+partition have an HFS filesystem already on it.  For IBM
 hardware there is no filesystem on the \fBbootstrap\fR(8) partition,
 in this case use fstype=raw.  When using the raw filesystem type
 \fBybin\fR requires that an ELF binary have already been installed on
@@ -165,38 +159,6 @@ HFS and MSDOS filesystems.
 Prevent \fBybin\fR from setting the OpenFirmware boot-device
 variable with \fBnvsetenv\fR(8).
 .TP
-.BR \-\-device\ \fIopenfirmware-dev-path
-This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
-specifies the OpenFirmware device of the disk the system will boot
-from.  The default is \*(lqhd:\*(rq.
-.TP
-.BR \-\-partition\ \fIroot-partition-number
-This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
-specifies the partition number of the root filesystem.  Mac partition
-tables are considered a partition themselves, so the first real
-partition will be 2, usually the \fBbootstrap\fR(8) partition, followed
-by the root partition, number 3.
-.TP
-.BR \-\-timeout\ \fItimeout
-This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
-specifies the timeout value in tenths of a second.  The timeout is how
-long \fByaboot\fR(8) will wait before booting the default (first listed)
-image.
-.TP
-.BR \-\-image\ \fIkernel-image
-This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
-specifies the path to the default kernel to be booted.
-.TP
-.BR \-\-label\ \fIlabel
-This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
-specifies the label used to boot the above kernel image.  The default
-is Linux.
-.TP
-.BR \-\-root\ \fIroot-device
-This option is used for auto-generation of a \fByaboot.conf\fR(5).  This
-specifies the Linux device for the root partition, this is passed to
-the kernel at boot time.  The default is \fI/dev/hda3\fR.
-.TP
 .BR \-v ,\  \-\-verbose
 This option causes \fBybin\fR to be more verbose as it proceeds.
 .TP
@@ -224,8 +186,7 @@ Print out the version number and exit.
 .br
 The temporary directory \fBybin\fR will use.
 .SH SECURITY
-The \fByaboot.conf\fR(5) auto generation requires a temporary file, this
-file is created with
+Temporary files are created with
 .BR mktemp (1).
 It is important that your system use a secure 
 .BR mktemp (1)
@@ -249,8 +210,6 @@ and this man page was written by Ethan Benson.
 was written by Benjamin Herrenschmidt.
 .SH REPORTING BUGS
 Report bugs to <erbenson@alaska.net>
-.br
-Report bugs in \fByaboot\fR(8) to <benh@kernel.crashing.org>
 .SH SEE ALSO
 .BR bootstrap (8),
 .BR hfsutils (1),

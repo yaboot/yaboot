@@ -2,6 +2,31 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-27 13:37:21 GMT	Ethan Benson <erbenson@alaska.net>	patch-13
+
+    Summary:
+      Commit yaboot 1.3.6-pre1
+    Revision:
+      yaboot--devel--1.3--patch-13
+
+    Commit yaboot 1.3.6-pre1.
+
+    modified files:
+     ChangeLog Makefile README THANKS TODO changelog
+     doc/README.rs6000 doc/examples/simpleboot.chrp
+     doc/examples/yaboot.conf.multi-boot
+     doc/examples/yaboot.conf.rs6000 etc/yaboot.conf man.patch
+     man/mkofboot.8 man/yaboot.8 man/ybin.8 second/file.c
+     second/yaboot.c ybin/yabootconfig ybin/ybin
+
+    renamed files:
+     doc/examples/.arch-ids/yaboot.conf.rs6k.id
+       ==> doc/examples/.arch-ids/yaboot.conf.rs6000.id
+     doc/examples/yaboot.conf.rs6k
+       ==> doc/examples/yaboot.conf.rs6000
+
+
+
 2002-03-27 13:30:47 GMT	Ethan Benson <erbenson@alaska.net>	patch-12
 
     Summary:

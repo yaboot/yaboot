@@ -54,7 +54,7 @@ bgcolor=green
 
 ## Password supplied as an md5 hash, see above
 
-#password=$1$saltstri$WHZcnT3IOdSrMvizOq7Ht1
+#password=$1$saltstrg$HnJ/gcM3oKhNbnzUPgXTD/
 
 ## A password is only required to boot an image specified here if
 ## parameters are specified on the command line or if the user enters
@@ -86,9 +86,9 @@ image=/vmlinux.old
 ## The {macos,macosx,darwin} variables can be either a unix /dev node or an
 ## OpenFirmware path, as shown here:
 
-## if you have the bsd bootloader installed on ybin bootstrap
-## partition as ofwboot.elf
-bsd=/dev/sda2
+## BSD root partition with bsd kernel at /bsd.  you must have the BSD
+## bootloader ofwboot installed at /usr/local/lib/yaboot/ofwboot
+bsd=/dev/sda5
 
 ## unix node
 macos=/dev/sda8

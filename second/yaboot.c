@@ -108,6 +108,7 @@ char bootdevice[1024];
 char *password = NULL;
 struct boot_fspec_t boot;
 int _machine = _MACH_Pmac;
+int flat_vmlinux;
 
 #ifdef CONFIG_COLOR_TEXT
 
@@ -332,10 +333,10 @@ load_config_file(char *device, char* path, int partition)
      }
 
      /* Build the path to the file */
-     if (path)
-	  strcpy(conf_path, path);
-     else if ( _machine == _MACH_chrp )
+     if (_machine == _MACH_chrp)
 	  strcpy(conf_path, "/etc/");
+     else if (path && *path)
+	  strcpy(conf_path, path);
      else
 	  conf_path[0] = 0;
      strcat(conf_path, CONFIG_FILE_NAME);
@@ -873,9 +874,9 @@ yaboot_text_ui(void)
 	  file.fs->close(&file);
 	  memset(&file, 0, sizeof(file));
 
-	  /* If sysmap, load it. 
+	  /* If sysmap, load it (only if booting a vmlinux).
 	   */
-	  if (params.sysmap.file) {
+	  if (flat_vmlinux && params.sysmap.file) {
 	       prom_printf("Loading System.map ...\n");
 	       if(strlen(boot.file) && !strcmp(boot.file,"\\\\") && params.sysmap.file[0] != '/'
 		  && params.sysmap.file[0] != '\\') {
@@ -921,10 +922,11 @@ yaboot_text_ui(void)
 	       }
 	  }
 
-	  /* If ramdisk, load it. For now, we can't tell the size it will be
-	   * so we claim an arbitrary amount of 4Mb
+	  /* If ramdisk, load it (only if booting a vmlinux).  For now, we
+	   * can't tell the size it will be so we claim an arbitrary amount
+	   * of 4Mb.
 	   */
-	  if (params.rd.file) {
+	  if (flat_vmlinux && params.rd.file) {
 	       if(strlen(boot.file) && !strcmp(boot.file,"\\\\") && params.rd.file[0] != '/'
 		  && params.kernel.file[0] != '\\')
 	       {
@@ -987,47 +989,49 @@ yaboot_text_ui(void)
 	  flush_icache_range ((long)loadinfo.base, (long)loadinfo.base+loadinfo.memsize);
 	  DEBUG_F(" done\n");
 
-/* 
- * Fill mew boot infos
- *
- * The birec is low on memory, probably inside the malloc pool, so
- * we don't write it earlier. At this point, we should not use anything
- * coming from the malloc pool
- */
-	  birec = (struct bi_record *)_ALIGN(loadinfo.filesize+(1<<20)-1,(1<<20));
+	  if (flat_vmlinux) {
+	       /* 
+	        * Fill new boot infos (only if booting a vmlinux).
+	        *
+	        * The birec is low on memory, probably inside the malloc pool,
+	        * so we don't write it earlier. At this point, we should not
+	        * use anything coming from the malloc pool.
+	        */
+	       birec = (struct bi_record *)_ALIGN(loadinfo.filesize+(1<<20)-1,(1<<20));
 
-/* We make sure it's mapped. We map only 64k for now, it's plenty enough
- * we don't claim since this precise memory range may already be claimed
- * by the malloc pool
- */
-	  prom_map (birec, birec, 0x10000);
-	  DEBUG_F("birec at %p\n", birec);
-	  DEBUG_SLEEP;
+	       /* We make sure it's mapped. We map only 64k for now, it's
+	        * plenty enough we don't claim since this precise memory
+	        * range may already be claimed by the malloc pool.
+	        */
+	       prom_map (birec, birec, 0x10000);
+	       DEBUG_F("birec at %p\n", birec);
+	       DEBUG_SLEEP;
 
-	  birec->tag = BI_FIRST;
-	  birec->size = sizeof(struct bi_record);
-	  birec = (struct bi_record *)((unsigned long)birec + birec->size);
+	       birec->tag = BI_FIRST;
+	       birec->size = sizeof(struct bi_record);
+	       birec = (struct bi_record *)((ulong)birec + birec->size);
 	
-	  birec->tag = BI_BOOTLOADER_ID;
-	  sprintf( (char *)birec->data, "yaboot");
-	  birec->size = sizeof(struct bi_record) + strlen("yaboot") + 1;
-	  birec = (struct bi_record *)((unsigned long)birec + birec->size);
+	       birec->tag = BI_BOOTLOADER_ID;
+	       sprintf( (char *)birec->data, "yaboot");
+	       birec->size = sizeof(struct bi_record) + strlen("yaboot") + 1;
+	       birec = (struct bi_record *)((ulong)birec + birec->size);
 	
-	  birec->tag = BI_MACHTYPE;
-	  birec->data[0] = _machine;
-	  birec->size = sizeof(struct bi_record) + sizeof(unsigned long);
-	  birec = (struct bi_record *)((unsigned long)birec + birec->size);
+	       birec->tag = BI_MACHTYPE;
+	       birec->data[0] = _machine;
+	       birec->size = sizeof(struct bi_record) + sizeof(ulong);
+	       birec = (struct bi_record *)((ulong)birec + birec->size);
 
-	  if (sysmap_base) {
-	       birec->tag = BI_SYSMAP;
-	       birec->data[0] = (unsigned long)sysmap_base;
-	       birec->data[1] = sysmap_size;
-	       birec->size = sizeof(struct bi_record) + sizeof(unsigned long)*2;
-	       birec = (struct bi_record *)((unsigned long)birec + birec->size);
-	  }
-	  birec->tag = BI_LAST;
-	  birec->size = sizeof(struct bi_record);
-	  birec = (struct bi_record *)((unsigned long)birec + birec->size);
+	       if (sysmap_base) {
+	            birec->tag = BI_SYSMAP;
+	            birec->data[0] = (ulong)sysmap_base;
+	            birec->data[1] = sysmap_size;
+	            birec->size = sizeof(struct bi_record) + sizeof(ulong)*2;
+	            birec = (struct bi_record *)((ulong)birec + birec->size);
+	       }
+	       birec->tag = BI_LAST;
+	       birec->size = sizeof(struct bi_record);
+	       birec = (struct bi_record *)((ulong)birec + birec->size);
+          }
 
           /* compute the kernel's entry point. */
 	  kernel_entry = loadinfo.base + loadinfo.entry - loadinfo.load_loc;
@@ -1133,11 +1137,21 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      /* Claim OF memory */
      DEBUG_F("Before prom_claim, mem_sz: 0x%08lx\n", loadinfo->memsize);
 
+     /* Determine whether we are trying to boot a vmlinux or some
+      * other binary image (eg, zImage).  We load vmlinux's at
+      * KERNELADDR and all other binaries at their e_entry value.
+      */
+     if (e->e_entry == KERNEL_LINK_ADDR_PPC32) {
+          flat_vmlinux = 1;
+          loadaddr = KERNELADDR;
+     } else {
+          flat_vmlinux = 0;
+          loadaddr = e->e_entry;
+     }
+
      /* On some systems, loadaddr may already be claimed, so try some
       * other nearby addresses before giving up.
       */
-     loadaddr = (e->e_entry == KERNEL_LINK_ADDR_PPC32 ||
-		 e->e_entry == 0) ? KERNELADDR : e->e_entry;
      for(addr=loadaddr; addr <= loadaddr * 8 ;addr+=0x100000) {
 	  loadinfo->base = prom_claim((void *)addr, loadinfo->memsize, 0);
 	  if (loadinfo->base != (void *)-1) break;
@@ -1262,10 +1276,21 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      /* Claim OF memory */
      DEBUG_F("Before prom_claim, mem_sz: 0x%08lx\n", loadinfo->memsize);
 
+     /* Determine whether we are trying to boot a vmlinux or some
+      * other binary image (eg, zImage).  We load vmlinux's at
+      * KERNELADDR and all other binaries at their e_entry value.
+      */
+     if (e->e_entry == KERNEL_LINK_ADDR_PPC64) {
+          flat_vmlinux = 1;
+          loadaddr = KERNELADDR;
+     } else {
+          flat_vmlinux = 0;
+          loadaddr = e->e_entry;
+     }
+
      /* On some systems, loadaddr may already be claimed, so try some
       * other nearby addresses before giving up.
       */
-     loadaddr = (e->e_entry == KERNEL_LINK_ADDR_PPC64) ? KERNELADDR : e->e_entry;
      for(addr=loadaddr; addr <= loadaddr * 8 ;addr+=0x100000) {
 	  loadinfo->base = prom_claim((void *)addr, loadinfo->memsize, 0);
 	  if (loadinfo->base != (void *)-1) break;
@@ -1424,15 +1449,16 @@ yaboot_main(void)
 	
      prom_get_chosen("bootpath", bootdevice, sizeof(bootdevice));
      DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
-     if (bootdevice[0] == 0)
+     if (bootdevice[0] == 0) {
 	  prom_get_options("boot-device", bootdevice, sizeof(bootdevice));
+	  DEBUG_F("boot-device = %s\n", bootdevice);
+     }
      if (bootdevice[0] == 0) {
 	  prom_printf("Couldn't determine boot device\n");
 	  return -1;
      }
 
-     if (!parse_device_path(bootdevice, (_machine == _MACH_Pmac) ? "hd" : "disc",
-			    -1, "", &boot)) {
+     if (!parse_device_path(bootdevice, NULL, -1, "", &boot)) {
 	  prom_printf("%s: Unable to parse\n", bootdevice);
 	  return -1;
      }
@@ -1458,7 +1484,7 @@ yaboot_main(void)
 		    strcat(boot.file, "\\");
 	  }
      }
-     DEBUG_F("After path fixup: dev=%s, part=%d, file=%s\n",
+     DEBUG_F("After pmac path kludgeup: dev=%s, part=%d, file=%s\n",
 	     boot.dev, boot.part, boot.file);
 
      useconf = load_config_file(boot.dev, boot.file, boot.part);

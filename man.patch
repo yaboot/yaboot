@@ -1,7 +1,7 @@
 diff -urN -x CVS man/mkofboot.8 man.deb/mkofboot.8
---- man/mkofboot.8	Thu May 24 04:32:54 2001
-+++ man.deb/mkofboot.8	Sun Oct 28 00:09:54 2001
-@@ -94,7 +94,7 @@
+--- man/mkofboot.8	Wed Nov 21 04:08:07 2001
++++ man.deb/mkofboot.8	Wed Nov 21 04:09:00 2001
+@@ -88,7 +88,7 @@
  .TP
  .BR \-i ,\  \-\-install\ \fIboot-file
  Use \fIboot-file\fR as the primary boot loader executable, instead of
@@ -10,7 +10,7 @@ diff -urN -x CVS man/mkofboot.8 man.deb/mkofboot.8
  .TP
  .BR \-C ,\  \-\-config\ \fIconfig-file
  Use \fIconfig-file\fR as the \fBmkofboot\fR/\fByaboot\fR(8) configuration
-@@ -200,8 +200,8 @@
+@@ -162,8 +162,8 @@
  Print out the version number and exit.
  .SH FILES
  .nf
@@ -21,7 +21,7 @@ diff -urN -x CVS man/mkofboot.8 man.deb/mkofboot.8
  /etc/yaboot.conf \- boot loader/mkofboot configuration file
  .fi
  .SH ENVIRONMENT
-@@ -218,7 +218,7 @@
+@@ -179,7 +179,7 @@
  program otherwise \fBmkofboot\fR will be vulnerable to race conditions.
  The Debian mktemp is derived from OpenBSD and thus should be secure.
  
@@ -32,7 +32,7 @@ diff -urN -x CVS man/mkofboot.8 man.deb/mkofboot.8
  writable by anyone but root since a different \fIofboot\fR script could be
 diff -urN -x CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
 --- man/yaboot.conf.5	Sun Oct 28 00:09:33 2001
-+++ man.deb/yaboot.conf.5	Sun Oct 28 00:09:54 2001
++++ man.deb/yaboot.conf.5	Wed Nov 21 04:09:00 2001
 @@ -136,7 +136,7 @@
    boot=/dev/hda2
    device=hd:
@@ -99,9 +99,9 @@ diff -urN -x CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
  bgcolor=green
  default=Linux
 diff -urN -x CVS man/ybin.8 man.deb/ybin.8
---- man/ybin.8	Thu May 24 04:33:16 2001
-+++ man.deb/ybin.8	Sun Oct 28 00:09:54 2001
-@@ -109,7 +109,7 @@
+--- man/ybin.8	Wed Nov 21 04:08:35 2001
++++ man.deb/ybin.8	Wed Nov 21 04:09:00 2001
+@@ -103,7 +103,7 @@
  .TP
  .BR \-i ,\  \-\-install\ \fIboot-file
  Use \fIboot-file\fR as the primary boot loader executable, instead of
@@ -110,7 +110,7 @@ diff -urN -x CVS man/ybin.8 man.deb/ybin.8
  .TP
  .BR \-C ,\  \-\-config\ \fIconfig-file
  Use \fIconfig-file\fR as the \fBybin\fR/\fByaboot\fR(8) configuration
-@@ -214,8 +214,8 @@
+@@ -176,8 +176,8 @@
  Print out the version number and exit.
  .SH FILES
  .nf
@@ -121,7 +121,7 @@ diff -urN -x CVS man/ybin.8 man.deb/ybin.8
  /etc/yaboot.conf \- boot loader/ybin configuration file
  .fi
  .SH ENVIRONMENT
-@@ -232,7 +232,7 @@
+@@ -193,7 +193,7 @@
  program, otherwise \fBybin\fR will be vulnerable to race conditions.
  The Debian mktemp is derived from OpenBSD and thus should be secure.
  
