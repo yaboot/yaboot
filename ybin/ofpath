@@ -313,6 +313,7 @@ ide_ofpath()
 	    "PowerMac3,6")
 		local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep $DEVNODE)"
 		if [ -z "$CDROM" ] ; then
+		    echo 1>&2 "$PRG: WARNING: Your kernel is too old for proper support, device may be innaccurate."
 		    echo "ultra2:$PARTITION"
 		else
 		    echo "cd:$PARTITION"
