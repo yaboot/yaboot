@@ -2,6 +2,21 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2004-05-08 22:04:51 GMT	Ethan Benson <erbenson@alaska.net>	patch-71
+
+    Summary:
+      Add additional check on /dev/nvram to avoid misleading error message
+    Revision:
+      yaboot--devel--1.3--patch-71
+
+    * ybin/ybin: Add additional check on /dev/nvram, if we cannot read a
+      couple bytes report it as broken.  This avoids misleading
+      `Incompatible nvsetenv' message on kernels without /dev/nvram support.
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/ybin
+
+
 2004-05-08 06:38:44 GMT	Ethan Benson <erbenson@alaska.net>	patch-70
 
     Summary:

@@ -462,6 +462,10 @@ checkconf()
 		    echo 1>&2 "$PRG: /dev/nvram: Permission denied"
 		    echo 1>&2 "$PRG: Warning: nvram will not be updated"
 		    nonvram=1
+		elif ! (dd if=/dev/nvram of=/dev/null bs=1 count=10 > /dev/null 2>&1) ; then
+		    echo 1>&2 "$PRG: /dev/nvram: No such device"
+		    echo 1>&2 "$PRG: Warning: nvram will not be updated"
+		    nonvram=1
 		else
 		    nonvram=1
 		    echo 1>&2 "$PRG: Warning: Incompatible version of \`nvsetenv', nvram will not be updated"
