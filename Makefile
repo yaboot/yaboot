@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.6
+VERSION = 1.3.7-UNSUPPORTED_DEVEL_BRANCH
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars

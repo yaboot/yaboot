@@ -2,6 +2,22 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-08-18 22:33:31 GMT	Ethan Benson <erbenson@alaska.net>	patch-27
+
+    Summary:
+      make version numbers loudly unsupported due to dumb dist maintainers
+    Revision:
+      yaboot--devel--1.3--patch-27
+
+    * make version numbers loudly unsupported due to dumb dist
+      maintainers, real versions not in place till release time.  UNRELEASED
+      SOFTWARE SHOULD NOT BE PACKAGED.
+
+    modified files:
+     0arch-timestamps0 ChangeLog Makefile ybin/yabootconfig
+     ybin/ybin
+
+
 2002-08-15 07:26:38 GMT	Ethan Benson <erbenson@alaska.net>	patch-26
 
     Summary:
