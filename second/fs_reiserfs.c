@@ -75,7 +75,7 @@ reiserfs_open( struct boot_file_t *file, const char *dev_name,
      if (part)
      {
 	  DEBUG_F( "Determining offset for partition %d\n", part->part_number );
-	  INFO->partition_offset = ((__u64)(part->part_start)) * ((__u64)part->blocksize);
+	  INFO->partition_offset = ((uint64_t)part->part_start) * part->blocksize;
 	  DEBUG_F( "%Lu = %lu * %hu\n", INFO->partition_offset,
 		   part->part_start,
 		   part->blocksize );
@@ -168,8 +168,8 @@ read_disk_block( struct boot_file_t *file, __u32 block, __u32 start,
 {
      __u16 fs_blocksize = INFO->blocksize == 0 ? REISERFS_OLD_BLOCKSIZE
 	  : INFO->blocksize;
-     unsigned long long pos = block * fs_blocksize;
-     pos += INFO->partition_offset + start;
+     unsigned long long pos = (unsigned long long)block * (unsigned long long)fs_blocksize;
+     pos += (unsigned long long)INFO->partition_offset + (unsigned long long)start;
      DEBUG_F( "Reading %u bytes, starting at block %u, disk offset %Lu\n",
 	      length, block, pos );
      if (!prom_lseek( file->of_device, pos )) {
@@ -525,6 +525,7 @@ read_tree_node( __u32 blockNr, __u16 depth )
 {
      char *cache = CACHE(depth);
      int num_cached = INFO->cached_slots;
+     errnum = 0;
 
      if ( depth < num_cached )
      {
@@ -670,7 +671,7 @@ search_stat( __u32 dir_id, __u32 objectid )
      int nr_item;
      int i;
      struct item_head *ih;
-
+     errnum = 0;
 
      DEBUG_F( "search_stat:\n  key %u:%u:0:0\n", le32_to_cpu(dir_id),
 	      le32_to_cpu(objectid) );
@@ -744,7 +745,7 @@ reiserfs_read_data( char *buf, __u32 len )
      __u32 offset;
      __u32 to_read;
      char *prev_buf = buf;
-
+     errnum = 0;
 
      DEBUG_F( "reiserfs_read_data: INFO->file->pos=%Lu len=%u, offset=%Lu\n",
 	      INFO->file->pos, len, (__u64) IH_KEY_OFFSET(INFO->current_ih) - 1 );
@@ -834,6 +835,7 @@ reiserfs_open_file( char *dirname )
      char linkbuf[PATH_MAX];	/* buffer for following symbolic links */
      int link_count = 0;
      int mode;
+     errnum = 0;
 
      dir_id = cpu_to_le32(REISERFS_ROOT_PARENT_OBJECTID);
      objectid = cpu_to_le32(REISERFS_ROOT_OBJECTID);
@@ -1046,7 +1048,7 @@ uniqueness2type (__u32 uniqueness)
 
 /* 
  * Local variables:
- * c-file-style: "K&R"
+ * c-file-style: "k&r"
  * c-basic-offset: 5
  * End:
  */

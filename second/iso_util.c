@@ -86,7 +86,7 @@ isonum_733 (char * p)
 
 /* 
  * Local variables:
- * c-file-style: "K&R"
+ * c-file-style: "k&r"
  * c-basic-offset: 8
  * End:
  */

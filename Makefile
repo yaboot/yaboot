@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.4
+VERSION = 1.3.5pre1
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars
@@ -114,6 +114,10 @@ elfextract:
 
 mkofboot:
 	ln -sf ybin ybin/mkofboot
+	@if [ $$(grep '^VERSION=' ybin/ybin | cut -f2 -d=) != ${VERSION} ] ; then	\
+		echo "ybin/ybin: warning: VERSION  mismatch"; 				\
+		false; 									\
+	fi
 
 %.o: %.c
 	$(CC) $(YBCFLAGS) -c -o $@ $<

@@ -323,7 +323,7 @@ swab32(unsigned long value)
 
 /* 
  * Local variables:
- * c-file-style: "K&R"
+ * c-file-style: "k&r"
  * c-basic-offset: 5
  * End:
  */

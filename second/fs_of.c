@@ -232,7 +232,7 @@ of_close(struct boot_file_t* file)
 
 /* 
  * Local variables:
- * c-file-style: "K&R"
+ * c-file-style: "k&r"
  * c-basic-offset: 5
  * End:
  */

@@ -623,7 +623,7 @@ static errcode_t linux_flush (io_channel channel)
 
 /* 
  * Local variables:
- * c-file-style: "K&R"
+ * c-file-style: "k&r"
  * c-basic-offset: 5
  * End:
  */

@@ -19,7 +19,7 @@
 #define EXT2_ET_MAGIC_ICOUNT                     (2133571341L)
 #define EXT2_ET_MAGIC_PQ_IO_CHANNEL              (2133571342L)
 #define EXT2_ET_MAGIC_EXT2_FILE                  (2133571343L)
-#define EXT2_ET_MAGIC_RESERVED_7                 (2133571344L)
+#define EXT2_ET_MAGIC_E2IMAGE                    (2133571344L)
 #define EXT2_ET_MAGIC_RESERVED_8                 (2133571345L)
 #define EXT2_ET_MAGIC_RESERVED_9                 (2133571346L)
 #define EXT2_ET_BAD_MAGIC                        (2133571347L)
@@ -86,6 +86,11 @@
 #define EXT2_ET_UNIMPLEMENTED                    (2133571408L)
 #define EXT2_ET_CANCEL_REQUESTED                 (2133571409L)
 #define EXT2_ET_FILE_TOO_BIG                     (2133571410L)
+#define EXT2_ET_JOURNAL_NOT_BLOCK                (2133571411L)
+#define EXT2_ET_NO_JOURNAL_SB                    (2133571412L)
+#define EXT2_ET_JOURNAL_TOO_SMALL                (2133571413L)
+#define EXT2_ET_JOURNAL_UNSUPP_VERSION           (2133571414L)
+#define EXT2_ET_LOAD_EXT_JOURNAL                 (2133571415L)
 extern void initialize_ext2_error_table(void);
 #define ERROR_TABLE_BASE_ext2 (2133571328L)
 

@@ -12,11 +12,24 @@
 #ifndef _EXT2FS_EXT2FS_H
 #define _EXT2FS_EXT2FS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Non-GNU C compilers won't necessarily understand inline
  */
 #if (!defined(__GNUC__) && !defined(__WATCOMC__))
 #define NO_INLINE_FUNCS
+#endif
+
+/*
+ * Build in support for byte-swapping filesystems if we the feature
+ * has been configured or if we're being built on a CPU architecture
+ * with a non-native byte order.
+ */
+#if defined(ENABLE_SWAPFS) || defined(WORDS_BIGENDIAN)
+#define EXT2FS_ENABLE_SWAPFS
 #endif
 
 /*
@@ -33,25 +46,21 @@
  * The last ext2fs revision level that this version of the library is
  * able to support.
  */
-#define EXT2_LIB_CURRENT_REV	0
+#define EXT2_LIB_CURRENT_REV	EXT2_DYNAMIC_REV
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
-#include <stdlib.h>
+#include "stdlib.h"
 
 #if EXT2_FLAT_INCLUDES
 #include "e2_types.h"
 #else
-#include <types.h>
-#if defined(__GNUC__) && defined(__STRICT_ANSI__) && \
-	(((~0UL) == 0xffffffff) || defined(__i386__))
-typedef __signed__ long long __s64;
-typedef unsigned long long __u64;
-#endif
-#endif
+#include "types.h" /* use yaboot's types.h */
+#endif /* EXT2_FLAT_INCLUDES */
 
+typedef __u32		ext2_ino_t;
 typedef __u32		blk_t;
 typedef __u32		dgrp_t;
 typedef __u32		ext2_off_t;
@@ -121,7 +130,7 @@ typedef struct ext2_struct_badblocks_iterate *badblocks_iterate;
  * ext2_dblist structure and abstractions (see dblist.c)
  */
 struct ext2_db_entry {
-	ino_t	ino;
+	ext2_ino_t	ino;
 	blk_t	blk;
 	int	blockcnt;
 };
@@ -149,9 +158,8 @@ typedef struct ext2_file *ext2_file_t;
 #define EXT2_SEEK_END	2
 
 /*
- * Flags for the ext2_filsys structure
+ * Flags for the ext2_filsys structure and for ext2fs_open()
  */
-
 #define EXT2_FLAG_RW			0x01
 #define EXT2_FLAG_CHANGED		0x02
 #define EXT2_FLAG_DIRTY			0x04
@@ -163,12 +171,22 @@ typedef struct ext2_file *ext2_file_t;
 #define EXT2_FLAG_SWAP_BYTES_WRITE	0x100
 #define EXT2_FLAG_MASTER_SB_ONLY	0x200
 #define EXT2_FLAG_FORCE			0x400
+#define EXT2_FLAG_SUPER_ONLY		0x800
+#define EXT2_FLAG_JOURNAL_DEV_OK	0x1000
+#define EXT2_FLAG_IMAGE_FILE		0x2000
 
 /*
  * Special flag in the ext2 inode i_flag field that means that this is
  * a new inode.  (So that ext2_write_inode() can clear extra fields.)
  */
 #define EXT2_NEW_INODE_FL	0x80000000
+
+/*
+ * Flags for mkjournal
+ *
+ * EXT2_MKJOURNAL_V1_SUPER	Make a (deprecated) V1 journal superblock
+ */
+#define EXT2_MKJOURNAL_V1_SUPER	0x0000001
 
 struct struct_ext2_filsys {
 	errcode_t			magic;
@@ -184,20 +202,22 @@ struct struct_ext2_filsys {
 	int				inode_blocks_per_group;
 	ext2fs_inode_bitmap		inode_map;
 	ext2fs_block_bitmap		block_map;
-	errcode_t (*get_blocks)(ext2_filsys fs, ino_t ino, blk_t *blocks);
-	errcode_t (*check_directory)(ext2_filsys fs, ino_t ino);
+	errcode_t (*get_blocks)(ext2_filsys fs, ext2_ino_t ino, blk_t *blocks);
+	errcode_t (*check_directory)(ext2_filsys fs, ext2_ino_t ino);
 	errcode_t (*write_bitmaps)(ext2_filsys fs);
-	errcode_t (*read_inode)(ext2_filsys fs, ino_t ino,
+	errcode_t (*read_inode)(ext2_filsys fs, ext2_ino_t ino,
 				struct ext2_inode *inode);
-	errcode_t (*write_inode)(ext2_filsys fs, ino_t ino,
+	errcode_t (*write_inode)(ext2_filsys fs, ext2_ino_t ino,
 				struct ext2_inode *inode);
 	badblocks_list			badblocks;
 	ext2_dblist			dblist;
 	__u32				stride;	/* for mke2fs */
+	struct ext2_super_block *	orig_super;
+	struct ext2_image_hdr *		image_header;
 	/*
 	 * Reserved for future expansion
 	 */
-	__u32				reserved[11];
+	__u32				reserved[9];
 
 	/*
 	 * Reserved for the use of the calling application.
@@ -358,6 +378,12 @@ typedef struct ext2_icount *ext2_icount_t;
 #define BMAP_ALLOC	1
 
 /*
+ * Flags for imager.c functions
+ */
+#define IMAGER_FLAG_INODEMAP	1
+#define IMAGER_FLAG_SPARSEWRITE	2
+
+/*
  * For checking structure magic numbers...
  */
 
@@ -366,121 +392,36 @@ typedef struct ext2_icount *ext2_icount_t;
 
 
 /*
- * The ext2fs library private definition of the ext2 superblock, so we
- * don't have to depend on the kernel's definition of the superblock,
- * which might not have the latest features.
+ * For ext2 compression support
  */
-struct ext2fs_sb {
-	__u32	s_inodes_count;		/* Inodes count */
-	__u32	s_blocks_count;		/* Blocks count */
-	__u32	s_r_blocks_count;	/* Reserved blocks count */
-	__u32	s_free_blocks_count;	/* Free blocks count */
-	__u32	s_free_inodes_count;	/* Free inodes count */
-	__u32	s_first_data_block;	/* First Data Block */
-	__u32	s_log_block_size;	/* Block size */
-	__s32	s_log_frag_size;	/* Fragment size */
-	__u32	s_blocks_per_group;	/* # Blocks per group */
-	__u32	s_frags_per_group;	/* # Fragments per group */
-	__u32	s_inodes_per_group;	/* # Inodes per group */
-	__u32	s_mtime;		/* Mount time */
-	__u32	s_wtime;		/* Write time */
-	__u16	s_mnt_count;		/* Mount count */
-	__s16	s_max_mnt_count;	/* Maximal mount count */
-	__u16	s_magic;		/* Magic signature */
-	__u16	s_state;		/* File system state */
-	__u16	s_errors;		/* Behaviour when detecting errors */
-	__u16	s_minor_rev_level; 	/* minor revision level */
-	__u32	s_lastcheck;		/* time of last check */
-	__u32	s_checkinterval;	/* max. time between checks */
-	__u32	s_creator_os;		/* OS */
-	__u32	s_rev_level;		/* Revision level */
-	__u16	s_def_resuid;		/* Default uid for reserved blocks */
-	__u16	s_def_resgid;		/* Default gid for reserved blocks */
-	/*
-	 * These fields are for EXT2_DYNAMIC_REV superblocks only.
-	 *
-	 * Note: the difference between the compatible feature set and
-	 * the incompatible feature set is that if there is a bit set
-	 * in the incompatible feature set that the kernel doesn't
-	 * know about, it should refuse to mount the filesystem.
-	 * 
-	 * e2fsck's requirements are more strict; if it doesn't know
-	 * about a feature in either the compatible or incompatible
-	 * feature set, it must abort and not try to meddle with
-	 * things it doesn't understand...
-	 */
-	__u32	s_first_ino; 		/* First non-reserved inode */
-	__u16   s_inode_size; 		/* size of inode structure */
-	__u16	s_block_group_nr; 	/* block group # of this superblock */
-	__u32	s_feature_compat; 	/* compatible feature set */
-	__u32	s_feature_incompat; 	/* incompatible feature set */
-	__u32	s_feature_ro_compat; 	/* readonly-compatible feature set */
-	__u8	s_uuid[16];		/* 128-bit uuid for volume */
-	char	s_volume_name[16]; 	/* volume name */
-	char	s_last_mounted[64]; 	/* directory where last mounted */
-	__u32	s_algorithm_usage_bitmap; /* For compression */
-	/*
-	 * Performance hints.  Directory preallocation should only
-	 * happen if the EXT2_COMPAT_PREALLOC flag is on.
-	 */
-	__u8	s_prealloc_blocks;	/* Nr of blocks to try to preallocate*/
-	__u8	s_prealloc_dir_blocks;	/* Nr to preallocate for dirs */
-	__u16	s_padding1;
-	/* 
-	 * Journaling support.
-	 */
-	__u8	s_journal_uuid[16];	/* uuid of journal superblock */
-	__u32	s_journal_inum;		/* inode number of journal file */
-	
-	__u32	s_reserved[199];	/* Padding to the end of the block */
-};
+#define EXT2FS_COMPRESSED_BLKADDR ((blk_t) 0xffffffff)
+#define HOLE_BLKADDR(_b) ((_b) == 0 || (_b) == EXT2FS_COMPRESSED_BLKADDR)
 
 /*
- * Feature set definitions (that might not be in ext2_fs.h
+ * Features supported by this version of the library
  */
-
-#ifndef EXT2_FEATURE_COMPAT_DIR_PREALLOC
-#define EXT2_FEATURE_COMPAT_DIR_PREALLOC	0x0001
-#endif
-
-#ifndef EXT2_FEATURE_COMPAT_IMAGIC_INODES /* for AFS, etc. */
-#define EXT2_FEATURE_COMPAT_IMAGIC_INODES		0x0002
-#define EXT2_IMAGIC_FL		0x00002000
-#endif
-
-#ifndef EXT3_FEATURE_COMPAT_HAS_JOURNAL
-#define EXT3_FEATURE_COMPAT_HAS_JOURNAL		0x0004
-#endif
-
-#ifndef EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER
-#define EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER	0x0001
-#endif
-
-#ifndef EXT2_FEATURE_RO_COMPAT_LARGE_FILE
-#define EXT2_FEATURE_RO_COMPAT_LARGE_FILE	0x0002
-#define i_size_high i_dir_acl
-#endif
-
-#ifndef EXT2_FEATURE_RO_COMPAT_BTREE_DIR
-#define EXT2_FEATURE_RO_COMPAT_BTREE_DIR	0x0004
-#endif
-
-#ifndef EXT2_FEATURE_INCOMPAT_COMPRESSION
-#define EXT2_FEATURE_INCOMPAT_COMPRESSION	0x0001
-#endif
-
-#ifndef EXT2_FEATURE_INCOMPAT_FILETYPE
-#define EXT2_FEATURE_INCOMPAT_FILETYPE	0x0002
-#endif
-
-#ifndef EXT3_FEATURE_INCOMPAT_RECOVER 
-#define EXT3_FEATURE_INCOMPAT_RECOVER	0x0004 /* Needs recovery */
-#endif
-
 #define EXT2_LIB_FEATURE_COMPAT_SUPP	(EXT2_FEATURE_COMPAT_DIR_PREALLOC|\
 					 EXT2_FEATURE_COMPAT_IMAGIC_INODES|\
-					 EXT3_FEATURE_COMPAT_HAS_JOURNAL)
-#define EXT2_LIB_FEATURE_INCOMPAT_SUPP	EXT2_FEATURE_INCOMPAT_FILETYPE
+					 EXT3_FEATURE_COMPAT_HAS_JOURNAL|\
+					 EXT2_FEATURE_COMPAT_EXT_ATTR)
+
+/* This #ifdef is temporary until compression is fully supported */
+#ifdef ENABLE_COMPRESSION
+#ifndef I_KNOW_THAT_COMPRESSION_IS_EXPERIMENTAL
+/* If the below warning bugs you, then have
+   `CPPFLAGS=-DI_KNOW_THAT_COMPRESSION_IS_EXPERIMENTAL' in your
+   environment at configure time. */
+ #warning "Compression support is experimental"
+#endif
+#define EXT2_LIB_FEATURE_INCOMPAT_SUPP	(EXT2_FEATURE_INCOMPAT_FILETYPE|\
+					 EXT2_FEATURE_INCOMPAT_COMPRESSION|\
+					 EXT3_FEATURE_INCOMPAT_JOURNAL_DEV|\
+					 EXT3_FEATURE_INCOMPAT_RECOVER)
+#else
+#define EXT2_LIB_FEATURE_INCOMPAT_SUPP	(EXT2_FEATURE_INCOMPAT_FILETYPE|\
+					 EXT3_FEATURE_INCOMPAT_JOURNAL_DEV|\
+					 EXT3_FEATURE_INCOMPAT_RECOVER)
+#endif
 #define EXT2_LIB_FEATURE_RO_COMPAT_SUPP	(EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER|\
 					 EXT2_FEATURE_RO_COMPAT_LARGE_FILE)
 /*
@@ -488,8 +429,8 @@ struct ext2fs_sb {
  */
 
 /* alloc.c */
-extern errcode_t ext2fs_new_inode(ext2_filsys fs, ino_t dir, int mode,
-				  ext2fs_inode_bitmap map, ino_t *ret);
+extern errcode_t ext2fs_new_inode(ext2_filsys fs, ext2_ino_t dir, int mode,
+				  ext2fs_inode_bitmap map, ext2_ino_t *ret);
 extern errcode_t ext2fs_new_block(ext2_filsys fs, blk_t goal,
 				  ext2fs_block_bitmap map, blk_t *ret);
 extern errcode_t ext2fs_get_free_blocks(ext2_filsys fs, blk_t start,
@@ -519,6 +460,8 @@ extern int ext2fs_badblocks_list_iterate(ext2_badblocks_iterate iter,
 extern void ext2fs_badblocks_list_iterate_end(ext2_badblocks_iterate iter);
 extern errcode_t ext2fs_badblocks_copy(ext2_badblocks_list src,
 				       ext2_badblocks_list *dest);
+extern int ext2fs_badblocks_equal(ext2_badblocks_list bb1,
+				  ext2_badblocks_list bb2);
 
 /* bb_compat */
 extern errcode_t badblocks_list_create(badblocks_list *ret, int size);
@@ -551,7 +494,7 @@ extern errcode_t ext2fs_allocate_inode_bitmap(ext2_filsys fs,
 					      const char *descr,
 					      ext2fs_inode_bitmap *ret);
 extern errcode_t ext2fs_fudge_inode_bitmap_end(ext2fs_inode_bitmap bitmap,
-					       ino_t end, ino_t *oend);
+					       ext2_ino_t end, ext2_ino_t *oend);
 extern errcode_t ext2fs_fudge_block_bitmap_end(ext2fs_block_bitmap bitmap,
 					       blk_t end, blk_t *oend);
 extern void ext2fs_clear_inode_bitmap(ext2fs_inode_bitmap bitmap);
@@ -561,7 +504,7 @@ extern errcode_t ext2fs_write_bitmaps(ext2_filsys fs);
 
 /* block.c */
 extern errcode_t ext2fs_block_iterate(ext2_filsys fs,
-				      ino_t	ino,
+				      ext2_ino_t	ino,
 				      int	flags,
 				      char *block_buf,
 				      int (*func)(ext2_filsys fs,
@@ -570,7 +513,7 @@ extern errcode_t ext2fs_block_iterate(ext2_filsys fs,
 						  void	*priv_data),
 				      void *priv_data);
 errcode_t ext2fs_block_iterate2(ext2_filsys fs,
-				ino_t	ino,
+				ext2_ino_t	ino,
 				int	flags,
 				char *block_buf,
 				int (*func)(ext2_filsys fs,
@@ -582,7 +525,7 @@ errcode_t ext2fs_block_iterate2(ext2_filsys fs,
 				void *priv_data);
 
 /* bmap.c */
-extern errcode_t ext2fs_bmap(ext2_filsys fs, ino_t ino,
+extern errcode_t ext2fs_bmap(ext2_filsys fs, ext2_ino_t ino,
 			     struct ext2_inode *inode, 
 			     char *block_buf, int bmap_flags,
 			     blk_t block, blk_t *phys_blk);
@@ -603,6 +546,7 @@ extern errcode_t ext2fs_check_desc(ext2_filsys fs);
 extern errcode_t ext2fs_close(ext2_filsys fs);
 extern errcode_t ext2fs_flush(ext2_filsys fs);
 extern int ext2fs_bg_has_super(ext2_filsys fs, int group_block);
+extern void ext2fs_update_dynamic_rev(ext2_filsys fs);
 
 /* cmp_bitmaps.c */
 extern errcode_t ext2fs_compare_block_bitmap(ext2fs_block_bitmap bm1,
@@ -612,15 +556,15 @@ extern errcode_t ext2fs_compare_inode_bitmap(ext2fs_inode_bitmap bm1,
 
 /* dblist.c */
 
-extern errcode_t ext2fs_get_num_dirs(ext2_filsys fs, ino_t *ret_num_dirs);
+extern errcode_t ext2fs_get_num_dirs(ext2_filsys fs, ext2_ino_t *ret_num_dirs);
 extern errcode_t ext2fs_init_dblist(ext2_filsys fs, ext2_dblist *ret_dblist);
-extern errcode_t ext2fs_add_dir_block(ext2_dblist dblist, ino_t ino,
+extern errcode_t ext2fs_add_dir_block(ext2_dblist dblist, ext2_ino_t ino,
 				      blk_t blk, int blockcnt);
 extern errcode_t ext2fs_dblist_iterate(ext2_dblist dblist,
 	int (*func)(ext2_filsys fs, struct ext2_db_entry *db_info,
 		    void	*priv_data),
        void *priv_data);
-extern errcode_t ext2fs_set_dir_block(ext2_dblist dblist, ino_t ino,
+extern errcode_t ext2fs_set_dir_block(ext2_dblist dblist, ext2_ino_t ino,
 				      blk_t blk, int blockcnt);
 extern errcode_t ext2fs_copy_dblist(ext2_dblist src,
 				    ext2_dblist *dest);
@@ -631,7 +575,7 @@ extern errcode_t
 	ext2fs_dblist_dir_iterate(ext2_dblist dblist,
 				  int	flags,
 				  char	*block_buf,
-				  int (*func)(ino_t	dir,
+				  int (*func)(ext2_ino_t	dir,
 					      int		entry,
 					      struct ext2_dir_entry *dirent,
 					      int	offset,
@@ -648,7 +592,7 @@ extern errcode_t ext2fs_write_dir_block(ext2_filsys fs, blk_t block,
 
 /* dir_iterate.c */
 extern errcode_t ext2fs_dir_iterate(ext2_filsys fs, 
-			      ino_t dir,
+			      ext2_ino_t dir,
 			      int flags,
 			      char *block_buf,
 			      int (*func)(struct ext2_dir_entry *dirent,
@@ -662,10 +606,14 @@ extern errcode_t ext2fs_dir_iterate(ext2_filsys fs,
 extern errcode_t ext2fs_dup_handle(ext2_filsys src, ext2_filsys *dest);
 
 /* expanddir.c */
-extern errcode_t ext2fs_expand_dir(ext2_filsys fs, ino_t dir);
+extern errcode_t ext2fs_expand_dir(ext2_filsys fs, ext2_ino_t dir);
 
+/* ext_attr.c */
+void ext2fs_swap_ext_attr(ext2_filsys fs, char *to, char *from);
+extern errcode_t ext2fs_read_ext_attr(ext2_filsys fs, blk_t block, void *buf);
+extern errcode_t ext2fs_write_ext_attr(ext2_filsys fs, blk_t block, void *buf); 
 /* fileio.c */
-extern errcode_t ext2fs_file_open(ext2_filsys fs, ino_t ino,
+extern errcode_t ext2fs_file_open(ext2_filsys fs, ext2_ino_t ino,
 				  int flags, ext2_file_t *ret);
 extern ext2_filsys ext2fs_file_get_fs(ext2_file_t file);
 extern errcode_t ext2fs_file_close(ext2_file_t file);
@@ -677,6 +625,14 @@ extern errcode_t ext2fs_file_lseek(ext2_file_t file, ext2_off_t offset,
 				   int whence, ext2_off_t *ret_pos);
 extern ext2_off_t ext2fs_file_get_size(ext2_file_t file);
 extern errcode_t ext2fs_file_set_size(ext2_file_t file, ext2_off_t size);
+
+/* finddev.c */
+#if 0 /* broken in yaboot build env */
+extern char *ext2fs_find_block_device(dev_t device);
+#endif
+
+/* flushb.c */
+extern errcode_t ext2fs_sync_device(int fd, int flushb);
 
 /* freefs.c */
 extern void ext2fs_free(ext2_filsys fs);
@@ -690,16 +646,25 @@ extern void ext2fs_badblocks_list_free(badblocks_list bb);
 extern errcode_t ext2fs_get_device_size(const char *file, int blocksize,
 					blk_t *retblocks);
 
+/* imager.c */
+extern errcode_t ext2fs_image_inode_write(ext2_filsys fs, int fd, int flags);
+extern errcode_t ext2fs_image_inode_read(ext2_filsys fs, int fd, int flags);
+extern errcode_t ext2fs_image_super_write(ext2_filsys fs, int fd, int flags);
+extern errcode_t ext2fs_image_super_read(ext2_filsys fs, int fd, int flags);
+extern errcode_t ext2fs_image_bitmap_write(ext2_filsys fs, int fd, int flags);
+extern errcode_t ext2fs_image_bitmap_read(ext2_filsys fs, int fd, int flags);
+
 /* initialize.c */
 extern errcode_t ext2fs_initialize(const char *name, int flags,
 				   struct ext2_super_block *param,
 				   io_manager manager, ext2_filsys *ret_fs);
 
 /* inode.c */
+extern errcode_t ext2fs_flush_icache(ext2_filsys fs);
 extern errcode_t ext2fs_open_inode_scan(ext2_filsys fs, int buffer_blocks,
 				  ext2_inode_scan *ret_scan);
 extern void ext2fs_close_inode_scan(ext2_inode_scan scan);
-extern errcode_t ext2fs_get_next_inode(ext2_inode_scan scan, ino_t *ino,
+extern errcode_t ext2fs_get_next_inode(ext2_inode_scan scan, ext2_ino_t *ino,
 			       struct ext2_inode *inode);
 extern errcode_t ext2fs_inode_scan_goto_blockgroup(ext2_inode_scan scan,
 						   int	group);
@@ -712,12 +677,12 @@ extern void ext2fs_set_inode_callback
 	 void *done_group_data);
 extern int ext2fs_inode_scan_flags(ext2_inode_scan scan, int set_flags,
 				   int clear_flags);
-extern errcode_t ext2fs_read_inode (ext2_filsys fs, ino_t ino,
+extern errcode_t ext2fs_read_inode (ext2_filsys fs, ext2_ino_t ino,
 			    struct ext2_inode * inode);
-extern errcode_t ext2fs_write_inode(ext2_filsys fs, ino_t ino,
+extern errcode_t ext2fs_write_inode(ext2_filsys fs, ext2_ino_t ino,
 			    struct ext2_inode * inode);
-extern errcode_t ext2fs_get_blocks(ext2_filsys fs, ino_t ino, blk_t *blocks);
-extern errcode_t ext2fs_check_directory(ext2_filsys fs, ino_t ino);
+extern errcode_t ext2fs_get_blocks(ext2_filsys fs, ext2_ino_t ino, blk_t *blocks);
+extern errcode_t ext2fs_check_directory(ext2_filsys fs, ext2_ino_t ino);
 
 /* icount.c */
 extern void ext2fs_free_icount(ext2_icount_t icount);
@@ -725,42 +690,51 @@ extern errcode_t ext2fs_create_icount2(ext2_filsys fs, int flags, int size,
 				       ext2_icount_t hint, ext2_icount_t *ret);
 extern errcode_t ext2fs_create_icount(ext2_filsys fs, int flags, int size,
 				      ext2_icount_t *ret);
-extern errcode_t ext2fs_icount_fetch(ext2_icount_t icount, ino_t ino,
+extern errcode_t ext2fs_icount_fetch(ext2_icount_t icount, ext2_ino_t ino,
 				     __u16 *ret);
-extern errcode_t ext2fs_icount_increment(ext2_icount_t icount, ino_t ino,
+extern errcode_t ext2fs_icount_increment(ext2_icount_t icount, ext2_ino_t ino,
 					 __u16 *ret);
-extern errcode_t ext2fs_icount_decrement(ext2_icount_t icount, ino_t ino,
+extern errcode_t ext2fs_icount_decrement(ext2_icount_t icount, ext2_ino_t ino,
 					 __u16 *ret);
-extern errcode_t ext2fs_icount_store(ext2_icount_t icount, ino_t ino,
+extern errcode_t ext2fs_icount_store(ext2_icount_t icount, ext2_ino_t ino,
 				     __u16 count);
-extern ino_t ext2fs_get_icount_size(ext2_icount_t icount);
-#if 0
+extern ext2_ino_t ext2fs_get_icount_size(ext2_icount_t icount);
 errcode_t ext2fs_icount_validate(ext2_icount_t icount, FILE *);
-#endif
 
 /* ismounted.c */
 extern errcode_t ext2fs_check_if_mounted(const char *file, int *mount_flags);
+extern errcode_t ext2fs_check_mount_point(const char *device, int *mount_flags,
+					  char *mtpt, int mtlen);
 
 /* namei.c */
-extern errcode_t ext2fs_lookup(ext2_filsys fs, ino_t dir, const char *name,
-			 int namelen, char *buf, ino_t *inode);
-extern errcode_t ext2fs_namei(ext2_filsys fs, ino_t root, ino_t cwd,
-			const char *name, ino_t *inode);
-errcode_t ext2fs_namei_follow(ext2_filsys fs, ino_t root, ino_t cwd,
-			      const char *name, ino_t *inode);
-extern errcode_t ext2fs_follow_link(ext2_filsys fs, ino_t root, ino_t cwd,
-			ino_t inode, ino_t *res_inode);
+extern errcode_t ext2fs_lookup(ext2_filsys fs, ext2_ino_t dir, const char *name,
+			 int namelen, char *buf, ext2_ino_t *inode);
+extern errcode_t ext2fs_namei(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
+			const char *name, ext2_ino_t *inode);
+errcode_t ext2fs_namei_follow(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
+			      const char *name, ext2_ino_t *inode);
+extern errcode_t ext2fs_follow_link(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
+			ext2_ino_t inode, ext2_ino_t *res_inode);
 
 /* native.c */
 int ext2fs_native_flag(void);
 
 /* newdir.c */
-extern errcode_t ext2fs_new_dir_block(ext2_filsys fs, ino_t dir_ino,
-				ino_t parent_ino, char **block);
+extern errcode_t ext2fs_new_dir_block(ext2_filsys fs, ext2_ino_t dir_ino,
+				ext2_ino_t parent_ino, char **block);
 
 /* mkdir.c */
-extern errcode_t ext2fs_mkdir(ext2_filsys fs, ino_t parent, ino_t inum,
+extern errcode_t ext2fs_mkdir(ext2_filsys fs, ext2_ino_t parent, ext2_ino_t inum,
 			      const char *name);
+
+/* mkjournal.c */
+extern errcode_t ext2fs_create_journal_superblock(ext2_filsys fs,
+						  __u32 size, int flags,
+						  char  **ret_jsb);
+extern errcode_t ext2fs_add_journal_device(ext2_filsys fs,
+					   ext2_filsys journal_dev);
+extern errcode_t ext2fs_add_journal_inode(ext2_filsys fs, blk_t size,
+					  int flags);
 
 /* openfs.c */
 extern errcode_t ext2fs_open(const char *name, int flags, int superblock,
@@ -768,26 +742,31 @@ extern errcode_t ext2fs_open(const char *name, int flags, int superblock,
 			     ext2_filsys *ret_fs);
 
 /* get_pathname.c */
-extern errcode_t ext2fs_get_pathname(ext2_filsys fs, ino_t dir, ino_t ino,
+extern errcode_t ext2fs_get_pathname(ext2_filsys fs, ext2_ino_t dir, ext2_ino_t ino,
 			       char **name);
 
 /* link.c */
-errcode_t ext2fs_link(ext2_filsys fs, ino_t dir, const char *name,
-		      ino_t ino, int flags);
-errcode_t ext2fs_unlink(ext2_filsys fs, ino_t dir, const char *name,
-			ino_t ino, int flags);
+errcode_t ext2fs_link(ext2_filsys fs, ext2_ino_t dir, const char *name,
+		      ext2_ino_t ino, int flags);
+errcode_t ext2fs_unlink(ext2_filsys fs, ext2_ino_t dir, const char *name,
+			ext2_ino_t ino, int flags);
 
 /* read_bb.c */
 extern errcode_t ext2fs_read_bb_inode(ext2_filsys fs,
 				      ext2_badblocks_list *bb_list);
 
 /* read_bb_file.c */
-#if 0
+extern errcode_t ext2fs_read_bb_FILE2(ext2_filsys fs, FILE *f, 
+				      ext2_badblocks_list *bb_list,
+				      void *private,
+				      void (*invalid)(ext2_filsys fs,
+						      blk_t blk,
+						      char *badstr,
+						      void *private));
 extern errcode_t ext2fs_read_bb_FILE(ext2_filsys fs, FILE *f, 
 				     ext2_badblocks_list *bb_list,
 				     void (*invalid)(ext2_filsys fs,
 						     blk_t blk));
-#endif
 
 /* rs_bitmap.c */
 extern errcode_t ext2fs_resize_generic_bitmap(__u32 new_end,
@@ -814,6 +793,12 @@ extern int ext2fs_parse_version_string(const char *ver_string);
 extern int ext2fs_get_library_version(const char **ver_string,
 				      const char **date_string);
 
+/* write_bb_file.c */
+extern errcode_t ext2fs_write_bb_FILE(ext2_badblocks_list bb_list,
+				      unsigned int flags,
+				      FILE *f);
+
+
 /* inline functions */
 extern errcode_t ext2fs_get_mem(unsigned long size, void **ptr);
 extern errcode_t ext2fs_free_mem(void **ptr);
@@ -830,7 +815,7 @@ extern void ext2fs_mark_bb_dirty(ext2_filsys fs);
 extern int ext2fs_test_ib_dirty(ext2_filsys fs);
 extern int ext2fs_test_bb_dirty(ext2_filsys fs);
 extern int ext2fs_group_of_blk(ext2_filsys fs, blk_t blk);
-extern int ext2fs_group_of_ino(ext2_filsys fs, ino_t ino);
+extern int ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino);
 
 /*
  * The actual inlined functions definitions themselves...
@@ -979,11 +964,15 @@ _INLINE_ int ext2fs_group_of_blk(ext2_filsys fs, blk_t blk)
 /*
  * Return the group # of an inode number
  */
-_INLINE_ int ext2fs_group_of_ino(ext2_filsys fs, ino_t ino)
+_INLINE_ int ext2fs_group_of_ino(ext2_filsys fs, ext2_ino_t ino)
 {
 	return (ino - 1) / fs->super->s_inodes_per_group;
 }
 #undef _INLINE_
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _EXT2FS_EXT2FS_H */

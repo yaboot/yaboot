@@ -54,7 +54,7 @@ struct fs_t xfs_filesystem = {
 
 struct boot_file_t *xfs_file;
 static char FSYS_BUF[32768];
-__u64 partition_offset;
+uint64_t partition_offset;
 int errnum;
 
 static int
@@ -69,7 +69,7 @@ xfs_open(struct boot_file_t *file, const char *dev_name,
 	if (part)
 	{
 		DEBUG_F("Determining offset for partition %d\n", part->part_number);
-		partition_offset = ((__u64)(part->part_start)) * ((__u64)part->blocksize);
+		partition_offset = ((uint64_t) part->part_start) * part->blocksize;
 		DEBUG_F("%Lu = %lu * %hu\n", partition_offset,
 			part->part_start,
 			part->blocksize);
@@ -145,12 +145,12 @@ xfs_close(struct boot_file_t *file)
 }
 
 static int
-read_disk_block(struct boot_file_t *file, __u32 block, __u32 start,
-		__u32 length, void *buf)
+read_disk_block(struct boot_file_t *file, uint64_t block, int start,
+		int length, void *buf)
 {
-	unsigned long long pos = block * 512;
+	uint64_t pos = block * 512;
 	pos += partition_offset + start;
-	DEBUG_F("Reading %u bytes, starting at block %u, disk offset %Lu\n",
+	DEBUG_F("Reading %d bytes, starting at block %Lu, disk offset %Lu\n",
 		length, block, pos);
 	if (!prom_lseek(file->of_device, pos)) {
 		DEBUG_F("prom_lseek failed\n");
@@ -234,24 +234,9 @@ ino2offset (xfs_ino_t ino)
 }
 
 /* XFS is big endian, powerpc is big endian */
-
-static inline __const__ __uint16_t
-le16 (__uint16_t x)
-{
-	return x;
-}
-
-static inline __const__ __uint32_t
-le32 (__uint32_t x)
-{
-	return x;
-}
-
-static inline __const__ __uint64_t
-le64 (__uint64_t x)
-{
-	return x;
-}
+#define le16(x) (x)
+#define le32(x) (x)
+#define le64(x) (x)
 
 static xfs_fsblock_t
 xt_start (xfs_bmbt_rec_32_t *r)
@@ -795,7 +780,7 @@ xfs_dir (char *dirname)
 
 /* 
  * Local variables:
- * c-file-style: "K&R"
+ * c-file-style: "k&r"
  * c-basic-offset: 8
  * End:
  */
