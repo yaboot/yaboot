@@ -27,7 +27,7 @@ if [ -n "$PATH_PREFIX" ] ; then
     PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
 fi
 PRG="${0##*/}"
-VERSION=1.0.8-UNSUPPORTED_UNRELEASED_DEVEL
+VERSION=1.0.8
 CHROOT=/
 ## $CONFIG is relative to $CHROOT
 CONFIG=etc/yaboot.conf

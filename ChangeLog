@@ -2,6 +2,20 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2004-07-11 20:14:40 GMT	Ethan Benson <erbenson@alaska.net>	patch-75
+
+    Summary:
+      Prep 1.3.13 release
+    Revision:
+      yaboot--devel--1.3--patch-75
+
+    * Bump version numbers for 1.3.13 release.
+
+    modified files:
+     0arch-timestamps0 ChangeLog Makefile ybin/ofpath
+     ybin/yabootconfig ybin/ybin
+
+
 2004-07-11 20:02:24 GMT	Ethan Benson <erbenson@alaska.net>	patch-74
 
     Summary:

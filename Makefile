@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.12
+VERSION = 1.3.13
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars
