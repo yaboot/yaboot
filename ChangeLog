@@ -2,6 +2,19 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-11-03 02:00:27 GMT	Ethan Benson <erbenson@alaska.net>	patch-37
+
+    Summary:
+      Add extra sanity checks to new ofpath ide resolution code
+    Revision:
+      yaboot--devel--1.3--patch-37
+
+    * ofpath: Add a few sanity checks to new ide resolution code.
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/ofpath
+
+
 2002-10-30 10:32:14 GMT	Ethan Benson <erbenson@alaska.net>	patch-36
 
     Summary:

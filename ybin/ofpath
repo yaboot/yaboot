@@ -27,7 +27,7 @@
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 PRG="${0##*/}"
-VERSION=1.0.3-DEVEL_DO_NOT_DISTRIBUTE-patch-36
+VERSION=1.0.3-DEVEL_DO_NOT_DISTRIBUTE-patch-37
 DEBUG=0
 export LC_COLLATE=C
 
@@ -302,6 +302,10 @@ ide_ofpath()
     fi
 
     local IDEBUS="$(v=`readlink /proc/ide/$DEVNODE` ; echo ${v%%/*} )"
+    if [ -z "$IDEBUS" ] ; then
+	echo 1>&2 "$PRG: BUG: IDEBUS == NULL"
+	return 1
+    fi
     local OF1275IDE="/proc/ide/$IDEBUS/devspec"
 
     if [ ! -f "$OF1275IDE" ] ; then
@@ -315,10 +319,6 @@ ide_ofpath()
 		fi
 		;;
 	    *)
-		if [ ! -L "/proc/ide/$DEVNODE" ] ; then
-		    echo "$PRG: /dev/$DEVNODE: Device not configured"
-		    return 1
-		fi
 		local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep $DEVNODE)"
 		if [ -z "$CDROM" ] ; then
 		    if [ "$DEVNODE" = hda ] ; then
@@ -332,8 +332,12 @@ ide_ofpath()
 		;;
 	esac
     else
-	local DEVSPEC="$(cat /proc/ide/$IDEBUS/devspec)"
+	local DEVSPEC="$OF1275IDE"
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVSPEC=$DEVSPEC"
+	if [ -z "$DEVSPEC" ] ; then
+	    echo 1>&2 "$PRG: KERNEL BUG: $OF1275IDE exists, but is empty"
+	    return 1
+	fi
 	case "$DEVNODE" in
 	    hda|hdc|hde|hdg|hdi)
 		echo "${DEVSPEC}/disk@0:$PARTITION"
