@@ -2,6 +2,19 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2003-11-19 10:40:13 GMT	Ethan Benson <erbenson@alaska.net>	patch-62
+
+    Summary:
+      Prepare changelog for imminent 1.3.11 release
+    Revision:
+      yaboot--devel--1.3--patch-62
+
+    * Prepare changelog for imminent 1.3.11 release.
+
+    modified files:
+     ./0arch-timestamps0 ./ChangeLog ./changelog
+
+
 2003-11-18 10:12:32 GMT	Ethan Benson <erbenson@alaska.net>	patch-61
 
     Summary:

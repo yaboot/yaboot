@@ -1,3 +1,11 @@
+UNRELEASED  Ethan Benson  <erbenson@alaska.net>
+
+	* UNRELEASED Version 1.3.11
+
+	* Support new Apple G5 PowerMacs.
+
+	* ofpath: Bugfix to properly support IDE add-on cards.
+
 2003-02-26  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.10
