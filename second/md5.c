@@ -1,7 +1,7 @@
 /*
  *  md5.c - an implementation of the MD5 algorithm and MD5 crypt
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  * 
  *  Adapted from GRUB
  * 

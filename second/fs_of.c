@@ -1,7 +1,7 @@
 /*
  *  fs_of.c - an implementation for OpenFirmware supported filesystems
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Copyright (C) 1999 Benjamin Herrenschmidt
  *

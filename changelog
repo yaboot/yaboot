@@ -1,3 +1,23 @@
+2002-9-14  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.7-pre1
+
+	* Documentation:
+	  - Add German translation of yaboot-howto.
+	  - Small updates to yaboot-howto.
+	  - No longer tell people to send bugs to benh in yabootconfig(8).
+
+	* yaboot:
+	  - Fix file search so IBM CHRP will work if there is more then
+	    one type 0x83 partition.
+	  - Fix possible reiserfs symlink resolution failure.
+
+	* yabootconfig:
+	  - Fix corner case /etc/fstab parsing failure.
+
+	* Small build system modifcations (mostly to accomidate the use of
+	  the arch revision control system.
+
 2001-12-01  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.6

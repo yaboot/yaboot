@@ -1,7 +1,7 @@
 /*
  *  fs_xfs.c - an implementation for the SGI XFS file system
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Adapted from Grub
  *

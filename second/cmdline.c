@@ -1,7 +1,7 @@
 /*
  *  cmdline.c - Prompt handling
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Adapted from SILO
  *

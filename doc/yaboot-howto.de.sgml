@@ -22,7 +22,7 @@
     <author>
 <name>Chris Tillman</name>
     </author>
-    <version>Version 1.02, 20. April 2002</version>
+    <version>Version 1.03, 14. September 2002</version>
     <abstract>
 Dieses Dokument umfasst Installations- und Benutzungs-Anleitungen für
 <prgn>yaboot</prgn>, den GNU/Linux PowerPC Bootloader.
@@ -744,9 +744,8 @@ Wo ist yaboot zu Hause?
 
 Wie installiere ich Debian?
 <list>
-<item>    <url id="http://mirrors.kernel.org/debian/dists/woody/main/disks-powerpc/current/doc/install.en.html"
+<item>    <url id="http://www.debian.org/releases/woody/powerpc/install"
     name="Installing Debian GNU/Linux 3.0 For PowerPC">
-<item>    <url id="http://www.debian.org/releases/potato/powerpc/install" name="Installing Debian GNU/Linux 2.2 For PowerPC">
 </list>
 
 <p>

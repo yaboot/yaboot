@@ -1,7 +1,7 @@
 /*
  *  fs.c - Filesystem common definitions
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Copyright (C) 1999 Benjamin Herrenschmidt
  *

@@ -1,7 +1,7 @@
 /*
  *  fs_ext2.c - an implementation for the Ext2/Ext3 filesystem
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Copyright (C) 1999 Benjamin Herrenschmidt
  *

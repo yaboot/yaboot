@@ -3,7 +3,7 @@
 ###############################################################################
 ##
 ## yabootconfig generates a simple /etc/yaboot.conf
-## Copyright (C) 2001 Ethan Benson
+## Copyright (C) 2001, 2002 Ethan Benson
 ##
 ## This program is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ if [ -n "$PATH_PREFIX" ] ; then
     PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
 fi
 PRG="${0##*/}"
-VERSION=1.0.6-UNSUPPORTED_DEVEL_BRANCH
+VERSION=1.0.6-pre1
 CHROOT=/
 ## $CONFIG is relative to $CHROOT
 CONFIG=etc/yaboot.conf
@@ -78,7 +78,7 @@ echo \
 "$PRG $VERSION
 Written by Ethan Benson
 
-Copyright (C) 2001 Ethan Benson
+Copyright (C) 2001, 2002 Ethan Benson
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
 }

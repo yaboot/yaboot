@@ -1,7 +1,7 @@
 /*
  *  Yaboot - secondary boot loader for Linux on PowerPC. 
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Copyright (C) 1999, 2000, 2001 Benjamin Herrenschmidt
  *  

@@ -5,7 +5,7 @@
 ###############################################################################
 ##
 ## ofboot first stage autoconfiguring bootloader for yaboot and ybin
-## Copyright (C) 2000, 2001 Ethan Benson
+## Copyright (C) 2000, 2001, 2002 Ethan Benson
 ##
 ## Forth code written by Chris Emerson
 ##
@@ -340,7 +340,7 @@ $BGCOLOR to background-color
 \"  \"(0d 0a)\" .printf
 $MENUOPTS
 \"  \"(0d 0a)\" .printf
-\" Boot: \" .printf
+\" Stage 1 Boot: \" .printf
 get-msecs d# $TIMEOUT 3E8 * +
 begin
   key? if

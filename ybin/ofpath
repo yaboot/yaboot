@@ -3,7 +3,7 @@
 ###############################################################################
 ##
 ## ofpath: determine OpenFirmware path from unix device node
-## Copyright (C) 2000, 2001 Ethan Benson
+## Copyright (C) 2000, 2001, 2002 Ethan Benson
 ##
 ## Portions based on show_of_path.sh:
 ##
@@ -39,7 +39,7 @@ echo \
 Written by Ethan Benson
 Portions based on show_of_path.sh written by Olaf Hering
 
-Copyright (C) 2000, 2001 Ethan Benson
+Copyright (C) 2000, 2001, 2002 Ethan Benson
 Portions Copyright (C) 2000 Olaf Hering
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."

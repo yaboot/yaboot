@@ -1,7 +1,7 @@
 /*
  *  prom.c - Routines for talking to the Open Firmware PROM
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Copyright (C) 1999 Benjamin Herrenschmidt
  *

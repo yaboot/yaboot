@@ -1,7 +1,7 @@
 /*
  *  file.c - Filesystem related interfaces
  *
- *  Copyright (C) 2001 Ethan Benson
+ *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  parse_device_path()
  *
