@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.11
+VERSION = 1.3.12-UNRELEASED_UNSUPPORTED_DEVELOPMENT_VERSION
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars
