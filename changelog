@@ -1,3 +1,17 @@
+2004-07-11  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.13
+
+	* ofpath: Fix several errors going to stdout rather then stderr.
+
+	* ybin: Detect broken /dev/nvram better.
+
+	* yabootconfig:
+	  - Support initrd.
+	  - Support LABEL= and UUID= in /etc/fstab (Colin Watson).
+
+	* yaboot: Support ~6MB kernels for tftp (this is maxed out for yaboot1).
+
 2004-04-17  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.12
