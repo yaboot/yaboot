@@ -868,7 +868,7 @@ if [ `uname -s` != Linux ] ; then
 fi
 
 ## check for ppc, i think uname -m is safe for this...
-if [ `uname -m` != ppc ] ; then
+if [ `uname -m` != ppc -o `uname -m` != pp64 ] ; then
     echo 1>&2 "$PRG: This utility will only work on PowerPC hardware"
     exit 1
 fi

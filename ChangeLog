@@ -2,6 +2,19 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2003-11-18 10:09:41 GMT	Ethan Benson <erbenson@alaska.net>	patch-60
+
+    Summary:
+      Make ofpath work on powerpc-64
+    Revision:
+      yaboot--devel--1.3--patch-60
+
+    ybin/ofpath: No longer refuse to function on ppc64 systems.
+
+    modified files:
+     ./0arch-timestamps0 ./ChangeLog ./ybin/ofpath
+
+
 2003-11-17 04:35:21 GMT	Ethan Benson <erbenson@alaska.net>	patch-59
 
     Summary:
