@@ -27,7 +27,7 @@ if [ -n "$PATH_PREFIX" ] ; then
     PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
 fi
 PRG="${0##*/}"
-VERSION=1.0.6
+VERSION=1.0.7-rc1
 CHROOT=/
 ## $CONFIG is relative to $CHROOT
 CONFIG=etc/yaboot.conf
@@ -36,6 +36,13 @@ QUIET=0
 DEBUG=0
 SIGINT="$PRG: Interrupt caught ... exiting"
 export LC_COLLATE=C
+
+## avoid older versions of ofpath shipped in debian boot-floppies etc.
+if [ -x "${PATH_PREFIX}/usr/sbin/ofpath" ] ; then
+    OFPATH="${PATH_PREFIX}/usr/sbin/ofpath"
+else
+    OFPATH=ofpath
+fi
 
 ## catch signals, clean up temporary file
 trap "cleanup" 0
@@ -501,7 +508,7 @@ fi
 
 ## only powermacs appear to need device=
 if (cat /proc/cpuinfo 2>/dev/null | grep -q pmac-generation 2> /dev/null) ; then
-    DEVICE="\ndevice=$(ofpath $KERNELDISK)"
+    DEVICE="\ndevice=$($OFPATH $KERNELDISK)"
     if [ $? != 0 ] ; then
 	echo 1>&2 "$PRG: Unable to determine OpenFirmware device name to $KERNELDISK, aborting..."
 	exit 1
@@ -561,6 +568,15 @@ fi
 ## setup append line
 if [ -n "$KERNARGS" ] ; then
     APPEND="\tappend=\"${KERNARGS}\"\n"
+fi
+
+## avoid user confusion when they boot an installer with video=ofonly
+## (usually via a install-safe label) and then reboot and have the box
+## not boot properly again.
+if [ -z "$APPEND" ] ; then
+    if (grep -q '\<video=ofonly\>' /proc/cmdline 2> /dev/null) ; then
+	APPEND="\tappend=\"video=ofonly\"\n"
+    fi
 fi
 
 ## generate global section of yaboot.conf

@@ -2,6 +2,26 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-11-17 03:13:10 GMT	Ethan Benson <erbenson@alaska.net>	patch-39
+
+    Summary:
+      Prepare 1.3.8-rc1
+    Revision:
+      yaboot--devel--1.3--patch-39
+
+    * Prefer $PATH_PREFIX/usr/sbin/ofpath if it exists.
+    * yabootconfig: Add append="video=ofonly" if the running kernel
+      was booted with it.  This solves user confusion when they boot an installer with an
+      install-safe label, install, then reboot the new system to find the
+      console display doesn't work.  This only occurs if user does not
+      specify --kernel-args so it will not interfere with distro installers
+      which handle this themselves.
+
+    modified files:
+     0arch-timestamps0 ChangeLog Makefile changelog ybin/ofpath
+     ybin/yabootconfig ybin/ybin
+
+
 2002-11-17 02:02:17 GMT	Ethan Benson <erbenson@alaska.net>	patch-38
 
     Summary:

@@ -2,7 +2,7 @@
 
 include Config
 
-VERSION = 1.3.8-UNSUPPORTED_DEVEL_DO_NOT_DISTRIBUTE
+VERSION = 1.3.8-rc1
 # Debug mode (spam/verbose)
 DEBUG = 0
 # make install vars

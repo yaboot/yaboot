@@ -28,11 +28,18 @@ if [ -n "$PATH_PREFIX" ] ; then
 fi
 PRG="${0##*/}"
 SIGINT="$PRG: Interrupt caught ... exiting"
-VERSION=1.3.8-UNSUPPORTED_DEVEL_DO_NOT_DISTRIBUTE
+VERSION=1.3.8-rc1
 DEBUG=0
 VERBOSE=0
 TMP="${TMPDIR:-/tmp}"
 export LC_COLLATE=C
+
+## avoid older versions of ofpath shipped in debian boot-floppies etc.
+if [ -x "${PATH_PREFIX}/usr/sbin/ofpath" ] ; then
+    OFPATH="${PATH_PREFIX}/usr/sbin/ofpath"
+else
+    OFPATH=ofpath
+fi
 
 ## catch signals, clean up junk in /tmp.
 trap "cleanup" 0
@@ -600,7 +607,7 @@ convertpath()
     ## figure out bootstrap device OF pathname if user did not supply it.
     if [ -z "$ofboot" ] ; then
 	[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$boot'..."
-	ofboot="$(ofpath $boot)"
+	ofboot="$($OFPATH $boot)"
 	if [ $? != 0 ] ; then
 	    echo 1>&2 "$PRG: Unable to find OpenFirmware path for boot=$boot"
 	    echo 1>&2 "$PRG: Please add ofboot=<path> where <path> is the OpenFirmware path to $boot to $CONF"
@@ -615,7 +622,7 @@ convertpath()
 	    /dev/*)
 		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$bsd'..."
 		local sbsd="$bsd"
-		bsd="$(ofpath $bsd)"
+		bsd="$($OFPATH $bsd)"
 		if [ $? != 0 ] ; then
 		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for bsd=$sbsd"
 		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for bsd=$sbsd in $CONF"
@@ -634,7 +641,7 @@ convertpath()
 	    /dev/*)
 		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$macos'..."
 		local smacos="$macos"
-		macos="$(ofpath $macos)"
+		macos="$($OFPATH $macos)"
 		if [ $? != 0 ] ; then
 		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for macos=$smacos"
 		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for macos=$smacos in $CONF"
@@ -653,7 +660,7 @@ convertpath()
 	    /dev/*)
 		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$macosx'..."
 		local smacosx="$macosx"
-		macosx="$(ofpath $macosx)"
+		macosx="$($OFPATH $macosx)"
 		if [ $? != 0 ] ; then
 		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for macosx=$smacosx"
 		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for macosx=$smacosx in $CONF"
@@ -672,7 +679,7 @@ convertpath()
 	    /dev/*)
 		[ "$VERBOSE" = 1 ] && echo "$PRG: Finding OpenFirmware device path to \`$darwin'..."
 		local sdarwin="$darwin"
-		darwin="$(ofpath $darwin)"
+		darwin="$($OFPATH $darwin)"
 		if [ $? != 0 ] ; then
 		    echo 1>&2 "$PRG: Unable to determine OpenFirmware path for darwin=$sdarwin"
 		    echo 1>&2 "$PRG: Try specifying the real OpenFirmware path for darwin=$sdarwin in $CONF"
