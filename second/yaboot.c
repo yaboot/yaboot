@@ -297,7 +297,7 @@ void print_message_file(char *filename)
      if (!msg)
 	  goto done;
      else
-	  memset(msg, 0, sizeof(*msg));
+	  memset(msg, 0, 2001);
 
      if (file.fs->read(&file, 2000, msg) <= 0)
 	  goto done;
@@ -309,10 +309,6 @@ done:
 	  file.fs->close(&file);
      if (msg)
 	  free(msg);
-     if (p)
-	  free(p);
-     if (endp)
-	  free(endp);
 }
 
 /* Currently, the config file must be at the root of the filesystem.

@@ -251,8 +251,9 @@ Specifies a file containing a message that is displayed before the
 boot prompt.  You may specify either a plain pathname, in which case
 the default device and partition will be derived from the
 \fIdevice=\fR and \fIpartition=\fR lines in the global section of
-\fByaboot.conf\fR, or you can specify a full OpenFirmware device
-path.  Note: only the first 2000 bytes of this file will be read.
+\fByaboot.conf\fR, or you can specify a full OpenFirmware device path.
+The message file must be plain ASCII text with UNIX newlines.  Note:
+only the first 2000 bytes of this file will be read.
 .TP
 .BI "password=" password
 Protect booting by a password. The password is given in either
