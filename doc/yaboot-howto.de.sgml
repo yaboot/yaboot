@@ -22,7 +22,7 @@
     <author>
 <name>Chris Tillman</name>
     </author>
-    <version>Version 1.01, 24. Februar 2002</version>
+    <version>Version 1.02, 20. April 2002</version>
     <abstract>
 Dieses Dokument umfasst Installations- und Benutzungs-Anleitungen für
 <prgn>yaboot</prgn>, den GNU/Linux PowerPC Bootloader.
@@ -34,10 +34,13 @@ verbreitet und verändert werden.
 &copy; 1998&ndash;2002 Chris Tillman
       </copyrightsummary>
 <p>
-This document is maintained in the upstream yaboot source.  Patches
-and translations should be sent to erbenson (at) alaska.net.  The most
-recent version of this document is available via the yaboot rsync
-tree: rsync://penguinppc.org/yaboot, and <url
+Dieses Dokument wird im upstream yaboot Quellcode gepflegt. Änderungen
+und Übersetzungen bitte an erbenson (at) alaska.net senden.
+Die aktuellste Version dieses Dokumentes ist im yaboot rsync Verzeichnis
+unter: rsync://penguinppc.org/yaboot zu finden.
+        <p>
+Die Bezugsquelle dieses
+Dokumentes ist <url
 id="http://penguinppc.org/projects/yaboot/doc/yaboot-howto.shtml"
 name="http://penguinppc.org/projects/yaboot/doc/yaboot-howto.shtml">.
 <p>
