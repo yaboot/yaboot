@@ -27,7 +27,7 @@ if [ -n "$PATH_PREFIX" ] ; then
     PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
 fi
 PRG="${0##*/}"
-VERSION=1.0.7
+VERSION=1.0.8-UNSUPPORTED_UNRELEASED_DEVEL
 CHROOT=/
 ## $CONFIG is relative to $CHROOT
 CONFIG=etc/yaboot.conf
@@ -441,12 +441,40 @@ fi
 ## user if we cannot find one.
 if [ -f "${CHROOT}vmlinux" ] ; then
     KERNEL="${CHROOT}vmlinux"
+    if [ -f "${CHROOT}initrd" ] ; then
+	INITRD="${CHROOT}initrd"
+    elif [ -f "${CHROOT}initrd.img" ] ; then
+	INITRD="${CHROOT}initrd.img"
+    elif [ -f "${CHROOT}initrd.gz" ] ; then
+	INITRD="${CHROOT}initrd.gz"
+    fi
 elif [ -f "${CHROOT}boot/vmlinux" ] ; then
     KERNEL="${CHROOT}boot/vmlinux"
+    if [ -f "${CHROOT}boot/initrd" ] ; then
+	INITRD="${CHROOT}boot/initrd"
+    elif [ -f "${CHROOT}boot/initrd.img" ] ; then
+	INITRD="${CHROOT}boot/initrd.img"
+    elif [ -f "${CHROOT}boot/initrd.gz" ] ; then
+	INITRD="${CHROOT}boot/initrd.gz"
+    fi
 elif [ -f "${CHROOT}boot/vmlinux-`uname -r`" ] ; then
     KERNEL="${CHROOT}boot/vmlinux-`uname -r`"
+    if [ -f "${CHROOT}boot/initrd-`uname -r`" ] ; then
+	INITRD="${CHROOT}boot/initrd-`uname -r`"
+    elif [ -f "${CHROOT}boot/initrd-`uname -r`.img" ] ; then
+	INITRD="${CHROOT}boot/initrd-`uname -r`.img"
+    elif [ -f "${CHROOT}boot/initrd-`uname -r`.gz" ] ; then
+	INITRD="${CHROOT}boot/initrd-`uname -r`.gz"
+    fi
 elif [ -f "${CHROOT}vmlinux-`uname -r`" ] ; then
     KERNEL="${CHROOT}vmlinux-`uname -r`"
+    if [ -f "${CHROOT}initrd-`uname -r`" ] ; then
+	INITRD="${CHROOT}initrd-`uname -r`"
+    elif [ -f "${CHROOT}initrd-`uname -r`.img" ] ; then
+	INITRD="${CHROOT}initrd-`uname -r`.img"
+    elif [ -f "${CHROOT}initrd-`uname -r`.gz" ] ; then
+	INITRD="${CHROOT}initrd-`uname -r`.gz"
+    fi
 elif [ "$QUIET" = 0 ] ; then
     echo 1>&2 "$PRG: Cannot find a kernel, please locate one"
     while true ; do
@@ -463,12 +491,30 @@ elif [ "$QUIET" = 0 ] ; then
 	    echo 1>&2 "$PRG: $KERN: Is not a regular file"
 	fi
     done
+    while true ; do
+	$PRINTF 1>&2 "Enter path to an initrd image (hit Enter for none): "
+	read IRD
+	if [ -z "$IRD" ] ; then
+	    break
+	fi
+	if [ -f "$IRD" ] ; then
+	    INITRD="$IRD"
+	    break
+	elif [ ! -e "$IRD" ] ; then
+	    echo 1>&2 "$PRG: $IRD: No such file or directory"
+	elif [ -d "$IRD" ] ; then
+	    echo 1>&2 "$PRG: $IRD: Is a directory"
+	else
+	    echo 1>&2 "$PRG: $IRD: Is not a regular file"
+	fi
+    done
 else
     echo 1>&2 "$PRG: Cannot find a kernel, aborting..."
     exit 1
 fi
 
 debug "KERNEL=$KERNEL\n"
+debug "INITRD=$INITRD\n"
 
 ## get partition number the kernel lives on, and the OF device= name
 ## of the whole disk.
@@ -483,7 +529,26 @@ else
     KERNELDISK="${KERNDEV%%[0-9]*}"
 fi
 
+if [ -n "$INITRD" ] ; then
+    ## get partition number the initrd lives on, and the OF device= name
+    ## of the whole disk.
+    IRDDEV="$(v=`df "$INITRD" 2> /dev/null | grep ^/dev/` ; echo ${v%%[ ]*})"
+    IRDDIR="$(v=`df "$INITRD" 2> /dev/null | grep ^/dev/` ; echo ${v##*[ ]})"
+    IRDLINKDEV="$(v=`df "${INITRD%/*}/" 2>/dev/null | grep ^/dev/` ; echo ${v%%[ ]*})"
+    IRDPARTITION="${KERNDEV##*[a-z]}"
+
+    if ckdevfs "$IRDDEV" ; then
+	INITRDDISK="${IRDDEV%/*}/disc"
+    else
+	INITRDDISK="${IRDDEV%%[0-9]*}"
+    fi
+fi
+
 debug "KERNEL=$KERNEL\nKERNDEV=$KERNDEV\nKERNDIR=$KERNDIR\nLINKDEV=$LINKDEV\nPARTITION=$PARTITION\nKERNELDISK=$KERNELDISK\n"
+
+if [ -n "$INITRD" ] ; then
+    debug "INITRD=$INITRD\nIRDDEV=$IRDDEV\nIRDDIR=$IRDDIR\nIRDLINKDEV=$IRDLINKDEV\nIRDPARTITION=$IRDPARTITION\nINITRDDISK=$INITRDDISK\n"
+fi
 
 ## sanity check
 for i in "$KERNDEV" "$KERNDIR" "$LINKDEV" "$PARTITION" "$KERNELDISK" ; do
@@ -494,6 +559,17 @@ for i in "$KERNDEV" "$KERNDIR" "$LINKDEV" "$PARTITION" "$KERNELDISK" ; do
     fi
 done
 
+if [ -n "$INITRD" ] ; then
+    ## sanity check
+    for i in "$IRDDEV" "$IRDDIR" "$IRDLINKDEV" "$IRDPARTITION" "$INITRDDISK" ; do
+	if [ -z "$i" ] ; then
+	    echo 1>&2 "$PRG: Could not determine necessary information, aborting..."
+	    echo 1>&2 "$PRG: Are you using chroot $PRG instead of $PRG --chroot ?"
+	    exit 1
+	fi
+    done
+fi
+
 ## check for cross device symlink
 if [ -L "$KERNEL" ] ; then
     if [ "$KERNDEV" != "$LINKDEV" ] ; then
@@ -502,6 +578,26 @@ if [ -L "$KERNEL" ] ; then
 	if [ ! -f "$KERNEL" ] ; then
 	    echo 1>&2 "$PRG: Unable to canonicalize symlink's target.  Do not create cross device symlinks."
 	    exit 1
+	fi
+    fi
+fi
+
+if [ -n "$INITRD" ] ; then
+    ## initrd must be on same device as kernel.
+    if [ "$IRDDEV" != "$KERNDEV" -o "$IRDPARTITION" != "$IRDPARTITION" -o "$INITRDDISK" != "$KERNELDISK" ] ; then
+	echo 1>&2 "$PRG: Initrd image must be on same device as kernel image."
+	exit 1
+    fi
+
+    ## check for cross device symlink
+    if [ -L "$INITRD" ] ; then
+	if [ "$IRDDEV" != "$IRDLINKDEV" ] ; then
+	    echo 1>&2 "$PRG: Warning: Cross device symlink $INITRD, using it's target instead"
+	    INITRD="$(readlink -f "$INITRD" 2>/dev/null)"
+	    if [ ! -f "$INITRD" ] ; then
+		echo 1>&2 "$PRG: Unable to canonicalize symlink's target.  Do not create cross device symlinks."
+		exit 1
+	    fi
 	fi
     fi
 fi
@@ -537,6 +633,31 @@ case "$IMAGE" in
     IMAGE="/${IMAGE}"
     ;;
 esac
+
+if [ -n "$INITRD" ] ; then
+    ## if there is a separate /boot partition we must strip off the /boot
+    ## mountpoint or else yaboot will not find the kernel.
+    if [ "$IRDDIR" != "$CHROOT" ] ; then
+	INITRDIMG="${INITRD##*$IRDDIR}"
+    else
+	INITRDIMG="$INITRD"
+    fi
+
+    ## fix chrooted path
+    if [ "$CHROOT" != / ] ; then
+	INITRDIMG="${INITRDIMG##*$CHROOT}"
+    fi
+
+    ## fix relative path (caused by chroot path fix)
+    case "$INITRDIMG" in
+	/*)
+	    true
+	    ;;
+	*)
+	    INITRDIMG="/${INITRDIMG}"
+	    ;;
+    esac
+fi
 
 ## figure out if yaboot is installed in /usr/local or not
 if [ -f /usr/local/lib/yaboot/yaboot ] ; then
@@ -579,6 +700,11 @@ if [ -z "$APPEND" ] ; then
     fi
 fi
 
+## generate initrd= lines
+if [ -n "$INITRDIMG" ] ; then
+    INITRDIMGS="\tinitrd=$INITRDIMG\n\tinitrd-size=8192\n"
+fi
+
 ## generate global section of yaboot.conf
 GLOBAL="## yaboot.conf generated by $PRG $VERSION
 ##
@@ -596,7 +722,7 @@ install=${INSTALL}${OFBOOT:-}\n"
 IMAGES="
 image=$IMAGE
 \tlabel=Linux
-\tread-only\n${APPEND:-}"
+\tread-only\n${APPEND:-}${INITRDIMGS:-}"
 
 ## safely create a tmp file then move it into place after we are sure
 ## it was written.
