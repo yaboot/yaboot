@@ -193,7 +193,7 @@ scsiinfo()
 		if [ -d /sys/bus/scsi/devices -a \
 		    -n "$(ls /sys/bus/scsi/devices 2>/dev/null)" ] ; then
 		    echo 1>&2 "$PRG: /proc/scsi/scsi does not exist"
-		    echo 1>&2 "$PRG: Make sure you compiled your kernel with CONFIG_SCSI_PROC_FS=n"
+		    echo 1>&2 "$PRG: Make sure you compiled your kernel with CONFIG_SCSI_PROC_FS=y"
 		    return 1
 		fi
 		;;
@@ -372,8 +372,8 @@ ide_ofpath()
 		local SLAVE="/@$(cat /proc/ide/${IDEBUS}/channel)/disk@1"
 		;;
 	    scsi) ## some lame controllers pretend they are scsi, hopefully all kludges are created equal.
-		local MASTER="/$(($(cat /proc/ide/${IDEBUS}/channel) * 2 + 0)),0"
-		local SLAVE="/$(($(cat /proc/ide/${IDEBUS}/channel) * 2 + 1)),0"
+		local MASTER="/@$(($(cat /proc/ide/${IDEBUS}/channel) * 2 + 0))"
+		local SLAVE="/@$(($(cat /proc/ide/${IDEBUS}/channel) * 2 + 1))"
 		;;
 	    *)
 		echo 2>&1 "$PRG: Unsupported IDE device type: \"$(cat /proc/device-tree${DEVSPEC}/device_type 2> /dev/null)\""
