@@ -1,6 +1,6 @@
 diff -urN -X CVS man/mkofboot.8 man.deb/mkofboot.8
 --- man/mkofboot.8	Thu May 24 04:32:54 2001
-+++ man.deb/mkofboot.8	Mon Aug  6 03:01:39 2001
++++ man.deb/mkofboot.8	Tue Sep 25 05:38:42 2001
 @@ -94,7 +94,7 @@
  .TP
  .BR \-i ,\  \-\-install\ \fIboot-file
@@ -31,8 +31,8 @@ diff -urN -X CVS man/mkofboot.8 man.deb/mkofboot.8
  but root.  It is also critical that \fI/etc/yaboot.conf\fR not be
  writable by anyone but root since a different \fIofboot\fR script could be
 diff -urN -X CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
---- man/yaboot.conf.5	Mon Aug  6 02:43:23 2001
-+++ man.deb/yaboot.conf.5	Mon Aug  6 03:01:39 2001
+--- man/yaboot.conf.5	Tue Sep 25 05:20:03 2001
++++ man.deb/yaboot.conf.5	Tue Sep 25 05:38:42 2001
 @@ -136,7 +136,7 @@
    boot=/dev/hda2
    device=hd:
@@ -51,16 +51,16 @@ diff -urN -X CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
  loader for yaboot.  It is capable of presenting a dual boot menu for
  GNU/Linux, MacOS and MacOSX.  If dual booting is not required or
  configured it will simply load yaboot directly.  You must specify this
-@@ -299,7 +299,7 @@
- option you will be presented with a simple menu at bootup allowing you
- to hit L to boot GNU/Linux or B to boot BSD (along with other choices
- if configured).  This will only work if you are using the new
--\fI/usr/local/lib/yaboot/ofboot\fR script.  When this is set to a unix
-+\fI/usr/lib/yaboot/ofboot\fR script.  When this is set to a unix
- device node (ie \fI/dev/hda11\fR) then ybin will use the
+@@ -301,7 +301,7 @@
+ When you define this option you will be presented with a simple menu at
+ bootup allowing you to hit L to boot GNU/Linux or B to boot BSD (along
+ with other choices if configured).  This will only work if you are
+-using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When this is
++using the new \fI/usr/lib/yaboot/ofboot\fR script.  When this is
+ set to a unix device node (ie \fI/dev/hda11\fR) then ybin will use the
  \fBofpath\fR(8) utility to determine the OpenFirmware device path.
  .TP
-@@ -308,7 +308,7 @@
+@@ -310,7 +310,7 @@
  partition.  When you define this option you will be presented with a
  simple menu at bootup allowing you to hit L to boot GNU/Linux or M to
  boot MacOS (along with other choices if configured).  This will only
@@ -69,7 +69,7 @@ diff -urN -X CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
  script.  When this is set to a unix device node (ie \fI/dev/hda11\fR)
  then ybin will use the \fBofpath\fR(8) utility to determine the
  OpenFirmware device path.
-@@ -318,7 +318,7 @@
+@@ -320,7 +320,7 @@
  When you define this option you will be presented with a simple menu
  at bootup allowing you to hit L to boot GNU/Linux or X to boot MacOSX
  (along with other choices if configured).  This will only work if you
@@ -78,7 +78,7 @@ diff -urN -X CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
  this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
  use the \fBofpath\fR(8) utility to determine the OpenFirmware device
  path.
-@@ -339,7 +339,7 @@
+@@ -341,7 +341,7 @@
  When you define this option you will be presented with a simple menu
  at bootup allowing you to hit L to boot GNU/Linux or D to boot Darwin
  (along with other choices if configured).  This will only work if you
@@ -87,7 +87,7 @@ diff -urN -X CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
  this is set to a unix device node (ie \fI/dev/hda11\fR) then ybin will
  use the \fBofpath\fR(8) utility to determine the OpenFirmware device
  path.
-@@ -587,8 +587,8 @@
+@@ -589,8 +589,8 @@
  root=/dev/hda3
  partition=3
  timeout=20
@@ -100,7 +100,7 @@ diff -urN -X CVS man/yaboot.conf.5 man.deb/yaboot.conf.5
  default=Linux
 diff -urN -X CVS man/ybin.8 man.deb/ybin.8
 --- man/ybin.8	Thu May 24 04:33:16 2001
-+++ man.deb/ybin.8	Mon Aug  6 03:01:39 2001
++++ man.deb/ybin.8	Tue Sep 25 05:38:42 2001
 @@ -109,7 +109,7 @@
  .TP
  .BR \-i ,\  \-\-install\ \fIboot-file

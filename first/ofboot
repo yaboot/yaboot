@@ -110,7 +110,9 @@ while [ "$COUNT" -le "$OSNUM" ] ; do
 	2)
 	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file2: $5\n"
 	[ "$COUNT" = "$OSNUM" ] && c="."
-	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	[ "$4" = "quit" ] && BOOT=quit
+	[ "$1" = "ybsd" ] && BOOT="load-base release-load-area \" ${4}${5%/*} ${5##*/},/bsd\" \$boot"
+	[ "$1" != ybsd -a "$4" != quit  ] && BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
 	BT2=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
 	MENU2="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
 	GET2="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
@@ -120,7 +122,9 @@ while [ "$COUNT" -le "$OSNUM" ] ; do
 	3)
 	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file3: $5\n"
 	[ "$COUNT" = "$OSNUM" ] && c="."
-	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	[ "$4" = "quit" ] && BOOT=quit
+	[ "$1" = "ybsd" ] && BOOT="load-base release-load-area \" ${4}${5%/*} ${5##*/},/bsd\" \$boot"
+	[ "$1" != ybsd -a "$4" != quit  ] && BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
 	BT3=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
 	MENU3="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
 	GET3="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
@@ -130,7 +134,9 @@ while [ "$COUNT" -le "$OSNUM" ] ; do
 	4)
 	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file4: $5\n"
 	[ "$COUNT" = "$OSNUM" ] && c="."
-	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	[ "$4" = "quit" ] && BOOT=quit
+	[ "$1" = "ybsd" ] && BOOT="load-base release-load-area \" ${4}${5%/*} ${5##*/},/bsd\" \$boot"
+	[ "$1" != ybsd -a "$4" != quit  ] && BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
 	BT4=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
 	MENU4="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
 	GET4="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
@@ -140,7 +146,9 @@ while [ "$COUNT" -le "$OSNUM" ] ; do
 	5)
 	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file5: $5\n"
 	[ "$COUNT" = "$OSNUM" ] && c="."
-	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	[ "$4" = "quit" ] && BOOT=quit
+	[ "$1" = "ybsd" ] && BOOT="load-base release-load-area \" ${4}${5%/*} ${5##*/},/bsd\" \$boot"
+	[ "$1" != ybsd -a "$4" != quit  ] && BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
 	BT5=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
 	MENU5="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
 	GET5="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
@@ -150,7 +158,9 @@ while [ "$COUNT" -le "$OSNUM" ] ; do
 	6)
 	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file6: $5\n"
 	[ "$COUNT" = "$OSNUM" ] && c="."
-	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	[ "$4" = "quit" ] && BOOT=quit
+	[ "$1" = "ybsd" ] && BOOT="load-base release-load-area \" ${4}${5%/*} ${5##*/},/bsd\" \$boot"
+	[ "$1" != ybsd -a "$4" != quit  ] && BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
 	BT6=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
 	MENU6="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
 	GET6="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
@@ -160,7 +170,9 @@ while [ "$COUNT" -le "$OSNUM" ] ; do
 	7)
 	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file7: $5\n"
 	[ "$COUNT" = "$OSNUM" ] && c="."
-	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	[ "$4" = "quit" ] && BOOT=quit
+	[ "$1" = "ybsd" ] && BOOT="load-base release-load-area \" ${4}${5%/*} ${5##*/},/bsd\" \$boot"
+	[ "$1" != ybsd -a "$4" != quit  ] && BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
 	BT7=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
 	MENU7="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
 	GET7="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"
@@ -170,7 +182,9 @@ while [ "$COUNT" -le "$OSNUM" ] ; do
 	8)
 	[ "$DEBUG" = 1 ] && $PRINTF 1>&2 "$PRG: DEBUG: file8: $5\n"
 	[ "$COUNT" = "$OSNUM" ] && c="."
-	[ "$4" = "quit" ] && BOOT=quit || BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
+	[ "$4" = "quit" ] && BOOT=quit
+	[ "$1" = "ybsd" ] && BOOT="load-base release-load-area \" ${4}${5%/*} ${5##*/},/bsd\" \$boot"
+	[ "$1" != ybsd -a "$4" != quit  ] && BOOT="load-base release-load-area \" ${4}${5}\" \$boot"
 	BT8=": boot$1 \" Booting $2...\" .printf 100 ms $BOOT ;"
 	MENU8="\"       $3 for $2${c-,}\"(0d 0a)\" .printf"
 	GET8="      ascii $3 of \" $3 \"(0d 0a)\" .printf boot$1 endof"

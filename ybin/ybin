@@ -28,7 +28,7 @@ if [ -n "$PATH_PREFIX" ] ; then
 fi
 PRG="${0##*/}"
 SIGINT="$PRG: Interrupt caught ... exiting"
-VERSION=1.3.2
+VERSION=1.3.3
 DEBUG=0
 VERBOSE=0
 TMP="${TMPDIR:-/tmp}"
@@ -373,6 +373,20 @@ checkconf()
     fi
 
     if [ -n "$magicboot" ] ; then
+	## check for bsd loader
+	if [ -n "$bsd" ] ; then
+	    if [ -f /usr/lib/yaboot/ofwboot -a -r /usr/lib/yaboot/ofwboot ] ; then
+		BSDLOADER="/usr/lib/yaboot/ofwboot"
+	    elif [ -f /usr/local/lib/yaboot/ofwboot -a -r /usr/local/lib/yaboot/ofwboot ] ; then
+		BSDLOADER="/usr/local/lib/yaboot/ofwboot"
+	    else
+		echo 1>&2 "$PRG: /usr/local/lib/yaboot/ofwboot: No such file or directory"
+		echo 1>&2 "$PRG: With the bsd= option set you must have the bsd boot loader ofwboot"
+		CONFERR=1
+	    fi
+	fi
+
+	## convert defaultos variable
 	case "$defaultos" in 
 	    linux|Linux|GNU|Gnu|gnu)
 		defaultos=bootyaboot
@@ -757,7 +771,7 @@ util_install()
 
     ## if there is a magicboot script to install we will give it the
     ## hfstype (should be "tbxi") and give yaboot type "boot".
-    if [ "$magicboot" ] ; then
+    if [ -n "$magicboot" ] ; then
 	local BTTYPE=boot
     else
 	local BTTYPE="$hfstype"
@@ -827,17 +841,26 @@ util_install()
 	    return 1
 	fi
 
-	[ "$VERBOSE" = 1 ] && echo "$PRG: Installing $bootconf to $boot..."
+	[ "$VERBOSE" = 1 ] && echo "$PRG: Installing $bootconf onto $boot..."
 	hcopy -r "$bootconf" :"$CFFILE"
 	if [ $? != 0 ] ; then
 	    echo 1>&2 "$PRG: An error occured while writing to $boot"
 	    return 1
 	fi
 
+	if [ -n "$BSDLOADER" ] ; then
+	    [ "$VERBOSE" = 1 ] && echo "$PRG: Installing $BSDLOADER onto $boot..."
+	    hcopy -r "$BSDLOADER" :ofwboot
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: An error occured while writing to $boot"
+		return 1
+	    fi
+	fi
+
 	## set all file's attributes, if a magicboot script exists it
 	## gets the configured hfstype instead of yaboot (should be
 	## "tbxi") so it gets booted by OF.
-	if [ "$magicboot" ] ; then
+	if [ -n "$magicboot" ] ; then
 	    [ "$VERBOSE" = 1 ] && echo "$PRG: Setting attributes on $WRAP..."
 	    hattrib -t "$hfstype" -c "$hfscreator" $INVISIBLE $LOCK :ofboot.b
 	    if [ $? != 0 ] ; then
@@ -858,6 +881,15 @@ util_install()
 	if [ $? != 0 ] ; then
 	    echo 1>&2 "$PRG: Warning: error setting attributes on $CFFILE"
 	    echo 1>&2 "$PRG: This is probably unimportant so we'll ignore it"
+	fi
+
+	if [ -n "$BSDLOADER" ] ; then
+	    [ "$VERBOSE" = 1 ] && echo "$PRG: Setting attributes on ofwboot..."
+	    hattrib -t "bsdb" -c "$hfscreator" $INVISIBLE $LOCK :ofwboot
+	    if [ $? != 0 ] ; then
+		echo 1>&2 "$PRG: Warning: error setting attributes on ofwboot"
+		echo 1>&2 "$PRG: This is probably unimportant so we'll ignore it"
+	    fi
 	fi
 
 	## bless the root directory so OF will find the boot file
@@ -981,7 +1013,7 @@ mnt_install()
 	local CFFILE=yaboot.conf
     fi
 
-    if [ "$magicboot" ] ; then
+    if [ -n "$magicboot" ] ; then
 	local WRAP="${magicboot##*/}"
     fi
 
@@ -991,7 +1023,7 @@ mnt_install()
 
     ## repoint magicboot as the real first stage loader if using the
     ## modern automatic generating ofboot.b.
-    if [ "$FIRST" ] ; then
+    if [ -n "$FIRST" ] ; then
 	magicboot="$FIRST"
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: set magicboot to $FIRST"
     fi
@@ -1028,7 +1060,7 @@ mnt_install()
 	return 1
     fi
 
-    [ "$VERBOSE" = 1 ] && echo "$PRG: Installing $bootconf on $boot..."
+    [ "$VERBOSE" = 1 ] && echo "$PRG: Installing $bootconf onto $boot..."
     cp -f "$bootconf" "$TARGET/$CFFILE"
     if [ $? != 0 ] ; then
 	echo 1>&2 "$PRG: An error occured while writing to $boot"
@@ -1036,12 +1068,25 @@ mnt_install()
 	return 1
     fi
 
+    if [ -n "$BSDLOADER" ] ; then
+	[ "$VERBOSE" = 1 ] && echo "$PRG: Installing $BSDLOADER onto $boot..."
+	cp -f "$BSDLOADER" "$TARGET/ofwboot"
+	if [ $? != 0 ] ; then
+	    echo 1>&2 "$PRG: An error occured while writing to $boot"
+	    umnt failure "$TARGET"
+	    return 1
+	fi
+    fi
+
     if [ "$protect" = yes ] ; then
         [ "$VERBOSE" = 1 ] && echo "$PRG: Setting read-only attributes..."
 	chmod a-w "$TARGET/$BTFILE"
 	chmod a-w "$TARGET/$CFFILE"
-	if [ "$magicboot" ] ; then
+	if [ -n "$magicboot" ] ; then
 	    chmod a-w "$TARGET/ofboot.b"
+	fi
+	if [ -n "$BSDLOADER" ] ; then
+	    chmod a-w "$TARGET/ofwboot"
 	fi
     fi
 
@@ -1145,7 +1190,7 @@ mkfirststage()
     ## assign variables for configured menu options.
     [ "$usemount" = no -a "$bless" = yes ] && local YB="yaboot GNU l $ofboot ,${BS}${BS}yaboot"
     [ "$usemount" = yes -o "$bless" = no ] && local YB="yaboot GNU l $ofboot ,${OFDIR}yaboot"
-    [ -n "$bsd" ] && OS="$(($OS + 1))" && local BSD="bsd BSD b $bsd ,${BS}ofwboot.elf"
+    [ -n "$bsd" ] && OS="$(($OS + 1))" && local BSD="ybsd BSD b $ofboot ,${BS}${BS}ofwboot/$bsd"
     [ -n "$macos" ] && OS="$(($OS + 1))" && local MAC="macos MacOS m $macos ,${BS}${BS}:tbxi"
     [ -n "$macosx" ] && OS="$(($OS + 1))" && local MX="macosx MacOSX x $macosx ,${OSXBOOT}"
     [ -n "$darwin" ] && OS="$(($OS + 1))" && local DW="darwin Darwin d $darwin ,${BS}${BS}:tbxi"

@@ -6,7 +6,7 @@
 .\" This program is distributed according to the Gnu General Public License.
 .\" See the file COPYING in the ybin source distribution.
 .\"
-.TH YABOOT.CONF 5 "28 May 2001" "GNU/Linux PowerPC" "File Formats"
+.TH YABOOT.CONF 5 "25 September 2001" "GNU/Linux PowerPC" "File Formats"
 .SH NAME
 .B yaboot.conf
 \- Configuration file format used by
@@ -293,14 +293,16 @@ brown, light-gray, dark-gray, yellow, and white.  The default is
 black.
 .TP
 .BI "bsd=" of-path
-The OpenFirmware or Unix device path to a NetBSD or OpenBSD bootstrap
-partition, this partition must already have the BSD ofwboot.elf
-bootloader installed in the root directory..  When you define this
-option you will be presented with a simple menu at bootup allowing you
-to hit L to boot GNU/Linux or B to boot BSD (along with other choices
-if configured).  This will only work if you are using the new
-\fI/usr/local/lib/yaboot/ofboot\fR script.  When this is set to a unix
-device node (ie \fI/dev/hda11\fR) then ybin will use the
+The OpenFirmware or Unix device path to a NetBSD or OpenBSD root
+partition, this partition must have the BSD kernel located at \fI/bsd\fR.
+You must also have the BSD bootloader
+\fIofwboot\fR installed at \fI/usr/local/lib/yaboot/ofwboot\fR,
+\fBybin\fR(8) will install this onto the \fBbootstrap\fR(8) partition.
+When you define this option you will be presented with a simple menu at
+bootup allowing you to hit L to boot GNU/Linux or B to boot BSD (along
+with other choices if configured).  This will only work if you are
+using the new \fI/usr/local/lib/yaboot/ofboot\fR script.  When this is
+set to a unix device node (ie \fI/dev/hda11\fR) then ybin will use the
 \fBofpath\fR(8) utility to determine the OpenFirmware device path.
 .TP
 .BI "macos=" of-path

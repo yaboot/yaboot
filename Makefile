@@ -1,6 +1,6 @@
 ## Configuration section
 
-VERSION = 1.3.2
+VERSION = 1.3.3
 # Debug mode (verbose)
 DEBUG = 0
 ROOT =

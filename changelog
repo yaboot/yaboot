@@ -1,3 +1,16 @@
+2001-09-25  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.3
+
+	* Add --debug option to yabootconfig
+
+	* Fix BSD booting support somewhat.  The bsd= option's semantics
+	  have changed, it must now be set to the BSD root partition.  ybin
+	  will now install /usr/local/lib/yaboot/ofwboot onto the bootstrap
+	  partition when bsd= is present in /etc/yaboot.conf.  The dual boot
+	  menu will then execute "ofwboot <bsd_root_part>,/bsd" this means
+	  the bsd kernel must be at /bsd on the BSD root partition.
+
 2001-09-24  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.2

@@ -27,12 +27,13 @@ if [ -n "$PATH_PREFIX" ] ; then
     PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
 fi
 PRG="${0##*/}"
-VERSION=1.0.3
+VERSION=1.0.4
 CHROOT=/
 ## $CONFIG is relative to $CHROOT
 CONFIG=etc/yaboot.conf
 NOINSTALL=0
 QUIET=0
+DEBUG=0
 SIGINT="$PRG: Interrupt caught ... exiting"
 export LC_COLLATE=C
 
@@ -101,6 +102,12 @@ Generate a working /etc/yaboot.conf.
   -V, --version              output version information and exit"
 }
 
+debug()
+{
+    [ "$DEBUG" = 0 ] && return 0
+    $PRINTF 1>&2 "$PRG: DEBUG: $1"
+}
+
 confirm()
 {
     $PRINTF \
@@ -153,6 +160,7 @@ ckmacfdisk()
 	echo 1>&2 "$PRG: `command -v $FDISK`: Permission denied"
 	return 1
     fi
+    debug "mac-fdisk is: $FDISK\n"
     return 0
 }
 
@@ -173,6 +181,7 @@ ckfdisk()
 	echo 1>&2 "$PRG: `command -v $FDISK`: Permission denied"
 	return 1
     fi
+    debug "fdisk is: $FDISK\n"
     return 0
 }
 
@@ -184,12 +193,16 @@ findbootblock()
 	ckmacfdisk || return 1
 	if [ "$FDISK" = pdisk ] ; then
 	    ## handle braindamaged pdisk
+	    debug "dealing with pdisk deficiency...\n"
 	    BOOT="$(v=`$FDISK -l "$DISK" 2>/dev/null | grep '\<Apple_Bootstrap\>'` ; echo ${v%%:*})"
+	    debug "BOOT before fixup: $BOOT\n"
 	    if [ -n "$BOOT" ] ; then
 		BOOT="${DISK}${BOOT}"
 	    fi
+	    debug "BOOT after fixup: $BOOT\n"
 	else
 	    BOOT="$(v=`$FDISK -l "$DISK" 2>/dev/null | grep '\<Apple_Bootstrap\>'` ; echo ${v%%[ ]*})"
+	    debug "BOOT=$BOOT\n"
 	fi
 	if [ -z "$BOOT" ] ; then
 	    echo 1>&2 "$PRG: Unable to locate bootstrap partition on $DISK..."
@@ -199,6 +212,7 @@ findbootblock()
     else
 	ckfdisk || return 1
 	BOOT="$(v=`$FDISK -l "$DISK" 2>/dev/null | grep '\<PPC PReP Boot\>'` ; echo ${v%%[ ]*})"
+	debug "BOOT=$BOOT\n"
 	if [ -z "$BOOT" ] ; then
 	    echo 1>&2 "$PRG: Unable to locate bootstrap partition on $DISK..."
 	    echo 1>&2 "$PRG: You must create an 800K type: 0x41 PPC PReP Boot partition to make the disk bootable"
@@ -306,6 +320,10 @@ if [ $# != 0 ] ; then
 		NOINSTALL=1
 		shift 1
 		;;
+	    --debug)
+		DEBUG=1
+		shift 1
+		;;
             "")
                 break
                 ;;
@@ -358,6 +376,7 @@ fi
 if [ -z "$ROOT" ] ; then
     ## IMPORTANT! that last substitution is [<space><tab>] thats all ash will grok
     ROOT="$(v=`grep '[[:blank:]]/[[:blank:]]' ${CHROOT}etc/fstab` ; echo ${v%%[ 	]*})"
+    debug "ROOT=$ROOT\n"
     if [ -z "$ROOT" ] ; then
 	echo 1>&2 "$PRG: Could not determine root partition, aborting..."
 	exit 1
@@ -442,6 +461,8 @@ else
     exit 1
 fi
 
+debug "KERNEL=$KERNEL\n"
+
 ## get partition number the kernel lives on, and the OF device= name
 ## of the whole disk.
 KERNDEV="$(v=`df "$KERNEL" 2> /dev/null | grep ^/dev/` ; echo ${v%%[ ]*})"
@@ -455,10 +476,13 @@ else
     KERNELDISK="${KERNDEV%%[0-9]*}"
 fi
 
+debug "KERNEL=$KERNEL\nKERNDEV=$KERNDEV\nKERNDIR=$KERNDIR\nLINKDEV=$LINKDEV\nPARTITION=$PARTITION\nKERNELDISK=$KERNELDISK\n"
+
 ## sanity check
 for i in "$KERNDEV" "$KERNDIR" "$LINKDEV" "$PARTITION" "$KERNELDISK" ; do
     if [ -z "$i" ] ; then
 	echo 1>&2 "$PRG: Could not determine necessary information, aborting..."
+	echo 1>&2 "$PRG: Are you using chroot $PRG instead of $PRG --chroot ?"
 	exit 1
     fi
 done

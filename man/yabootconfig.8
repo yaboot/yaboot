@@ -17,7 +17,7 @@
 .\" along with this program; if not, write to the Free Software                
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 .\"
-.TH YABOOTCONFIG 8 "22 June 2001" "GNU/Linux PowerPC" "System Manager's Manual"
+.TH YABOOTCONFIG 8 "25 September 2001" "GNU/Linux PowerPC" "System Manager's Manual"
 .SH NAME
 .B yabootconfig
 \- generates a simple /etc/yaboot.conf
@@ -28,6 +28,7 @@
 .RB [ \ \-r | \-\-root\ \fIdevice\  ]
 .RB [ \ \-q | \-\-quiet\  ]
 .RB [ \ \-\-noinstall\  ]
+.RB [ \ \-\-debug\  ]
 .RB [ \ \-h | \-\-help\  ]
 .RB [ \ \-V | \-\-version\  ]
 .SH DESCRIPTION
@@ -56,7 +57,7 @@ requires \fBofpath\fR(8) in order to get the OpenFirmware device name
 for the root disk on PowerMacs. 
 .SH OPTIONS
 .TP
-.BR \-t.,\  \-\-chroot\ \fIdirectory
+.BR \-t ,\  \-\-chroot\ \fIdirectory
 Cause \fByabootconfig\fR to work as if \fIdirectory\fR is the /
 directory.  This is useful when booting from a rescue floppy or CDROM
 in which case you mount your true root filesystem on /target or /mnt.
@@ -106,6 +107,10 @@ Normally \fByabootconfig\fR will automatically run \fBmkofboot\fR(8)
 after it successfully generates a valid
 \fI<chroot>/etc/yaboot.conf\fR.  This option causes \fByabootconfig\fR
 to only generate the config file without installing the \fBbootstrap\fR.
+.TP
+.BR \-\-debug
+This option causes \fByabootconfig\fR to output some boring details useful
+only for debugging \fByabootconfig\fR itself.
 .TP
 .BR \-h ,\  \-\-help
 Print out usage information and exit.
