@@ -1,6 +1,6 @@
 ## Configuration section
 
-VERSION = 1.3.1
+VERSION = 1.3.2
 # Debug mode (verbose)
 DEBUG = 0
 ROOT =
@@ -134,6 +134,7 @@ clean:
 	find . -name '#*' | xargs rm -f
 	find . -name '.#*' | xargs rm -f
 	find . -name '*~' | xargs rm -f
+	-gunzip man/*.gz
 	rm -rf man.deb
 	chmod 755 ybin/ybin ybin/ofpath ybin/yabootconfig
 	chmod -R u+rwX,go=rX .
@@ -169,7 +170,12 @@ install: all strip
 	install -o root -g root -m 0644 man/ybin.8.gz ${ROOT}/${PREFIX}/${MANDIR}/man8/ybin.8.gz
 	install -o root -g root -m 0644 man/yaboot.conf.5.gz ${ROOT}/${PREFIX}/${MANDIR}/man5/yaboot.conf.5.gz
 	@gunzip man/*.gz
-	@[ ! -e ${ROOT}/etc/yaboot.conf ] && install -o root -g root -m 0644 etc/yaboot.conf ${ROOT}/etc/yaboot.conf
+	@if [ ! -e ${ROOT}/etc/yaboot.conf ] ; then						\
+		echo "install -o root -g root -m 0644 etc/yaboot.conf ${ROOT}/etc/yaboot.conf"; \
+		install -o root -g root -m 0644 etc/yaboot.conf ${ROOT}/etc/yaboot.conf;	\
+	 else											\
+		echo "/etc/yaboot.conf already exists, leaving it alone";			\
+	 fi
 	@echo
 	@echo "Installation successful."
 	@echo

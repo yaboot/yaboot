@@ -1,3 +1,10 @@
+2001-09-24  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.2
+
+	* Fix Makefile thinko where make install failed if
+	  /etc/yaboot.conf already existed.
+
 2001-09-20  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.1
