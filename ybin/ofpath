@@ -314,7 +314,7 @@ scsi_ofpath()
 ide_ofpath()
 {
     if [ ! -L "/proc/ide/$DEVNODE" ] ; then
-	echo 2>&1 "$PRG: /dev/$DEVNODE: Device not configured"
+	echo 1>&2 "$PRG: /dev/$DEVNODE: Device not configured"
 	return 1
     fi
 
@@ -326,7 +326,7 @@ ide_ofpath()
 
     case "$(uname -r)" in
 	2.5.*|2.6.0*|2.6.1|2.6.1-*|2.6.2|2.6.2-*)
-	    echo "$PRG: Linux kernel `uname -r` is not supported"
+	    echo 1>&2 "$PRG: Linux kernel `uname -r` is not supported"
 	    return 1
 	    ;;
 	2.6.*|2.7.*)
@@ -336,7 +336,7 @@ ide_ofpath()
 	    fi
 	    local SYS="$(m=`grep '.* .* sysfs ' /proc/mounts | head -n 1` ; echo `d=${m#* };echo ${d%% *}`)"
 	    if [ -z "$SYS" -o ! -d "$SYS" ] ; then
-		echo 2>&1 "$PRG: Unable to determine sysfs mountpoint"
+		echo 1>&2 "$PRG: Unable to determine sysfs mountpoint"
 		return 1
 	    fi
 	    local OF1275IDE="${SYS}/block/${DEVNODE}/device/../../devspec"
@@ -397,7 +397,7 @@ ide_ofpath()
 		local SLAVE="/@$(($(cat /proc/ide/${IDEBUS}/channel) * 2 + 1))"
 		;;
 	    *)
-		echo 2>&1 "$PRG: Unsupported IDE device type: \"$(cat /proc/device-tree${DEVSPEC}/device_type 2> /dev/null)\""
+		echo 1>&2 "$PRG: Unsupported IDE device type: \"$(cat /proc/device-tree${DEVSPEC}/device_type 2> /dev/null)\""
 		return 1
 		;;
 	esac

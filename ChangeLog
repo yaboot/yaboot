@@ -2,6 +2,20 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2004-05-08 06:38:44 GMT	Ethan Benson <erbenson@alaska.net>	patch-70
+
+    Summary:
+      Fix several ofpath error messages going to stdout rather then stderr
+    Revision:
+      yaboot--devel--1.3--patch-70
+
+    * ybin/ofpath: Fix several error messages mistakenly written to stdout
+      rather then stderr. (Thanks to Colin Watson for noticing)
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/ofpath
+
+
 2004-04-26 00:27:48 GMT	Ethan Benson <erbenson@alaska.net>	patch-69
 
     Summary:
