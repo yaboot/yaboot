@@ -2,6 +2,22 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-07-29 08:01:44 GMT	Ethan Benson <erbenson@alaska.net>	patch-24
+
+    Summary:
+      Don't recommend reporting bugs to benh in yabootconfig(8)
+    Revision:
+      yaboot--devel--1.3--patch-24
+
+    * Don't recommend reporting bugs to benh in yabootconfig(8).
+    
+    
+    
+
+    modified files:
+     0arch-timestamps0 ChangeLog man/yabootconfig.8
+
+
 2002-07-03 08:17:12 GMT	Ethan Benson <erbenson@alaska.net>	patch-23
 
     Summary:
