@@ -2,6 +2,20 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-11-18 10:38:53 GMT	Ethan Benson <erbenson@alaska.net>	patch-41
+
+    Summary:
+      handle ide device nodes up to hdp
+    Revision:
+      yaboot--devel--1.3--patch-41
+
+    * ofpath: handle ide device nodes up to /dev/hdp (16 disks, current
+      max in the kernel).
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/ofpath
+
+
 2002-11-17 23:33:17 GMT	Ethan Benson <erbenson@alaska.net>	patch-40
 
     Summary:
