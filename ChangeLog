@@ -2,6 +2,25 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2003-06-22 08:06:01 GMT	Ethan Benson <erbenson@alaska.net>	patch-51
+
+    Summary:
+      Update ChangeLog tag for compatiblity with arch 1.0pre25
+    Revision:
+      yaboot--devel--1.3--patch-51
+
+    * Update ChangeLog tag for compatiblity with arch 1.0pre25.
+
+    new files:
+     .arch-ids/ChangeLog.id ChangeLog
+
+    removed files:
+     .arch-ids/ChangeLog.id ChangeLog
+
+    modified files:
+     0arch-timestamps0
+
+
 2003-02-26 11:27:33 GMT	Ethan Benson <erbenson@alaska.net>	patch-50
 
     Summary:
@@ -15,7 +34,7 @@
     * Prep 1.3.10.
 
     modified files:
-     0arch-timestamps0 ChangeLog Makefile changelog
+     0arch-timestamps0 ChangeLog Makefile changelog ybin/mkofboot
      ybin/ofpath ybin/ybin
 
 
@@ -31,7 +50,7 @@
       - Finalize changelog.
 
     modified files:
-     0arch-timestamps0 ChangeLog Makefile changelog
+     0arch-timestamps0 ChangeLog Makefile changelog ybin/mkofboot
      ybin/ybin
 
 
@@ -46,7 +65,7 @@
       systems with more then one primary GNU/Linux filesystem partition.
 
     modified files:
-     0arch-timestamps0 ChangeLog second/file.c
+     0arch-timestamps0 ChangeLog second/file.c ybin/mkofboot
 
 
 2003-02-09 05:28:41 GMT	Ethan Benson <erbenson@alaska.net>	patch-47
@@ -605,7 +624,7 @@
 2002-03-27 13:37:21 GMT	Ethan Benson <erbenson@alaska.net>	patch-13
 
     Summary:
-      Commit yaboot 1.3.6-pre1
+      Summary Commit yaboot 1.3.6-pre1
     Revision:
       yaboot--devel--1.3--patch-13
 
