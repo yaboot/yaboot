@@ -27,7 +27,7 @@
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 PRG="${0##*/}"
-VERSION=1.0.2
+VERSION=1.0.3-DEVEL_DO_NOT_DISTRIBUTE-1
 DEBUG=0
 export LC_COLLATE=C
 
@@ -142,6 +142,22 @@ lgrep()
     done
     return 0
 }
+
+## if readlink is missing use a kludge
+if (command -v readlink > /dev/null 2>&1) ; then
+    true
+else
+    readlink()
+    {
+        local SYMTARGET="$(v=`ls -l "$2" 2>/dev/null` ; echo ${v##*> })"
+        if [ -n "$SYMTARGET" ] ; then
+            echo "$SYMTARGET"
+            return 0
+        else
+            return 1
+        fi
+    }
+fi
 
 ## a function to print relevant scsi host path when there is more then
 ## one.  this function also takes care of stripping off the trailing
@@ -278,6 +294,76 @@ scsi_ofpath()
     return 0
 }
 
+ide_ofpath()
+{
+    local OF1275IDE=/proc/ide/pmac
+
+    if [ ! -f "$OF1275IDE" ] ; then
+	case "$(cat /proc/device-tree/model)" in
+	    "PowerMac3,6")
+		local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep $DEVNODE)"
+		if [ -z "$CDROM" ] ; then
+		    echo "ultra2:$PARTITION"
+		else
+		    echo "cd:$PARTITION"
+		fi
+		;;
+	    *)
+		if [ ! -L "/proc/ide/$DEVNODE" ] ; then
+		    echo "$PRG: /dev/$DEVNODE: Device not configured"
+		    return 1
+		fi
+		local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep $DEVNODE)"
+		if [ -z "$CDROM" ] ; then
+		    if [ "$DEVNODE" = hda ] ; then
+			echo "hd:$PARTITION"
+		    else
+			echo "ultra1:$PARTITION"
+		    fi
+		else
+		    echo "cd:$PARTITION"
+		fi
+		;;
+	esac
+    else
+	if [ ! -L "/proc/ide/$DEVNODE" ] ; then
+	    echo 2>&1 "$PRG: /dev/$DEVNODE: Device not configured"
+	    return 1
+	fi
+
+	local IDEBUS="$(v=`readlink /proc/ide/$DEVNODE` ; echo ${v%%/*} )"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: IDEBUS=$IDEBUS"
+	local NUMBUSSES="$(($(linecount $OF1275IDE) / 5))"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: NUMBUSSES=$NUMBUSSES"
+	if [ "$((${IDEBUS##ide} + 1))" -gt "$NUMBUSSES" ] ; then
+	    echo 1>&2 "$PRG: /dev/$DEVNODE is not supported"
+	    return 1
+	fi
+	local IDEDEV="$(head -n $((5 * $((${IDEBUS##ide} + 1)))) $OF1275IDE | tail -n 5)"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: IDEDEV=$IDEDEV"
+	if [ "$(echo "$IDEDEV" | head -n 1)" != "$IDEBUS" ] ; then
+	    echo "$PRG: /dev/$DEVNODE: is not supported"
+	    return 1
+	fi
+	local DEVSPEC="$(v=`echo "$IDEDEV" | grep devspec` ; echo ${v##*:})"
+	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVSPEC=$DEVSPEC"
+	case "$DEVNODE" in
+	    hda|hdc|hde|hdg)
+		echo "${DEVSPEC}/disk@0:$PARTITION"
+		return 0
+		;;
+	    hdb|hdd|hdf|hdh)
+		echo "${DEVSPEC}/disk@1:$PARTITION"
+		return 0
+		;;
+	    *)
+		echo 1>&2 "$PRG: /dev/$DEVNODE is not supported"
+		return 1
+		;;
+	esac
+    fi
+}
+
 ## figure out the OpenFirmware device path for newworld macs.
 ## sd* scsi disks , hd* ide disks.
 newworld()
@@ -288,7 +374,7 @@ newworld()
 		true
 	    else
 		echo 1>&2 "$PRG: /proc/device-tree is broken.  Do not use BootX to boot, use yaboot."
-		echo 1>&2 "$PRG: The yaboot FAQ can be found here: http://www.alaska.net/~erbenson/doc"
+		echo 1>&2 "$PRG: The yaboot HOWTO can be found here: http://www.alaska.net/~erbenson/doc"
 		return 1
 	    fi
 
@@ -299,30 +385,8 @@ newworld()
 	    ## find the actual OF path.	
 	    scsi_ofpath || return 1
 	    ;;
-	hda*)
-	    local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep hda)"
-	    if [ -z "$CDROM" ] ; then
-		echo "hd:$PARTITION"
-	    else
-		echo "cd:$PARTITION"
-	    fi
-	    ;;
-	hdb*)
-	    local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep hdb)"
-	    if [ -z "$CDROM" ] ; then
-		echo "ultra1:$PARTITION"
-	    else
-		echo "cd:$PARTITION"
-	    fi
-	    ;;
 	hd*)
-	    local CDROM="$(grep "^drive name:" /proc/sys/dev/cdrom/info 2> /dev/null | grep $DEVNODE)"
-	    if [ -z "$CDROM" ] ; then
-		echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
-		return 1
-	    else
-		echo "cd:$PARTITION"
-	    fi
+	    ide_ofpath || return 1
 	    ;;
 	*)
 	    echo 1>&2 "$PRG: Device: /dev/$DEVNODE is not supported"
