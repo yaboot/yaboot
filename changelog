@@ -15,12 +15,12 @@
 	* yabootconfig:
 	  - Fix corner case /etc/fstab parsing failure. (Debian bug#156742).
 
-	* Small build system modifcations (mostly to accommodate the use of
+	* Small build system modifications (mostly to accommodate the use of
 	  the arch revision control system.
 
 	* yaboot now includes two changelogs: "ChangeLog" which is a
 	  detailed automatically generated list of changes, and "changelog"
-	  (this file) which is a hand written understandable summery of
+	  (this file) which is a hand written understandable summary of
 	  changes between releases.
 
 2001-12-01  Ethan Benson  <erbenson@alaska.net>
