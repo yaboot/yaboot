@@ -2,6 +2,24 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-27 13:30:47 GMT	Ethan Benson <erbenson@alaska.net>	patch-12
+
+    Summary:
+      Commit yaboot 1.3.5
+    Revision:
+      yaboot--devel--1.3--patch-12
+
+    Commit yaboot 1.3.5.
+
+    new files:
+     doc/.arch-ids/Makefile.id doc/.arch-ids/yaboot-howto.sgml.id
+     doc/Makefile doc/yaboot-howto.sgml
+
+    modified files:
+     ChangeLog Makefile THANKS changelog man.patch
+     man/yaboot.conf.5 ybin/ybin
+
+
 2002-03-27 13:25:55 GMT	Ethan Benson <erbenson@alaska.net>	patch-11
 
     Summary:

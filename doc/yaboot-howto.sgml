@@ -1,0 +1,734 @@
+<!DOCTYPE debiandoc PUBLIC "-//DebianDoc//DTD DebianDoc//EN" [
+ <!-- 
+        document conventions:
+          file, directory, device == file
+	  program, command == prgn
+          variable == var
+          package == package
+          program output == tt
+          key input == em, example for longer ones
+          command input == tt
+   -->
+]>
+
+<debiandoc>
+  <book>
+    <titlepag>
+      <title>
+        HOWTO-Booting with Yaboot on PowerPC
+      </title>
+      <author>
+	<name>Chris Tillman</name>
+      </author>
+      <version>Version 1.00, Oct 28 2001</version>
+      <abstract>
+This document contains installation and usage instructions for
+<prgn>yaboot</prgn>, the GNU/Linux PowerPC bootloader.
+      </abstract>
+      <copyright>
+	<copyrightsummary>
+This document may be distributed and modified under the terms of the
+GNU General Public License.
+&copy; 1998&ndash;2001 Chris Tillman
+        </copyrightsummary>
+	<p>
+This document is free software; you may redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+	<p>
+This document is distributed in the hope that it will be useful, but
+<em>without any warranty</em>; without even the implied warranty of
+merchantability or fitness for a particular purpose. See the GNU
+General Public License for more details.
+	<p>
+
+A copy of the GNU General Public License is available as
+<file>/usr/share/common-licenses/GPL</file> in the Debian GNU/Linux
+distribution or on the World Wide Web at the <url
+id="http://www.gnu.org/copyleft/gpl.html" name="GNU website">. You can also
+obtain it by writing to the Free Software Foundation, Inc., 59 Temple Place
+- Suite 330, Boston, MA 02111-1307, USA.
+
+    <toc detail="sect">
+<chapt>Yaboot's Purpose
+<p>
+
+Yaboot is a bootloader for PowerPC computers (NewWorld PowerMacs and IBM
+CHRP). It loads a Linux operating system kernel from an
+OpenFirmware-accessible filesystem and initiates operation of the kernel. On
+PowerMacs, an included CHRP script can display a multi-OS boot menu which
+can launch <prgn>yaboot</prgn> or other operating systems. Utilities are
+included to place <prgn>yaboot</prgn> and the associated script on a
+non-mountable bootstrap partition.
+
+
+<chapt>System Requirements
+<p>
+Motorola PowerPC processors have been used on at least three different
+kinds of systems: NuBus, OldWorld PCI, and NewWorld PCI. Nubus systems
+include the 6100/7100/8100 line of Power Macintoshes. OldWorld systems
+are most Power Macintoshes with a floppy drive and a PCI bus. Most
+603, 603e, 604, and 604e based Power Macintoshes, including the 7200,
+7300, 7500, 7600, 8500, 8600, 9500, and 9600 are OldWorld
+machines. The beige colored G3 systems are also OldWorld.
+<p>
+
+<em><prgn>yaboot</prgn> will not work on NuBus or OldWorld machines</em>,
+those will require <prgn>quik</prgn> or (for MacOS Pre-9.0.4 only)
+<prgn>BootX/miboot</prgn>.
+
+<p>
+The NewWorld PowerMacs, for which <prgn>yaboot</prgn> is designed, are
+any PowerMacs in translucent colored plastic cases. That includes all
+iMacs, iBooks, G4 systems, blue colored G3 systems, and most
+PowerBooks manufactured in and after 1999. 
+
+
+<chapt>Obtaining Yaboot
+<p>
+
+Yaboot is included with Debian GNU/Linux installation for PowerPC computers.
+Updates for Debian may be downloaded via the normal methods, such as
+<prgn>apt-get</prgn>, <prgn>dselect</prgn>, or <prgn>dpkg</prgn>.
+Installation of an updated version of <prgn>yaboot</prgn> on your system
+does not change your boot configuration; you must use the included
+<prgn>ybin</prgn> utility to do that.
+
+<p>
+
+You can also download <prgn>yaboot</prgn> directly from the
+<prgn>yaboot</prgn> home page at <url
+id="http://penguinppc.org/projects/yaboot">. If you download it using MacOS,
+be sure to download using <em>binary</em> (not text) format, and don't let
+Stuffit Expander or another utility expand the archive in MacOS.
+
+<p>
+
+You can download the precompiled <file>yaboot-binary-X.Y.tar.gz</file>, or
+the source tarball <file>yaboot-X.Y.tar.gz</file>. To unpack the binary
+distribution, use the command <tt>tar -zxvpf yaboot-X.Y.tar.gz</tt>. The
+components are unpacked into a <file>usr/local/</file> directory inside the
+directory where the command was executed.
+
+<p>
+
+To make and install from source, first make sure you have a working compiler
+(<prgn>gcc</prgn>) and the <prgn>make</prgn> program installed. (If
+not, download the binary yaboot tarball instead of the source.) Then run the
+following commands (substitute the actual revision numbers for X and Y):
+
+<p>
+<example>
+     tar -zxvpf yaboot-X.Y.tar.gz
+     cd yaboot-X.Y
+     make
+     su
+     make install
+</example>
+
+<chapt>Creating the Bootstrap Partition
+<p>
+
+Be sure you have reviewed the <prgn>mac-fdisk</prgn> Basics page at <url
+id="http://penguinppc.org/projects/yaboot/doc/mac-fdisk-basics.shtml">. If
+you are creating a new Linux installation, the first partition you create
+with <prgn>mac-fdisk</prgn> should be the bootstrap partition. Just use the
+<prgn>mac-fdisk</prgn> <tt>b</tt> command to automatically create a
+bootstrap partition of the proper size and type. If your version of
+<prgn>mac-fdisk</prgn> doesn't include the <tt>b</tt> command, use: 
+
+<p>
+<example>
+     Command (? for help): C xxxx 800k bootstrap Apple_Bootstrap 
+</example>
+<p>
+
+(Replace xxxx with the starting block number.) A working tarball of a
+bootstrap-capable version of mac-fdisk (Debian users already have this
+version) is also distributed at <url
+id="http://penguinppc.org/projects/eb/">. To install this, use
+
+<example>
+     su -
+     cd /
+     gzip -dc mac-fdisk.tar.gz | tar -xvp
+</example>
+ 
+<p>
+The bootstrap partition only takes 800k of space. If you are adding a
+bootstrap partition to your existing setup, you may have enough free
+space on your existing drive without changing other partitions. If
+not, you could avoid re-partitioning the entire disk by stealing a
+little space from your swap partition. Or <prgn>parted</prgn> would allow
+you to resize partitions.
+
+<p>
+
+The bootstrap partition should end up being partition #2, after the
+partition map itself but before any other partitions on the disk. You can
+easily change the order of the partitions in the partition map using the
+<tt>r</tt> command (see the <prgn>mac-fdisk</prgn> tutorial). In other
+words, it's not the physical placement of the bootstrap partition that
+counts, it's the logical order within the partition map. Note, though, if
+you have an existing system and you shift the partition numbers around, you
+will need to make the appropriate changes in <file>/etc/fstab</file>.
+
+<p>
+
+The reason you want the bootstrap partition as partition #2, is so
+that it precedes all other partitions in the boot sequence. This helps
+tremendously to make the entire system more stable, since some OS's
+are very intrusive in their use of partitions.
+
+<p>
+
+When you're finished partitioning, use the <tt>p</tt> command and make note
+of the final partition numbers. You will need to know the partition
+number for the bootstrap partition, the location of your kernel, and
+if you intend to set up <prgn>yaboot</prgn> for multiple OS booting, partition
+numbers for your alternate OS's.
+
+<p>
+
+While it's possible to install <prgn>yaboot</prgn> on a mountable HFS
+<file>/boot</file> partition, that configuration is deprecated, discouraged
+and completely unsupported.
+
+<chapt>Yabootconfig: Make It Easy
+<p>
+
+For initial installation on a machine, you can use <prgn>yabootconfig</prgn>
+to first create a <file>yaboot.conf</file> file and then install everything
+on your bootstrap partition. Yabootconfig reads the running system's
+<file>/etc/fstab</file> to determine the kernel location, and detects the
+location of the 800k Apple_Bootstrap partition. The Debian installer uses
+<prgn>yabootconfig</prgn> behind the scenes in the Make Hard Disk Bootable
+step.
+
+<p>
+
+Normally, the initial boot configuration is created while in a ramdisk
+installer environment, with the system being installed being mounted under
+<file>/target</file> or <file>/mnt</file>. To run <prgn>yabootconfig</prgn>
+under these conditions, supply the path to the target system with -t or
+--chroot option. For example: <tt>yabootconfig --chroot /target</tt>
+
+<p>
+
+The <file>yaboot.conf</file> automatically created by
+<prgn>yabootconfig</prgn> will just control booting of the linux system
+under which it was created. To boot additional OS's or add other options,
+you will need to edit the <file>yaboot.conf</file> file.
+
+
+<chapt>Customizing Your Boot Configuration
+<p>
+
+To customize your <prgn>yaboot</prgn> installation, use any text editor such
+as <prgn>vi</prgn> or <prgn>nano</prgn> (or <prgn>nano-tiny</prgn> in the
+Debian installer) to edit the <file>yaboot.conf</file> file. If you used
+<prgn>yabootconfig</prgn> to create the initial <file>yaboot.conf</file>, it
+will already contain a basic configuration to boot the linux system.
+
+<p>
+
+The <file>yaboot.conf</file> has numerous options; see the
+<file>yaboot.conf</file> man page for details. I will briefly cover the most
+popular items here. The file controls both <prgn>yaboot</prgn> operation
+during tha actual boot, and <prgn>ybin</prgn> operation while saving the
+configuration to the boot partition.
+
+<p>
+
+Lines in the file beginning with <tt>#</tt> are interpreted as comments. Each
+option or parameter must be specified on a separate line. Don't use
+any extra spaces within or following parameter definitions. Also, the
+file must have unix newlines; be sure to save as a unix type file
+if you create or edit it within MacOS.
+
+
+<sect>Linux Style Device Paths 
+<p>
+
+For those unfamiliar with Linux device naming, partition paths are in
+the form of <tt>/dev/xxx#</tt> where xxx is the Linux device name and #
+represents the partition number. Typical Linux device names are:
+
+<example>
+  Name   Device Type
+  ----   --------------------------------------------------
+  hda    internal ide drive (primary controller, master disk)
+  hdb    internal ide drive (primary controller, slave disk)
+  hdc    secondary controller, master disk (often used for CD-ROM)
+  hdd    secondary controller, slave disk (often used for Zip drive)
+  sda    first SCSI disk (SCSI ID address-wise)
+  sdb    second SCSI disk 
+  scd0   first CD-ROM (or sr0)
+  fd0    first floppy drive
+  fd1    second floppy drive
+</example>
+
+
+<sect>OpenFirmware Device Paths
+<p>
+A utility for finding the OpenFirmware device path corresponding to a
+given Linux device path is provided: <prgn>ofpath</prgn>. <prgn>ybin</prgn>
+uses <prgn>ofpath</prgn>
+internally to convert Linux device names you use in <file>yaboot.conf</file> to
+OpenFirmware equivalents. Example: <tt>ofpath /dev/hda</tt> (should return hd:). 
+You can also figure out OpenFirmware device paths yourself, see 
+Recovering From Misconfiguration below.
+
+<sect>Required Settings
+<p>
+
+The bootstrap partition is identified with <tt>boot=boot-partition</tt>,
+where boot-partition is the Linux-style path to the bootstrap partition. If
+you followed our partitioning recommendations on your internal hard disk,
+that would be <tt>boot=/dev/hda2</tt>.
+
+<p>
+
+For PowerMacs, a magicboot line such as 
+<tt>magicboot=/usr/local/lib/yaboot/ofboot</tt> is also required. Several
+models cannot execute a straight ELF, and need a CHRP script (which this
+line in the <file>yaboot.conf</file> makes available).
+
+<p>
+
+The <tt>partition=</tt>, <tt>image=</tt>, and <tt>root=</tt> settings (under
+kernel image settings below) are also required.
+
+<sect>Boot Menu Options
+<p>
+
+A CHRP script (<file>ofboot</file>) has been provided which
+<prgn>ybin</prgn> will modify using <file>yaboot.conf</file> settings, to
+display a very handy multi-OS boot menu. 
+
+<p> 
+
+If you are setting up a multi-OS boot menu, you'll need to identify the
+partitions where each OS lives. You can use Linux-style or OpenFirmware
+partition paths. Here are some examples illustrating the possibilities:
+
+<example>
+     macos=/dev/hda10
+     macosx=/dev/hda12
+     darwin=hd:9
+     bsd=zip:1
+</example>
+
+When using <tt>macosx=</tt>, if you have OSX installed on a UFS partition,
+then point the macosx to the OSX bootstrap partition, not the UFS root.
+Don't be tempted to use the OSX bootstrap partition for <prgn>ybin</prgn>,
+however &mdash; you still need a separate Apple_Bootstrap partition.
+
+<p>
+
+When using <tt>bsd=</tt>, on the other hand, point to the BSD root
+partition, not a bsd bootstrap partition. To use <tt>bsd=</tt>, you also
+need to have the bsd bootloader (ofwboot) available in
+<file>/usr/local/lib/yaboot/</file> when running <prgn>ybin</prgn>.
+
+<p>
+
+If nothing is selected from the boot menu when it appears, the system
+launches <prgn>yaboot</prgn> to start Linux. To launch another OS when no
+key is pressed, add a <tt>defaultos=</tt> line, for example
+<tt>defaultos=macos</tt> or <tt>defaultos=bsd</tt>.
+
+
+<sect>Kernel Image Settings
+<p>
+Kernel images to be launched by yaboot can be kept on any partition,
+in an ext2, ext3, XFS, ReiserFS, or HFS/HFS+ filesystem. Yaboot will
+need to know the kernel partition number and filesystem path.
+
+<p>
+
+The <file>yaboot.conf</file> file has two sections; most options are in the
+global section at the top of the file, and options pertaining to separate
+kernel images are grouped together below. Most kernel image options may be
+specified either globally or locally; a global option is overridden if it is
+re-specified in a kernel image section. Each kernel image section begins
+with an <tt>image=/</tt> line specifying the filesystem path to that kernel
+image; the first <tt>image=/</tt> line marks the end of the global section.
+
+<p>
+
+Yaboot must know the device, partition number, and filesystem path for the
+kernel image that is to be loaded and started. However, <tt>device=</tt> is
+usually not necessary, because if you don't specify it <prgn>yaboot</prgn>
+assumes it will find the kernel on the same device it was booted from, which
+is quite often true. You should always supply the kernel partition number,
+for example <tt>partition=3</tt>, and of course the image path (for example
+<tt>image=/boot/vmlinux</tt> ). If your kernel image is at the root level of
+the parttion, don't forget to include the leading slash when specifying the
+image path (<tt>image=vmlinux</tt> will probably fail).
+
+<p>
+
+It's worth noting that <prgn>yaboot</prgn> locates the kernel image within a
+partition's filesystem without regard to where that partition will
+eventually be mounted within the Linux root filesystem. So, for example, if
+you've placed a kernel image or symlink at /boot/vmlinux, but /boot is
+actually a separate partition on your system, then the image path for
+<prgn>yaboot</prgn> will just be <tt>image=/vmlinux</tt>.
+
+<p>
+
+You must also specify the Linux partition path for the root partition, for
+example <tt>root=/dev/hda3</tt>. This parameter is passed to the kernel when
+it starts up to let it know where its root filesystem is located. Many other
+options are available to pass additional boot parameters to the kernel
+(<tt>append=</tt>), specify initial ramdisk size (<tt>ramdisk=</tt>), load a
+ramdisk image (<tt>initrd=</tt>), and others. Refer to the yaboot.conf man
+page for details on kernel image options.  
+
+<p>
+
+Here's a simple but complete example <file>yaboot.conf</file> with one
+kernel image section:
+
+<example>
+  # Where's the bootstrap partition
+  boot=/dev/hda2
+  # CHRP script spec
+  magicboot=/usr/lib/yaboot/ofboot
+  # Dual boot with MacOS
+  macos=hd:14
+  # How long to wait at the OS boot menu (seconds)
+  delay=5
+
+  # How long to wait at the boot: prompt (tenths of a second)
+  timeout=50
+  # Globally identified root partition
+  root=/dev/hda3 
+  # The device where the kernel lives
+  device=hd:
+
+  # Kernel image section begins here
+  # Specify the filesystem path to the kernel image, symlinks are OK
+  image=/vmlinux
+      # Specify the partition number where this path is valid
+      partition=3
+      # Add a label, you can type this at the boot: prompt to load this kernel
+      label=Linux
+      # Specify the type of root fs mounting, read-only allows fsck to run
+      read-only
+
+  ## You must run ybin for changes to take effect!!!!!!!
+</example>
+<p>
+
+To netboot a kernel image via tftp, use <tt>image=/tftpboot/vmlinux</tt> (the
+path on the tftp server) and <tt>device=enet:10.0.0.1</tt>
+(substituting the tftp boot server IP address).
+
+<p> 
+
+Normally the first image specified in the <file>yaboot.conf</file> will be the
+image booted if no entry is made at the boot: prompt. To have another
+image loaded by default, add a <tt>default=label</tt> line in the global
+section. 
+
+
+<sect>Optional and Cool Settings
+<p>
+
+Yaboot and your multiboot menu can throw a splash of color into your life!
+Use <tt>fgcolor=</tt> and <tt>bgcolor=</tt> lines to set your screen to wake
+you up in the morning with black, blue, light-blue, green, light-green,
+cyan, light-cyan, red, light-red, purple, light-purple, brown, light-gray,
+dark-gray, yellow, and white. Make fgcolor and bgcolor the same if you'd
+really like a challenge.
+
+<p>
+
+Add any or all of enableofboot, enablenetboot, or enablecdboot to add
+the respective options to your OS boot menu: boot from OpenFirmware,
+the network, or CDROM.
+
+<p>
+
+Use Set delay= (in seconds) to determine how long the multiboot OS menu
+should wait before booting the default OS. <tt>timeout=</tt> (in tenths of
+seconds) to set how long yaboot should wait at the boot: prompt for
+you to choose a kernel image before booting the first image in the
+file or the <tt>default=</tt> image.
+
+<p>
+
+Booting password protection is available using a <tt>password=</tt> line. 
+When you add <tt>password=</tt>, a password will be required for all booting.
+Automatic booting is not possible unless a <tt>restricted</tt> line is added.
+
+<p>
+
+If <tt>restricted</tt> is added in the global section, kernel images defined
+in <file>yaboot.conf</file> may be booted as long as no arguments are added
+at the boot: prompt. This is useful for unattended booting, while preventing
+the instant rootshell problems of console access (though OpenFirmare
+passwords are also needed to make this really secure, along with locking the
+case). To boot an undefined image, or any image with additional arguments, a
+password will be required.
+
+<p>
+
+The <tt>password=</tt> line may either be a plaintext password or an MD5
+hash (the same format as the Linux <file>/etc/shadow</file> file). To make an
+md5 hash use the following perl snippet:
+
+<example>
+    $ perl -e 'printf("%s\n", crypt("secret", "\$1\$saltstrg"))'
+</example> 
+The saltstrg should be a random string, for example one generated by 
+
+<example>
+    makepasswd --chars=8
+</example>
+
+
+<chapt>Saving Boot Configuration Changes
+<p>
+
+There are currently three utilities provided to save your boot configuration
+changes to the boot partition: <prgn>ybin</prgn>, <prgn>mkofboot</prgn>, and
+<prgn>yabootconfig</prgn>. Ybin copies <prgn>yaboot</prgn>,
+<file>yaboot.conf</file>, and the CHRP script to the boot partition, and
+then performs the necessary blessing. Mkofboot initializes the bootstrap
+partition, then runs <prgn>ybin</prgn>. And <prgn>yabootconfig</prgn>
+creates a working <file>yaboot.conf</file> and then runs
+<prgn>mkofboot</prgn>. For details and options of these utilities, see the
+associated man pages or type the utility name followed by --help on the
+command line.
+
+
+<chapt>Common Mistakes
+<p>
+
+The most common mistake made in the usage of <prgn>yaboot</prgn> is trying
+to use it to boot from a mountable partition on a permanent basis. When a
+PowerPC first starts up, the booting process is started by locating a
+so-called `blessed' folder. The MacOS places the blessing so that multiple
+system folders may exist on a partition, but only one of them will be valid
+for starting up. If the computer is set up to dual boot Linux and MacOS,
+when MacOS is booted it will unbless any folders which do not contain a
+valid MacOS system. Then the next time the machine boots, the partition
+containing the formerly blessed folder will not be bootable.
+
+<p>
+
+The utilities provided with <prgn>yaboot</prgn> should always be used to set
+it up on its own bootstrap partition for regular booting needs. The only
+time you should place <prgn>yaboot</prgn> on a mountable partition is for
+initial installation of Linux and rescue operations. In those cases you can
+intervene in the normal bootloading process to request a specific file to be
+executed, and blessed folders are not an issue since this type of booting is
+not automatic.
+
+<p>
+
+After <prgn>yaboot</prgn> has been installed, another common mistake is
+changing the boot configuration file or updating the <prgn>yaboot</prgn>
+software and then failing to re-run the <prgn>ybin</prgn> utility to
+transfer the changed configuration to the boot partition. Booting functions
+will not be changed unless the changes are saved to the bootstrap partition.
+If you change your <file>yaboot.conf</file> often, you might want to add a
+comment line inside the <file>yaboot.conf</file> file to remind yourself to
+run <prgn>ybin</prgn> after making changes.
+
+
+<chapt>Recovering From Misconfiguration
+<p>
+
+If you have a problem booting, don't panic. Yaboot can boot any
+installed Linux kernel and system from the boot: prompt. 
+
+<sect>Resetting the NVRAM
+<p>
+
+Hold the Command-Option-p-r keys all together at startup to reset all nvram
+parameters to their factory defaults. Hold the keys until you hear the
+startup chime two or three times. If the setup recommendations were
+followed, the <prgn>yaboot</prgn> installation will be be the first bootable
+partition and OpenFirmware will boot it automatically. It should be noted
+that MacOS settings such as virtual memory, startup disk, and screen
+resolution will also be reset to their defaults.
+
+
+<sect>Loading Yaboot
+<p>
+
+If a <tt>boot:</tt> prompt isn't presented, then <prgn>yaboot</prgn> isn't
+being loaded. You can load it manually from
+OpenFirmware. Holding the Command-Option-o-f keys all together after
+pressing the power-on key will give you an OpenFirmware prompt 
+
+<example>
+    0 >
+</example>
+(Command is the key with the cloverleaf and/or apple engraved on it). 
+
+<p>
+
+At the OF prompt, you will need to use OpenFirmware paths for most of
+the boot configuration items. You can determine most OpenFirmware
+paths from the OF prompt using a few OF commands, then construct an OF
+boot command to directly boot your kernel.
+
+<p>
+
+The full OpenFirmware path consists of three parts in the format 
+
+<example>
+    device-name:partition-number,/filesystem-path
+</example>
+
+<p>
+
+The OF command devalias will list all the device aliases effective on
+your system. You may see some of these:
+<example>
+  Name      Device Type
+  ----      --------------------------------------------------
+  hd        internal ide drive (primary controller, master disk)
+  ultra1    internal ide drive (primary controller, slave disk)
+  ide0      ide drive (secondary controller, master disk)
+  ide1      ide drive (secondary controller, slave disk)
+  cd        CD-ROM 
+  zip       Zip drive
+  fw        FireWire interface
+  fd        Floppy drive
+  enet      Ethernet interface
+</example>
+
+Append the partition number of the boot partition (in our recommendation, 2)
+and then follow that with <tt>,yaboot</tt> to boot the <prgn>yaboot</prgn>
+file on the boot partition.
+
+<example>
+    0 > boot hd:2,yaboot 
+</example>
+<p>
+
+Hit return, and <prgn>yaboot</prgn> should be loaded and display its
+<file>boot:</file> prompt. If you don't know the partition number, just
+start at 2 and work your way up until you hit it.
+
+<sect>Manually Loading a Kernel Image 
+<p>
+
+Once you have the boot: prompt, you can enter a label defined in your
+<file>yaboot.conf</file> to boot that kernel image. Or instead of a label,
+you can enter a full OpenFirmware path. A typical kernel path might be
+
+<example>
+    boot: hd:3,/vmlinux
+</example>
+
+To pass parameters to the kernel, add them on to the <tt>boot:</tt> prompt
+line after the kernel label or path. You'll need to specify <tt>root=</tt>
+as a minimum, but you can add any kernel parameters desired. Here's an
+example; 
+
+<example>
+    boot: hd:3,/vmlinux root=/dev/hda3 ro
+</example>
+
+
+<chapt>Yaboot as a Temporary Bootloader 
+<p>
+It's very convenient for certain tasks like installing a new system
+the first time without a CD, or rescuing an existing system, to boot a
+ramdisk system such as an installer directly from files placed on an
+existing partition.
+
+<p>
+
+An example is the Debian installer. It is contained in a floppy-image
+root.bin file which <prgn>yaboot</prgn> can boot directly. A simple
+<file>yaboot.conf</file> to initialize the ramdisk, yaboot, root.bin, and a
+kernel image (named linux in this example) are all that is needed. All files
+are placed at the root level on an existing partition.
+
+<p>
+
+The <file>yaboot.conf</file> file for this purpose contains just 
+four lines:
+<example>
+    image=linux
+    label=install
+    initrd=root.bin
+    initrd-size=8192
+</example>
+<p>
+
+If you create <file>yaboot.conf</file> in the MacOS, you must convert
+it to use Unix newlines (linefeeds only). If you use MacOS newlines
+(just carriage returns), <prgn>yaboot</prgn> will be unable to read the file.
+
+<p>
+Boot into OpenFirmware, and type at the prompt:
+<example>
+    0 > boot hd:xx,yaboot
+</example>
+
+replacing xx with the partition number of the partition where the
+kernel and <prgn>yaboot</prgn> files were placed, followed by a return. At the
+boot: prompt, type <em>install</em> followed by a return.
+
+
+<chapt>For More Information
+<p>
+
+Where's home?
+<list>
+<item>    <url id="http://penguinppc.org/projects/yaboot/" name="Yaboot Home">
+</list>
+
+<p>
+
+How do I install Debian?
+<list>
+<item>    <url id="http://mirrors.kernel.org/debian/dists/woody/main/disks-powerpc/current/doc/install.en.html"
+    name="Installing Debian GNU/Linux 3.0 For PowerPC">
+<item>    <url id="http://www.debian.org/releases/stable/powerpc/install" name="Installing Debian GNU/Linux 2.2 For PowerPC">
+</list>
+
+<p>
+
+What's Open Firmware?
+<list>
+<item>    <url id="http://developer.apple.com/technotes/tn/tn1044.html">
+<item>    <url id="http://developer.apple.com/technotes/tn/tn1061.html">
+<item>    <url id="http://developer.apple.com/technotes/tn/tn1062.html">
+<item>    <url id="http://developer.apple.com/technotes/tn/tn1167.html">
+</list>
+
+
+</chapt>
+  </book>
+</debiandoc>
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-namecase-general:t
+sgml-general-insert-case:lower
+sgml-minimize-attributes:max
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:nil
+sgml-parent-document:nil
+sgml-declaration:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->

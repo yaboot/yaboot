@@ -8,6 +8,7 @@ In no particular order:
  * iNOUE Koich! <inoue@ma.ns.musashi-tech.ac.jp> for advice and help [re]writing ofboot's Forth code.
  * Segher Boessenkool <segher@chello.nl> for help with ofboot's Forth code, and the new penguin icon.
  * Tom Rini <trini@kernel.crashing.org> for adding devfs support to ofpath.
+ * Chris Tillman <tillman@azstarnet.com> for writing the yaboot-howto.
  * Eric Peden <ericpeden@homemail.com> for writing the yaboot FAQ.
  * Nicholas Humfrey <njh399@ecs.soton.ac.uk> for the badge icons in ofboot.
  * Hollis Blanchard <hollis+@andrew.cmu.edu> YellowDog/RPM packaging.

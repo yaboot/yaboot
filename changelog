@@ -1,11 +1,13 @@
-2001-10-25  Ethan Benson  <erbenson@alaska.net>
+2001-10-28  Ethan Benson  <erbenson@alaska.net>
 
-	* Version 1.3.5pre2
+	* Version 1.3.5
+
+	* Add yaboot-howto, Thanks to Chris Tillman.
 
 	* yaboot:
-	  - XFS fixes for large partitions (Brendan O'Dea)
+	  - XFS fixes for large partitions (Brendan O'Dea).
 	  - Upgrade libext2fs to 1.25, this adds full ext3 support to yaboot.
-	  - Reiserfs fixes (Jeff Mahoney)
+	  - Reiserfs fixes (Jeff Mahoney).
 	  - Implement the message= configuration option (see yaboot.conf man page).
 
 2001-10-13  Ethan Benson  <erbenson@alaska.net>
