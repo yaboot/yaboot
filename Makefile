@@ -152,6 +152,7 @@ clean:
 	find . -not -path './\{arch\}*' -name '.#*' | xargs rm -f
 	find . -not -path './\{arch\}*' -name '*~' | xargs rm -f
 	find . -not -path './\{arch\}*' -name '*.swp' | xargs rm -f
+	find . -not -path './\{arch\}*' -name ',,*' | xargs rm -rf
 	-gunzip man/*.gz
 	rm -rf man.deb
 

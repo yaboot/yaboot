@@ -2,6 +2,19 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-31 05:21:42 GMT	Ethan Benson <erbenson@alaska.net>	patch-19
+
+    Summary:
+      Remove more arch crap in clean target
+    Revision:
+      yaboot--devel--1.3--patch-19
+
+    * Remove ,,* in clean target, this is more crap arch leaves laying around.
+
+    modified files:
+     ChangeLog Makefile
+
+
 2002-03-31 05:11:46 GMT	Ethan Benson <erbenson@alaska.net>	patch-18
 
     Summary:
