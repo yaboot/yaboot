@@ -553,7 +553,9 @@ prom_claim (void *virt, unsigned int size, unsigned int align)
 void
 prom_release(void *virt, unsigned int size)
 {
-//  call_prom ("release", 2, 1, virt, size);
+     call_prom ("release", 2, 0, virt, size);
+#if 0 /* this is bullshit, newworld OF RELEASE method works fine. */
+
      /* release in not enough, it needs also an unmap call. This bit of forth
       * code inspired from Darwin's bootloader but could be replaced by direct
       * calls to the MMU package if needed
@@ -570,6 +572,7 @@ prom_release(void *virt, unsigned int size)
 		"\" release\" ^mem "			// Then free the physical pages
 		,size, virt 
 	  );
+#endif /* bullshit */
 }
 
 void
