@@ -148,10 +148,10 @@ bindist: all
 
 clean:
 	rm -f second/yaboot util/addnote util/elfextract $(OBJS)
-	find . -path './{arch}' -prune -o -name '#*' | xargs rm -f
-	find . -path './{arch}' -prune -o -name '.#*' | xargs rm -f
-	find . -path './{arch}' -prune -o -name '*~' | xargs rm -f
-	find . -path './{arch}' -prune -o -name '*.swp' | xargs rm -f
+	find . -not -path './\{arch\}*' -name '#*' | xargs rm -f
+	find . -not -path './\{arch\}*' -name '.#*' | xargs rm -f
+	find . -not -path './\{arch\}*' -name '*~' | xargs rm -f
+	find . -not -path './\{arch\}*' -name '*.swp' | xargs rm -f
 	-gunzip man/*.gz
 	rm -rf man.deb
 
