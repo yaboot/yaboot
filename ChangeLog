@@ -2,6 +2,26 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-09-08 00:13:58 GMT	Ethan Benson <erbenson@alaska.net>	patch-28
+
+    Summary:
+      Fix partition file search
+    Revision:
+      yaboot--devel--1.3--patch-28
+
+    * Change file_block_open() to check for FILE_OK rather then NULL
+    return from fs_open().  When no partition is specified in a file open
+    call yaboot will loop through all known partitions until the file is
+    found, or no more partitions are left.  In older versions fs_open()
+    would check for FILE_OK, so checking for NULL return from fs_open()
+    worked, in current versions fs_open() checks for BADFS so proper
+    errors can be reported.  This only really affects IBM CHRP.
+    
+
+    modified files:
+     ChangeLog second/file.c
+
+
 2002-08-18 22:33:31 GMT	Ethan Benson <erbenson@alaska.net>	patch-27
 
     Summary:

@@ -166,7 +166,7 @@ file_block_open(	struct boot_file_t*	file,
 		  p->part_number, p->part_start, p->part_size );
 	  if (partition == -1) {
 	       file->fs = fs_open( file, dev_name, p, file_name );
-	       if (file->fs != NULL)
+	       if (file->fs != FILE_ERR_OK)
 		    goto bail;
 	  }
 	  if ((partition >= 0) && (partition == p->part_number))
