@@ -1,8 +1,10 @@
-2002-11-27  Ethan Benson  <erbenson@alaska.net>
+2002-12-09  Ethan Benson  <erbenson@alaska.net>
 
-	* Version 1.3.8-rc4
+	* Version 1.3.8
 
-	* ofpath: Support new Xserve and Windtunnel PowerMacs.
+	* ofpath: Support new Xserve and Windtunnel PowerMacs.  
+	  - NOTE: For this to fully work it requires a sufficiently recent
+	    kernel.
 
 	* Prefer $PATH_PREFIX/usr/sbin/ofpath if it exists.
 
