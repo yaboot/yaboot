@@ -2,6 +2,22 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-11-19 11:32:49 GMT	Ethan Benson <erbenson@alaska.net>	patch-42
+
+    Summary:
+      Fix readlink fallback
+    Revision:
+      yaboot--devel--1.3--patch-42
+
+    * ofpath: fallback shell function for readlink was broken.  Fixes
+      IDEBUS==NULL on broken systems that lack /bin/readlink.
+    * Prepare 1.3.8-rc3.
+
+    modified files:
+     0arch-timestamps0 ChangeLog Makefile changelog ybin/ofpath
+     ybin/ybin
+
+
 2002-11-18 10:38:53 GMT	Ethan Benson <erbenson@alaska.net>	patch-41
 
     Summary:

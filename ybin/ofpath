@@ -149,7 +149,7 @@ if (command -v readlink > /dev/null 2>&1) ; then
 else
     readlink()
     {
-        local SYMTARGET="$(v=`ls -l "$2" 2>/dev/null` ; echo ${v##*> })"
+        local SYMTARGET="$(v=`ls -l "$1" 2>/dev/null` ; echo ${v##*> })"
         if [ -n "$SYMTARGET" ] ; then
             echo "$SYMTARGET"
             return 0
