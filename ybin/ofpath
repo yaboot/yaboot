@@ -27,7 +27,7 @@
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 PRG="${0##*/}"
-VERSION=1.0.3
+VERSION=1.0.4
 DEBUG=0
 export LC_COLLATE=C
 
@@ -346,7 +346,7 @@ ide_ofpath()
 	fi
 
 	case "$(cat /proc/device-tree${DEVSPEC}/device_type 2> /dev/null)" in
-	    ata)
+	    ide|ata)
 		local MASTER="/disk@0"
 		local SLAVE="/disk@1"
 		;;

@@ -1,3 +1,10 @@
+2003-02-26  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.10
+
+	* ofpath: Apple apparently can't decide whether its called `ata'
+	  or `ide'; fix support for early iMac models.
+
 2003-02-12  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.9
