@@ -29,6 +29,7 @@
 #include "fs.h"
 #include "xfs/xfs.h"
 #include "errors.h"
+#include "debug.h"
 
 #define SECTOR_BITS 9
 

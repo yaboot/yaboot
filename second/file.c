@@ -26,6 +26,7 @@
 #include "partition.h"
 #include "fs.h"
 #include "errors.h"
+#include "debug.h"
 
 extern char bootdevice[1024];
 
@@ -91,76 +92,6 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      return 1;
 }
 
-#if 0
-char *
-parse_device_path(char *of_device, char **file_spec, int *partition)
-{
-	char *p, *last;
-
-	if (file_spec)
-		*file_spec = NULL;
-	if (partition)
-		*partition = -1;
-
-	DEBUG_F("of_device before parsing: %s\n", of_device);
-	p = strchr(of_device, ':');
-	DEBUG_F("of_device after parsing: %s\n", p);
-
-	if (!p) {                          /* if null terminated we are finished */
-	     DEBUG_F("of_device: %s\n", of_device);
-	     return of_device;
-	}
-#if 0 /* this is broken crap, breaks netboot entirely */
-	else if (strstr(of_device, "ethernet") != NULL)
-	     p = strchr(of_device, ',');  /* skip over ip all the way to the ',' */
-	else if (strstr(of_device, "enet") != NULL)
-	     p = strchr(of_device, ',');  /* skip over ip all the way to the ',' */
-#endif
-	*p = 0;
-	last = ++p;                       /* sets to start of second part */
-	while(*p && *p != ',') {
-        if (!isdigit (*p)) {
-	     p = last;
-	     break;
-	}
-	++p;
-	}
-	if (p != last) {
-	     *(p++) = 0;
-	     if (partition)
-		  *partition = simple_strtol(last, NULL, 10);
-	}
-	if (*p && file_spec)
-	     *file_spec = p;
-
-	DEBUG_F("of_device: %s\n", of_device);
-	strcat(of_device, ":");
-	DEBUG_F("of_device after strcat: %s\n", of_device);
-	return of_device;
-}
-
-int
-validate_fspec(		struct boot_fspec_t*	spec,
-			char*			default_device,
-			int			default_part)
-{
-    if (!spec->file) {
-    	spec->file = spec->dev;
-    	spec->dev = NULL;
-    }
-    if (spec->part == -1)
-    	spec->part = default_part;
-    if (!spec->dev)
-	spec->dev = default_device;
-    if (!spec->file)
-	return FILE_BAD_PATH;
-    else if (spec->file[0] == ',')
-	spec->file++;
-
-    return FILE_ERR_OK;
-}
-
-#endif
 
 static int
 file_block_open(	struct boot_file_t*	file,
@@ -253,71 +184,26 @@ static struct fs_t fs_default =
 };
 
 
-int open_file(	const struct boot_fspec_t*	spec,
-		struct boot_file_t*		file)
+int open_file(const struct boot_fspec_t* spec, struct boot_file_t* file)
 {
-//	static char	temp[1024];
-	static char	temps[64];
-//	char		*dev_name;
-//	char		*file_name = NULL;
-	phandle		dev;
 	int		result;
-	int		partition;
 	
 	memset(file, 0, sizeof(struct boot_file_t*));
         file->fs        = &fs_default;
 
-	/* Lookup the OF device path */
-	/* First, see if a device was specified for the kernel
-	 * if not, we hope that the user wants a kernel on the same
-	 * drive and partition as yaboot itself */
-#if 0 /* this is crap */
-	if (!spec->dev)
-		strcpy(spec->dev, bootdevice);
-	strncpy(temp,spec->dev,1024);
-	dev_name = parse_device_path(temp, &file_name, &partition);
-	if (file_name == NULL)
-		file_name = (char *)spec->file;
-	if (file_name == NULL) {
-	     prom_printf("Configuration error: null filename\n");
-	     return FILE_ERR_NOTFOUND;
-	}
-	if (partition == -1)
-#endif
-		partition = spec->part;
-
-
 	DEBUG_F("dev_path = %s\nfile_name = %s\npartition = %d\n",
-		spec->dev, spec->file, partition);
+		spec->dev, spec->file, spec->part);
 
-	/* Find OF device phandle */
-	dev = prom_finddevice(spec->dev);
-	if (dev == PROM_INVALID_HANDLE) {
-		return FILE_ERR_BADDEV;
-	}
-
-	DEBUG_F("dev_phandle = %p\n", dev);
-
-	/* Check the kind of device */
-	result = prom_getprop(dev, "device_type", temps, 63);
-	if (result == -1) {
-		prom_printf("can't get <device_type> for device\n");
-		return FILE_ERR_BADDEV;
-	}
-	temps[result] = 0;
-	if (!strcmp(temps, "block"))
-		file->device_kind = FILE_DEVICE_BLOCK;
-	else if (!strcmp(temps, "network"))
-		file->device_kind = FILE_DEVICE_NET;
-	else {
-		prom_printf("Unkown device type <%s>\n", temps);
-		return FILE_ERR_BADDEV;
-	}
+	result = prom_get_devtype(spec->dev);
+	if (result > 0)
+	     file->device_kind = result;
+	else
+	     return result;
 	
 	switch(file->device_kind) {
 	    case FILE_DEVICE_BLOCK:
 		DEBUG_F("device is a block device\n");
-	  	return file_block_open(file, spec->dev, spec->file, partition);
+	  	return file_block_open(file, spec->dev, spec->file, spec->part);
 	    case FILE_DEVICE_NET:
 		DEBUG_F("device is a network device\n");
 	  	return file_net_open(file, spec->dev, spec->file);

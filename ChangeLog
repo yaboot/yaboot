@@ -2,6 +2,26 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2002-03-26 15:00:49 GMT	Ethan Benson <erbenson@alaska.net>	patch-7
+
+    Summary:
+      Commit yaboot 1.3.4-pre3
+    Revision:
+      yaboot--devel--1.3--patch-7
+
+    Commit yaboot 1.3.4-pre3.
+
+    new files:
+     include/.arch-ids/debug.h.id include/debug.h
+
+    modified files:
+     ChangeLog Makefile changelog include/errors.h include/file.h
+     include/fs.h include/partition.h include/prom.h second/cfg.c
+     second/file.c second/fs_ext2.c second/fs_of.c
+     second/fs_reiserfs.c second/fs_xfs.c second/partition.c
+     second/prom.c second/yaboot.c ybin/ybin
+
+
 2002-03-26 14:42:58 GMT	Ethan Benson <erbenson@alaska.net>	patch-6
 
     Summary:

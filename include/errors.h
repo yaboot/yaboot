@@ -34,3 +34,7 @@
 #define FILE_ERR_LENGTH         -10
 #define FILE_ERR_FSBUSY         -11
 #define FILE_ERR_BADDEV         -12
+
+/* Device kind */
+#define FILE_DEVICE_BLOCK       1
+#define FILE_DEVICE_NET         2

@@ -28,7 +28,7 @@ if [ -n "$PATH_PREFIX" ] ; then
 fi
 PRG="${0##*/}"
 SIGINT="$PRG: Interrupt caught ... exiting"
-VERSION=1.3.4pre2
+VERSION=1.3.4pre3
 DEBUG=0
 VERBOSE=0
 TMP="${TMPDIR:-/tmp}"
@@ -1052,7 +1052,7 @@ mnt_install()
 	fi
     fi
 
-    [ "$VERBOSE" = 1 ] && echo "$INSTALLFIRST"
+    [ "$VERBOSE" = 1 ] && echo "$INSTALLPRIMARY"
     cp -f "$install" "$TARGET/$BTFILE"
     if [ $? != 0 ] ; then
 	echo 1>&2 "$PRG: An error occured while writing to $boot"

@@ -34,6 +34,7 @@
 #include "partition.h"
 #include "fs.h"
 #include "errors.h"
+#include "debug.h"
 
 #define FAST_VERSION
 #define MAX_READ_RANGE	256

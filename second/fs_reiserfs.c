@@ -27,8 +27,8 @@
 #include "stdlib.h"
 #include "fs.h"
 #include "errors.h"
+#include "debug.h"
 #include "reiserfs/reiserfs.h"
-
 
 /* Exported in struct fs_t */
 static int reiserfs_open( struct boot_file_t *file, const char *dev_name,

@@ -29,6 +29,8 @@
 #include "prom.h"
 #include "string.h"
 #include "linux/iso_fs.h"
+#include "debug.h"
+#include "errors.h"
 
 /* We currently don't check the partition type, some users
  * are putting crap there and still expect it to work...
@@ -54,14 +56,16 @@ static unsigned long swab32(unsigned long value);
 static unsigned char block_buffer[MAX_BLOCK_SIZE];
 
 static void
-add_new_partition( struct partition_t**	list, int part_number,
-                   unsigned long part_start, unsigned long part_size,
-                   unsigned short part_blocksize )
+add_new_partition(struct partition_t**	list, int part_number, const char *part_type,
+		  const char *part_name, unsigned long part_start, unsigned long part_size,
+		  unsigned short part_blocksize)
 {
 	struct partition_t*	part;
 	part = (struct partition_t*)malloc(sizeof(struct partition_t));
 	
 	part->part_number = part_number;
+	strncpy(part->part_type, part_type, MAX_PART_NAME);
+	strncpy(part->part_name, part_name, MAX_PART_NAME);
 	part->part_start = part_start;
 	part->part_size = part_size;
 	part->blocksize = part_blocksize;
@@ -132,6 +136,8 @@ partition_mac_lookup( const char *dev_name, prom_handle disk,
                     add_new_partition(
                         list, /* partition list */
                         block, /* partition number */
+			part->type, /* type */
+			part->name, /* name */
                         part->start_block + part->data_start, /* start */
                         part->data_count, /* size */
                         ptable_block_size );
@@ -158,6 +164,8 @@ partition_fdisk_lookup( const char *dev_name, prom_handle disk,
 	    if (part->sys_ind == LINUX_NATIVE) {
             	add_new_partition(  list,
 				    partition,
+				    "Linux", /* type */
+				    '\0', /* name */
                                     swab32(*(unsigned int *)(part->start4)),
                                     swab32(*(unsigned int *)(part->size4)),
 				    512 /*blksize*/ );
@@ -217,9 +225,8 @@ partitions_lookup(const char *device)
 		goto bail;
 	}
 	prom_blksize = prom_getblksize(disk);
-#if DEBUG
-	prom_printf("block size of device is %d\n", prom_blksize);
-#endif	
+	DEBUG_F("block size of device is %d\n", prom_blksize);
+
 	if (prom_blksize <= 1)
 		prom_blksize = 512;
 	if (prom_blksize > MAX_BLOCK_SIZE) {
@@ -229,7 +236,7 @@ partitions_lookup(const char *device)
 	
 	/* Read boot blocs */
 	if (prom_readblocks(disk, 0, 1, block_buffer) != 1) {
-		prom_printf("Can't read boot blocs\n");
+		prom_printf("Can't read boot blocks\n");
 		goto bail;
 	}	
 	if (desc->signature == MAC_DRIVER_MAGIC) {
@@ -239,11 +246,13 @@ partitions_lookup(const char *device)
 		/* fdisk partition format */
 		partition_fdisk_lookup(device, disk, prom_blksize, &list);
 	} else if (prom_blksize == 2048 && identify_iso_fs(disk, &iso_root_block)) {
-		add_new_partition(	&list,
-				0,
-				iso_root_block,
-				0,
-				prom_blksize);
+		add_new_partition(&list,
+				  0,
+				  '\0',
+				  '\0',
+				  iso_root_block,
+				  0,
+				  prom_blksize);
 		prom_printf("ISO9660 disk\n");
 	} else {
 		prom_printf("No supported partition table detected\n");
@@ -254,6 +263,36 @@ bail:
 	prom_close(disk);
 	
 	return list;
+}
+
+char *
+get_part_type(char *device, int partition)
+{
+     struct partition_t*	parts;
+     struct partition_t*	p;
+     struct partition_t*	found;
+     char *type = NULL;
+
+     if (prom_get_devtype(device) != FILE_DEVICE_BLOCK)
+	  return NULL;
+
+     parts = partitions_lookup(device);
+     found = NULL;
+
+     if (!parts)
+	  return '\0';
+
+     for (p = parts; p && !found; p=p->next) {
+	  DEBUG_F("number: %02d, start: 0x%08lx, length: 0x%08lx, type: %s, name: %s\n",
+		  p->part_number, p->part_start, p->part_size, p->part_type, p->part_name);
+	  if ((partition >= 0) && (partition == p->part_number)) {
+	       type = strdup(p->part_type);
+	       break;
+	  }	  
+     }
+     if (parts)
+	  partitions_free(parts);
+     return type;
 }
 
 /* Freed in reverse order of allocation to help malloc'ator */
@@ -282,3 +321,9 @@ swab32(unsigned long value)
 }
 
 
+/* 
+ * Local variables:
+ * c-file-style: "K&R"
+ * c-basic-offset: 5
+ * End:
+ */

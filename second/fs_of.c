@@ -36,6 +36,7 @@
 #include "partition.h"
 #include "fs.h"
 #include "errors.h"
+#include "debug.h"
 
 #define LOAD_BUFFER_POS		0x600000
 #define LOAD_BUFFER_SIZE	0x400000

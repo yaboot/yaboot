@@ -31,10 +31,6 @@ struct boot_file_t;
 
 #define FILE_MAX_PATH		1024
 
-/* Device kind */
-#define FILE_DEVICE_BLOCK	1
-#define FILE_DEVICE_NET		2
-
 struct boot_fspec_t {
 	char*	dev;		/* OF device path */
 	int	part;		/* Partition number or -1 */

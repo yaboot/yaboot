@@ -12,7 +12,7 @@
 
    Because this program is derived from the corresponding file in the
    silo-0.64 distribution, it is also
-sys
+
    Copyright (C) 1996 Pete A. Zaitcev
    		 1996 Maurizio Plaza
    		 1996 David S. Miller
@@ -46,6 +46,7 @@ sys
 #include "yaboot.h"
 #include "linux/elf.h"
 #include "bootinfo.h"
+#include "debug.h"
 
 #define CONFIG_FILE_NAME	"yaboot.conf"
 #define CONFIG_FILE_MAX		0x8000		/* 32k */
@@ -104,9 +105,7 @@ static void     setup_display(void);
 
 int useconf = 0;
 char bootdevice[1024];
-//char *bootpath = NULL;
 char *password = NULL;
-//int bootpartition = -1;
 struct boot_fspec_t boot;
 int _machine = _MACH_Pmac;
 
@@ -291,7 +290,7 @@ load_config_file(char *device, char* path, int partition)
     fspec.part = partition;
     result = open_file(&fspec, &file);
     if (result != FILE_ERR_OK) {
-	 prom_printf("%s:%d", fspec.dev, fspec.part);
+	 prom_printf("%s:%d,", fspec.dev, fspec.part);
 	 prom_perror(result, fspec.file);
 	 prom_printf("Can't open config file\n");
 	 goto bail;
@@ -1361,58 +1360,78 @@ setup_display(void)
 int
 yaboot_main(void)
 {
-	if (_machine == _MACH_Pmac)
-		setup_display();
+     char *ptype;
+
+     if (_machine == _MACH_Pmac)
+	  setup_display();
 	
-	prom_get_chosen("bootpath", bootdevice, sizeof(bootdevice));
-	DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
-	if (bootdevice[0] == 0)
-		prom_get_options("boot-device", bootdevice, sizeof(bootdevice));
-	if (bootdevice[0] == 0) {
-	    prom_printf("Couldn't determine boot device\n");
-	    return -1;
-    	}
+     prom_get_chosen("bootpath", bootdevice, sizeof(bootdevice));
+     DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
+     if (bootdevice[0] == 0)
+	  prom_get_options("boot-device", bootdevice, sizeof(bootdevice));
+     if (bootdevice[0] == 0) {
+	  prom_printf("Couldn't determine boot device\n");
+	  return -1;
+     }
 
-	if (!parse_device_path(bootdevice, (_machine == _MACH_Pmac) ? "hd" : "disc",
-			       -1, "", &boot)) {
-	     prom_printf("%s: Unable to parse\n", bootdevice);
-	     return -1;
-	}
-	DEBUG_F("After parse_device_path: dev=%s, part=%d, file=%s\n",
-		boot.dev, boot.part, boot.file);
+     if (!parse_device_path(bootdevice, (_machine == _MACH_Pmac) ? "hd" : "disc",
+			    -1, "", &boot)) {
+	  prom_printf("%s: Unable to parse\n", bootdevice);
+	  return -1;
+     }
+     DEBUG_F("After parse_device_path: dev=%s, part=%d, file=%s\n",
+	     boot.dev, boot.part, boot.file);
 
-  	if (strlen(boot.file)) {
-	     if (!strncmp(boot.file, "\\\\", 2))
-		  boot.file = "\\\\";
-	     else {
-		  char *p, *last;
-		  p = last = boot.file;
-		  while(*p) {
-		       if (*p == '\\')
-			    last = p;
-		       p++;
-		  }
-		  if (p)
-		       *(last) = 0;
-		  else
-		       boot.file = "";
-		  if (strlen(boot.file))
-		       strcat(boot.file, "\\");
-	     }
-	}
-	DEBUG_F("After path fixup: dev=%s, part=%d, file=%s\n",
-		boot.dev, boot.part, boot.file);
+     if (strlen(boot.file)) {
+	  if (!strncmp(boot.file, "\\\\", 2))
+	       boot.file = "\\\\";
+	  else {
+	       char *p, *last;
+	       p = last = boot.file;
+	       while(*p) {
+		    if (*p == '\\')
+			 last = p;
+		    p++;
+	       }
+	       if (p)
+		    *(last) = 0;
+	       else
+		    boot.file = "";
+	       if (strlen(boot.file))
+		    strcat(boot.file, "\\");
+	  }
+     }
+     DEBUG_F("After path fixup: dev=%s, part=%d, file=%s\n",
+	     boot.dev, boot.part, boot.file);
 
-	useconf = load_config_file(boot.dev, boot.file, boot.part);
+     useconf = load_config_file(boot.dev, boot.file, boot.part);
 
-	prom_printf("Welcome to yaboot version " VERSION "\n");
-	prom_printf("Enter \"help\" to get some basic usage information\n");
+     prom_printf("Welcome to yaboot version " VERSION "\n");
+     prom_printf("Enter \"help\" to get some basic usage information\n");
+
+     /* I am fed up with lusers using the wrong partition type and
+	mailing me *when* it breaks */
+
+     if (_machine == _MACH_Pmac) {
+	  char *entry = cfg_get_strg(0, "ptypewarning");
+	  int warn = 1;
+	  if (entry)
+	       warn = strcmp(entry,
+			     "I_know_the_partition_type_is_wrong_and_will_NOT_send_mail_when_booting_breaks");
+	  if (warn) {
+	       ptype = get_part_type(boot.dev, boot.part);
+	       if ((ptype != NULL) && (strcmp(ptype, "Apple_Bootstrap")))
+		    prom_printf("\nWARNING: Bootstrap partition type is wrong: \"%s\"\n"
+				"         type should be: \"Apple_Bootstrap\"\n\n", ptype);
+	  }
+     }
+
+     yaboot_text_ui();
 	
-	yaboot_text_ui();
-	
-	prom_printf("Bye.\n");
-	return 0;
+     prom_printf("Bye.\n");
+     return 0;
 }
+
 /* 
  * Local variables:
  * c-file-style: "K&R"

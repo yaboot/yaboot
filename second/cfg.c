@@ -64,6 +64,7 @@ CONFIG cf_options[] =
     {cft_strg, "init-message", NULL},
     {cft_strg, "fgcolor", NULL},
     {cft_strg, "bgcolor", NULL},
+    {cft_strg, "ptypewarning", NULL},
     {cft_end, NULL, NULL}};
 
 CONFIG cf_image[] =

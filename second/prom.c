@@ -164,6 +164,36 @@ prom_get_options (char *name, void *mem, int len)
   return prom_getprop (prom_options, name, mem, len);
 }
 
+int
+prom_get_devtype (char *device)
+{
+     phandle    dev;
+     int        result;
+     char       tmp[64];
+
+     /* Find OF device phandle */
+     dev = prom_finddevice(device);
+     if (dev == PROM_INVALID_HANDLE) {
+	  return FILE_ERR_BADDEV;
+     }
+
+     /* Check the kind of device */
+     result = prom_getprop(dev, "device_type", tmp, 63);
+     if (result == -1) {
+	  prom_printf("can't get <device_type> for device: %s\n", device);
+	  return FILE_ERR_BADDEV;
+     }
+     tmp[result] = 0;
+     if (!strcmp(tmp, "block"))
+	  return FILE_DEVICE_BLOCK;
+     else if (!strcmp(tmp, "network"))
+	  return FILE_DEVICE_NET;
+     else {
+	  prom_printf("Unkown device type <%s>\n", tmp);
+	  return FILE_ERR_BADDEV;
+     }
+}
+
 void
 prom_init (prom_entry pp)
 {
