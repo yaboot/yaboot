@@ -27,7 +27,7 @@
 
 PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
 PRG="${0##*/}"
-VERSION=1.0.5-UNRELEASED_UNSUPPORTED
+VERSION=1.0.5
 DEBUG=0
 export LC_COLLATE=C
 
