@@ -2,6 +2,22 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2003-02-12 08:55:45 GMT	Ethan Benson <erbenson@alaska.net>	patch-49
+
+    Summary:
+      Prep 1.3.9 release
+    Revision:
+      yaboot--devel--1.3--patch-49
+
+    * Prep 1.3.9 release:
+      - Set version numbers to 1.3.9.
+      - Finalize changelog.
+
+    modified files:
+     0arch-timestamps0 ChangeLog Makefile changelog
+     ybin/ybin
+
+
 2003-02-10 09:55:05 GMT	Ethan Benson <erbenson@alaska.net>	patch-48
 
     Summary:
