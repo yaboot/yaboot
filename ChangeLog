@@ -2,6 +2,24 @@
 # tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2003-02-09 05:28:41 GMT	Ethan Benson <erbenson@alaska.net>	patch-47
+
+    Summary:
+      Update first stage to be compatible with new Macs
+    Revision:
+      yaboot--devel--1.3--patch-47
+
+    * Mark first stage loader compatible with new MacOS9-free PowerMacs so
+      it will be accepted by OpenFirmware.
+    * Update copyrights to include 2003.
+    * Version 1.3.9-UNRELEASED.
+
+    modified files:
+     0arch-timestamps0 ChangeLog Makefile README TODO changelog
+     doc/examples/dualboot.chrp doc/examples/simpleboot.chrp
+     first/ofboot ybin/ofpath ybin/yabootconfig ybin/ybin
+
+
 2002-12-10 08:14:21 GMT	Ethan Benson <erbenson@alaska.net>	patch-46
 
     Summary:

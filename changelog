@@ -1,3 +1,12 @@
+2003-02-09  Ethan Benson  <erbenson@alaska.net>
+
+	* Version 1.3.9
+
+	* Mark first stage bootloader as compatible with new MacOS9
+	  incompatible PowerMacs.
+	
+	* Update copyright notices to include 2003
+
 2002-12-09  Ethan Benson  <erbenson@alaska.net>
 
 	* Version 1.3.8

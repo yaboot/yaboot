@@ -1,19 +1,4 @@
-* Interactive shell mode for yaboot, similar to the grub shell.
-
-* Add nvram updating support for IBM hardware.  This requires ofpath
-  to support these machines (ofpath done, or mostly so).  It also
-  requires a compatible nvsetenv or equivilent. 
-
-* Validate yaboot options before proceeding. (need better config parsing)
-
-* Password protection for insecure menu options (MacOS).
-
-* Use system libext2fs instead of shipping a private copy (this is not
-  as simple as it sounds)
-
-* Figure out all the crap with CHRP netbooting, probably have to remove
-  hard-coding of ":0" after a net device path (done as of 1.3.4?)
-
-* JFS support.
-
-* Support for compressed images (this will probably be solved in the kernel)
+* Yaboot 1.x is in strict maintenance mode, only critical bugfixes
+  will be done.  Please consult the yaboot 1.99 devel tree for the TODO
+  on the 2.0 rewrite.  See http://penguinppc.org/projects/yaboot/arch.shtml
+  for how to access the development tree.

@@ -5,7 +5,7 @@
 ###############################################################################
 ##
 ## ofboot first stage autoconfiguring bootloader for yaboot and ybin
-## Copyright (C) 2000, 2001, 2002 Ethan Benson
+## Copyright (C) 2000, 2001, 2002, 2003 Ethan Benson
 ##
 ## Forth code written by Chris Emerson
 ##
@@ -312,7 +312,7 @@ TMPBOOT=`mktemp -q "$TMP/ofboot.XXXXXX"`
 $PRINTF \
 "<CHRP-BOOT>
 <COMPATIBLE>
-MacRISC
+MacRISC MacRISC3
 </COMPATIBLE>
 <DESCRIPTION>
 PowerPC GNU/Linux First Stage Bootstrap
