@@ -76,7 +76,8 @@ strstr (phaystack, pneedle)
 	      a = *++haystack;
 	      if (a == '\0')
 		goto ret0;
-shloop:	    }
+shloop:	    ;
+            }
           while (a != b);
 
 jin:	  a = *++haystack;
