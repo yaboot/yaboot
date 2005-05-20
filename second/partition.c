@@ -1,6 +1,8 @@
 /*
  *  partition.c - partition table support
  *
+ *  Copyright (C) 2004 Sven Luther
+ *
  *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Copyright (C) 1999 Benjamin Herrenschmidt
@@ -31,6 +33,7 @@
 #include "stdlib.h"
 #include "mac-part.h"
 #include "fdisk-part.h"
+#include "amiga-part.h"
 #include "partition.h"
 #include "prom.h"
 #include "string.h"
@@ -213,6 +216,110 @@ identify_iso_fs(ihandle device, unsigned int *iso_root_block)
      return 0;
 }
 
+/* 
+ * Detects and read amiga partition tables.
+ */
+
+static int
+_amiga_checksum (unsigned int blk_size)
+{
+	unsigned int sum;
+	int i, end;
+	unsigned int *amiga_block = (unsigned int *) block_buffer;
+
+	sum = amiga_block[0];
+	end = amiga_block[AMIGA_LENGTH];
+
+	if (end > blk_size) end = blk_size;
+
+	for (i = 1; i < end; i++) sum += amiga_block[i];
+
+	return sum;
+}
+
+static int
+_amiga_find_rdb (const char *dev_name, prom_handle disk, unsigned int prom_blksize)
+{
+	int i;
+	unsigned int *amiga_block = (unsigned int *) block_buffer;
+
+	for (i = 0; i<AMIGA_RDB_MAX; i++) {
+		if (i != 0) {
+			if (prom_readblocks(disk, i, 1, block_buffer) != 1) {
+	  			prom_printf("Can't read boot block %d\n", i);
+	  			break;
+			}	
+		}
+		if ((amiga_block[AMIGA_ID] == AMIGA_ID_RDB) && (_amiga_checksum (prom_blksize) == 0))
+			return 1;
+	}
+	/* Amiga partition table not found, let's reread block 0 */
+	if (prom_readblocks(disk, 0, 1, block_buffer) != 1) {
+  		prom_printf("Can't read boot blocks\n");
+  		return 0; /* TODO: something bad happened, should fail more verbosely */
+	}	
+	return 0;
+}
+
+static void
+partition_amiga_lookup( const char *dev_name, prom_handle disk,
+                        unsigned int prom_blksize, struct partition_t** list )
+{
+	int partition, part;
+	unsigned int blockspercyl;
+	unsigned int *amiga_block = (unsigned int *) block_buffer;
+	unsigned int *used = NULL;
+	unsigned int possible;
+	int checksum;
+	int i;
+
+	blockspercyl = amiga_block[AMIGA_SECT] * amiga_block[AMIGA_HEADS];
+	possible = amiga_block[AMIGA_RDBLIMIT]/32 +1;
+
+	used = (unsigned int *) malloc (sizeof (unsigned int) * (possible + 1));
+
+	for (i=0; i < possible; i++) used[i] = 0;
+
+
+	for (part = amiga_block[AMIGA_PARTITIONS], partition = 0;
+		part != AMIGA_END;
+		part = amiga_block[AMIGA_PART_NEXT], partition++)
+	{
+		if (prom_readblocks(disk, part, 1, block_buffer) != 1) {
+	  		prom_printf("Can't read partition block %d\n", part);
+	  		break;
+		}	
+		checksum = _amiga_checksum (prom_blksize);
+		if ((amiga_block[AMIGA_ID] == AMIGA_ID_PART) &&
+			(checksum == 0) &&
+			((used[part/32] & (0x1 << (part % 32))) == 0))
+		{
+			used[part/32] |= (0x1 << (part % 32));
+		} else {
+	  		prom_printf("Amiga partition table corrupted at block %d\n", part);
+			if (amiga_block[AMIGA_ID] != AMIGA_ID_PART)
+				prom_printf ("block type is not partition but %08x\n", amiga_block[AMIGA_ID]);
+			if (checksum != 0)
+				prom_printf ("block checsum is bad : %d\n", checksum);
+			if ((used[part/32] & (0x1 << (part % 32))) != 0)
+				prom_printf ("partition table is looping, block %d already traveled\n", part);
+			break;
+		}
+
+	       /* We use the partition block size from the partition table.
+		* The filesystem implmentations are responsible for mapping
+		* to their own fs blocksize */
+	       add_new_partition(
+		    list, /* partition list */
+		    partition, /* partition number */
+		    "Linux", /* type */
+		    '\0', /* name */
+		    blockspercyl * amiga_block[AMIGA_PART_LOWCYL], /* start */
+		    blockspercyl * (amiga_block[AMIGA_PART_HIGHCYL] - amiga_block[AMIGA_PART_LOWCYL] + 1), /* size */
+		    prom_blksize );
+	}
+}
+
 struct partition_t*
 partitions_lookup(const char *device)
 {
@@ -260,6 +367,9 @@ partitions_lookup(const char *device)
 			    0,
 			    prom_blksize);
 	  prom_printf("ISO9660 disk\n");
+     } else if (_amiga_find_rdb(device, disk, prom_blksize) != -1) {
+	  /* amiga partition format */
+	  partition_amiga_lookup(device, disk, prom_blksize, &list);
      } else {
 	  prom_printf("No supported partition table detected\n");
 	  goto bail;
