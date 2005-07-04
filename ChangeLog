@@ -2,6 +2,20 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2005-07-04 03:34:00 GMT	Ethan Benson <erbenson@alaska.net>	patch-81
+
+    Summary:
+      Merge Dustin's RAID patch
+    Revision:
+      yaboot--devel--1.3--patch-81
+
+    * ybin/ybin: Allow for multiple bootstrap partitions.  Patch by Dustin
+      Kirkland.  May not fully work on PMAC hardware.
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/ybin
+
+
 2005-05-20 03:10:03 GMT	Ethan Benson <erbenson@alaska.net>	patch-80
 
     Summary:

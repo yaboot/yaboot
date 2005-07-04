@@ -27,6 +27,7 @@ if [ -n "$PATH_PREFIX" ] ; then
     PATH="${PATH}:${PATH_PREFIX}/sbin:${PATH_PREFIX}/bin:${PATH_PREFIX}/usr/sbin:${PATH_PREFIX}/usr/bin:${PATH_PREFIX}/usr/local/sbin:${PATH_PREFIX}/usr/local/bin"
 fi
 PRG="${0##*/}"
+ABSPRG="$0"
 SIGINT="$PRG: Interrupt caught ... exiting"
 VERSION=1.3.13
 DEBUG=0
@@ -1336,19 +1337,26 @@ if [ $# != 0 ] ; then
 		;;
 	    --debug)
 		DEBUG=1
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    -v|--verbose)
 		VERBOSE=1
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    -f|--force)
 		FORCE=yes
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    -b|--boot)
 		if [ -n "$2" ] ; then
-		    boot="$2"
+		    if [ "$boot" = "unconfigured" ]; then
+			boot="$2"
+		    else
+			boot="$boot $2"
+		    fi
 		    ARGBT=1
 		    shift 2
 		else
@@ -1361,6 +1369,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    ofboot="$2"
 		    ARGOB=1
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1372,6 +1381,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    install="$2"
 		    ARGBF=1
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1384,6 +1394,7 @@ if [ $# != 0 ] ; then
 		    CONF="$2"
 		    bootconf="$2"
 		    ERR=" Error in $CONF:"
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1395,6 +1406,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    magicboot="$2"
 		    ARGWP=1
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1406,6 +1418,7 @@ if [ $# != 0 ] ; then
 		if [ -n "$2" ] ; then
 		    fstype="$2"
 		    ARGFS=1
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1416,26 +1429,31 @@ if [ $# != 0 ] ; then
 	    --nobless)
 		bless=no
 		ARGBS=1
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    -M|--mount)
 		usemount=yes
 		ARGMT=1
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    --protect)
 		protect=yes
 		ARGPT=1
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    --hide)
 		hide=yes
 		ARGHD=1
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    --nonvram)
 		nonvram=1
 		ARGNV=1
+		ARGS="$ARGS $1"
 		shift
 		;;
 	    --device)
@@ -1443,6 +1461,7 @@ if [ $# != 0 ] ; then
 		    device="$2"
 		    bootconf=auto
 		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1455,6 +1474,7 @@ if [ $# != 0 ] ; then
 		    timeout="$2"
 		    bootconf=auto
 		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1467,6 +1487,7 @@ if [ $# != 0 ] ; then
 		    image="$2"
 		    bootconf=auto
 		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1479,6 +1500,7 @@ if [ $# != 0 ] ; then
 		    label="$2"
 		    bootconf=auto
 		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1491,6 +1513,7 @@ if [ $# != 0 ] ; then
 		    partition="$2"
 		    bootconf=auto
 		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1503,6 +1526,7 @@ if [ $# != 0 ] ; then
 		    root="$2"
 		    bootconf=auto
 		    echo 1>&2 "$PRG: WARNING: Deprecated option --device"
+		    ARGS="$ARGS $1 $2"
 		    shift 2
 		else
 		    echo 1>&2 "$PRG: option requires an argument $1"
@@ -1581,6 +1605,20 @@ fi
 [ $(parseconf flag enablenetboot) = 0 ] && network=yes
 [ $(parseconf flag enableofboot) = 0 ] && of=yes
 [ $(parseconf flag brokenosx) = 0 ] && brokenosx=yes
+
+bootparts=0
+for i in $boot; do
+    bootparts=$(($bootparts + 1))
+done
+if [ "$bootparts" -gt 1 ]; then
+    [ "$VERBOSE" = 1 ] && echo "$PRG: Iterating through list of boot partitions..."
+    rc=0
+    for i in $boot; do
+        [ "$VERBOSE" = 1 ] && echo "$ABSPRG $ARGS -b $i"
+        $ABSPRG $ARGS -b $i || rc=$?
+    done
+    exit $rc
+fi
 
 ## ffs!! rtfm! foad!
 if [ "$boot" = unconfigured ] ; then
