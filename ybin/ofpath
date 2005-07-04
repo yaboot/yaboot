@@ -425,14 +425,6 @@ newworld()
 {
     case "$DEVNODE" in
 	sd*)
-	    if ls -l /proc/device-tree | grep -q ^lr ; then
-		true
-	    else
-		echo 1>&2 "$PRG: /proc/device-tree is broken.  Do not use BootX to boot, use yaboot."
-		echo 1>&2 "$PRG: The yaboot HOWTO can be found here: http://www.alaska.net/~erbenson/doc"
-		return 1
-	    fi
-
 	    ## use common scsiinfo function to get info we need.
 	    scsiinfo || return 1
 

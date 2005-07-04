@@ -2,6 +2,21 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2005-07-04 03:42:18 GMT	Ethan Benson <erbenson@alaska.net>	patch-82
+
+    Summary:
+      Remove check for BootX broken device-trees
+    Revision:
+      yaboot--devel--1.3--patch-82
+
+    * ybin/ofpath: Remove check for broken-by-BootX device-tree, it no
+      longer works under current 2.6 kernels and nobody attempts to use
+      BootX anymore.
+
+    modified files:
+     0arch-timestamps0 ChangeLog ybin/ofpath
+
+
 2005-07-04 03:34:00 GMT	Ethan Benson <erbenson@alaska.net>	patch-81
 
     Summary:
