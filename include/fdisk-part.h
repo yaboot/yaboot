@@ -27,6 +27,7 @@
 #define LINUX_SWAP      0x82
 #define LINUX_NATIVE    0x83
 #define LINUX_EXTENDED  0x85
+#define LINUX_RAID      0xfd
 
 struct fdisk_partition {
 	unsigned char boot_ind;         /* 0x80 - active */

@@ -40,6 +40,7 @@ struct partition_t {
 	unsigned long  		part_start; /* In blocks */
 	unsigned long  		part_size; /* In blocks */
 	unsigned short		blocksize;
+	int			sys_ind; /* fs type */
 };
 
 extern struct partition_t*	partitions_lookup(const char *device);
