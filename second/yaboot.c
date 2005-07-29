@@ -435,7 +435,7 @@ bail:
      if (opened)
 	  file.fs->close(&file);
     
-     if (result != 1 && conf_file)
+     if (conf_file)
 	  free(conf_file);
     	
      return result;
@@ -1081,7 +1081,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      /* Read the rest of the Elf header... */
      if ((*(file->fs->read))(file, size, &e->e_version) < size) {
 	  prom_printf("\nCan't read Elf32 image header\n");
-	  return 0;
+	  goto bail;
      }
 
      DEBUG_F("Elf32 header:\n");
@@ -1100,24 +1100,24 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 
      if (e->e_phnum > MAX_HEADERS) {
 	  prom_printf ("Can only load kernels with one program header\n");
-	  return 0;
+	  goto bail;
      }
 
      ph = (Elf32_Phdr *)malloc(sizeof(Elf32_Phdr) * e->e_phnum);
      if (!ph) {
 	  prom_printf ("Malloc error\n");
-	  return 0;
+	  goto bail;
      }
 
      /* Now, we read the section header */
      if ((*(file->fs->seek))(file, e->e_phoff) != FILE_ERR_OK) {
 	  prom_printf ("seek error\n");
-	  return 0;
+	  goto bail;
      }
      if ((*(file->fs->read))(file, sizeof(Elf32_Phdr) * e->e_phnum, ph) !=
 	 sizeof(Elf32_Phdr) * e->e_phnum) {
 	  prom_printf ("read error\n");
-	  return 0;
+	  goto bail;
      }
 
      /* Scan through the program header
@@ -1144,7 +1144,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 
      if (loadinfo->memsize == 0) {
 	  prom_printf("Can't find a loadable segment !\n");
-	  return 0;
+	  goto bail;
      }
 
      /* leave some room (1Mb) for boot infos */
@@ -1173,7 +1173,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      }
      if (loadinfo->base == (void *)-1) {
 	  prom_printf("Claim error, can't allocate kernel memory\n");
-	  return 0;
+	  goto bail;
      }	
 
      DEBUG_F("After ELF parsing, load base: %p, mem_sz: 0x%08lx\n",
@@ -1192,13 +1192,13 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 	  if ((*(file->fs->seek))(file, p->p_offset) != FILE_ERR_OK) {
 	       prom_printf ("Seek error\n");
 	       prom_release(loadinfo->base, loadinfo->memsize);
-	       return 0;
+	       goto bail;
 	  }
 	  offset = p->p_vaddr - loadinfo->load_loc;
 	  if ((*(file->fs->read))(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
 	       prom_printf ("Read failed\n");
 	       prom_release(loadinfo->base, loadinfo->memsize);
-	       return 0;
+	       goto bail;
 	  }
      }
 
@@ -1206,6 +1206,11 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
     
      /* Return success at loading the Elf32 kernel */
      return 1;
+
+bail:
+     if (ph)
+       free(ph);
+     return 0;
 }
 
 static int
@@ -1220,7 +1225,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      /* Read the rest of the Elf header... */
      if ((*(file->fs->read))(file, size, &e->e_version) < size) {
 	  prom_printf("\nCan't read Elf64 image header\n");
-	  return 0;
+	  goto bail;
      }
 
      DEBUG_F("Elf64 header:\n");
@@ -1239,24 +1244,24 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 
      if (e->e_phnum > MAX_HEADERS) {
 	  prom_printf ("Can only load kernels with one program header\n");
-	  return 0;
+	  goto bail;
      }
 
      ph = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * e->e_phnum);
      if (!ph) {
 	  prom_printf ("Malloc error\n");
-	  return 0;
+	  goto bail;
      }
 
      /* Now, we read the section header */
      if ((*(file->fs->seek))(file, e->e_phoff) != FILE_ERR_OK) {
 	  prom_printf ("Seek error\n");
-	  return 0;
+	  goto bail;
      }
      if ((*(file->fs->read))(file, sizeof(Elf64_Phdr) * e->e_phnum, ph) !=
 	 sizeof(Elf64_Phdr) * e->e_phnum) {
 	  prom_printf ("Read error\n");
-	  return 0;
+	  goto bail;
      }
 
      /* Scan through the program header
@@ -1283,7 +1288,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 
      if (loadinfo->memsize == 0) {
 	  prom_printf("Can't find a loadable segment !\n");
-	  return 0;
+	  goto bail;
      }
 
      /* leave some room (1Mb) for boot infos */
@@ -1312,7 +1317,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      }
      if (loadinfo->base == (void *)-1) {
 	  prom_printf("Claim error, can't allocate kernel memory\n");
-	  return 0;
+	  goto bail;
      }	
 
      DEBUG_F("After ELF parsing, load base: %p, mem_sz: 0x%08lx\n",
@@ -1331,13 +1336,13 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 	  if ((*(file->fs->seek))(file, p->p_offset) != FILE_ERR_OK) {
 	       prom_printf ("Seek error\n");
 	       prom_release(loadinfo->base, loadinfo->memsize);
-	       return 0;
+	       goto bail;
 	  }
 	  offset = p->p_vaddr - loadinfo->load_loc;
 	  if ((*(file->fs->read))(file, p->p_filesz, loadinfo->base+offset) != p->p_filesz) {
 	       prom_printf ("Read failed\n");
 	       prom_release(loadinfo->base, loadinfo->memsize);
-	       return 0;
+	       goto bail;
 	  }
      }
 
@@ -1345,6 +1350,11 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
     
      /* Return success at loading the Elf64 kernel */
      return 1;
+
+bail:
+     if (ph)
+       free(ph);
+     return 0;
 }
 
 static int
@@ -1521,11 +1531,13 @@ yaboot_main(void)
 	       if ((ptype != NULL) && (strcmp(ptype, "Apple_Bootstrap")))
 		    prom_printf("\nWARNING: Bootstrap partition type is wrong: \"%s\"\n"
 				"         type should be: \"Apple_Bootstrap\"\n\n", ptype);
+	       if (ptype)
+		    free(ptype);
 	  }
      }
 
      yaboot_text_ui();
-	
+
      prom_printf("Bye.\n");
      return 0;
 }

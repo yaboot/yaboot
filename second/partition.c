@@ -280,6 +280,10 @@ partition_amiga_lookup( const char *dev_name, prom_handle disk,
 	possible = amiga_block[AMIGA_RDBLIMIT]/32 +1;
 
 	used = (unsigned int *) malloc (sizeof (unsigned int) * (possible + 1));
+	if (!used) {
+               prom_printf("Can't allocate memory\n");
+               return;
+	}
 
 	for (i=0; i < possible; i++) used[i] = 0;
 
@@ -322,6 +326,8 @@ partition_amiga_lookup( const char *dev_name, prom_handle disk,
 		    prom_blksize,
 		    0 );
 	}
+	if (used) 
+		free(used);
 }
 
 struct partition_t*

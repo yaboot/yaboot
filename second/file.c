@@ -78,8 +78,8 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
      if (!imagepath)
 	  return 0;
-     else
-	  ipath = strdup(imagepath);
+     else if (!(ipath = strdup(imagepath))) 
+	  return 0;
 
      if (defdevice)
 	  defdev = strdup(defdevice);
@@ -89,6 +89,8 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 	       if ((ptr = strrchr(defdev, ':')) != NULL)
 		    *ptr = 0; /* remove trailing : from defdevice if necessary */
 	  }
+     } else {
+	  return 0;
      }
 
      /* if there is no : then there is no filename or partition.  must
@@ -123,6 +125,7 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      } else if (strlen(ipath)) {
           result->file = strdup(ipath);
      } else {
+	  free(defdev);
 	  return 0;
      }
 
@@ -137,7 +140,7 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
      free(ipath);
      if (defdev)
-	  free(defdev);
+          free(defdev);
      return 1;
 }
 
