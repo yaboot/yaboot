@@ -28,9 +28,14 @@ KERNELADDR	= 0x01400000
 #
 CROSS = 
 
+CC		:= $(CROSS)gcc
+LD		:= $(CROSS)ld
+AS		:= $(CROSS)as
+OBJCOPY		:= $(CROSS)objcopy
+
 # The flags for the yaboot binary.
 #
-YBCFLAGS = -Os $(CFLAGS) -nostdinc -Wall -isystem `gcc -print-file-name=include` -fsigned-char
+YBCFLAGS = -Os $(CFLAGS) -nostdinc -Wall -isystem `$(CC) -print-file-name=include` -fsigned-char
 YBCFLAGS += -DVERSION=\"${VERSION}\"	#"
 YBCFLAGS += -DTEXTADDR=$(TEXTADDR) -DDEBUG=$(DEBUG)
 YBCFLAGS += -DMALLOCADDR=$(MALLOCADDR) -DMALLOCSIZE=$(MALLOCSIZE)
@@ -94,11 +99,6 @@ OBJS += second/fs_reiserfs.o
 endif
 
 # compilation
-CC		:= $(CROSS)gcc
-LD		:= $(CROSS)ld
-AS		:= $(CROSS)as
-OBJCOPY		:= $(CROSS)objcopy
-
 lgcc = `$(CC) -print-libgcc-file-name`
 
 all: yaboot addnote mkofboot
