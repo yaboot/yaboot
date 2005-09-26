@@ -1161,7 +1161,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
           loadaddr = KERNELADDR;
      } else {
           flat_vmlinux = 0;
-          loadaddr = e->e_entry;
+          loadaddr = loadinfo->load_loc;
      }
 
      /* On some systems, loadaddr may already be claimed, so try some
