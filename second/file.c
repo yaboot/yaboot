@@ -38,6 +38,112 @@
 
 extern char bootdevice[1024];
 
+static char *netdev_path_to_filename(const char *path)
+{
+     char *tmp, *args, *filename;
+     size_t len;
+
+     DEBUG_F("path = %s\n", path);
+
+     if (!path)
+	  return NULL;
+
+     args = strrchr(path, ':');
+     if (!args)
+	  return NULL;
+
+     /* The obp-tftp device arguments should be at the end of
+      * the argument list.  Skip over any extra arguments (promiscuous,
+      * speed, duplex, bootp, rarp).
+      */
+
+     tmp = strstr(args, "promiscuous");
+     if (tmp && tmp > args)
+	  args = tmp + strlen("promiscuous");
+
+     tmp = strstr(args, "speed=");
+     if (tmp && tmp > args)
+	  args = tmp + strlen("speed=");
+
+     tmp = strstr(args, "duplex=");
+     if (tmp && tmp > args)
+	  args = tmp + strlen("duplex=");
+
+     tmp = strstr(args, "bootp");
+     if (tmp && tmp > args)
+	  args = tmp + strlen("bootp");
+
+     tmp = strstr(args, "rarp");
+     if (tmp && tmp > args)
+	  args = tmp + strlen("rarp");
+
+     args = strchr(args, ',');
+     if (!args)
+	  return NULL;
+
+     tmp = args;
+     tmp--;
+     /* If the preceding character is ':' then there were no
+      * non-obp-tftp arguments and we know we're right up to the
+      * filename.  Otherwise, we must advance args once more.
+      */
+     args++;
+     if (*tmp != ':') {
+	  args = strchr(args, ',');
+	  if (!args)
+	       return NULL;
+	  args++;
+     }
+
+     /* filename may be empty; e.g. enet:192.168.1.1,,192.168.1.2 */
+     if (*args == ',') {
+	  DEBUG_F("null filename\n");
+	  return NULL;
+     }
+
+     /* Now see whether there are more args following the filename. */
+     tmp = strchr(args, ',');
+     if (!tmp)
+	  len = strlen(args) + 1;
+     else
+	  len = tmp - args + 1;
+
+     filename = malloc(len);
+     if (!filename)
+	  return NULL;
+
+     strncpy(filename, args, len);
+     filename[len - 1] = '\0';
+
+     DEBUG_F("filename = %s\n", filename);
+     return filename;
+}
+
+static char *netdev_path_to_dev(const char *path)
+{
+     char *dev, *tmp;
+     size_t len;
+
+     DEBUG_F("path = %s\n", path);
+
+     if (!path)
+	  return NULL;
+
+     tmp = strchr(path, ':');
+     if (!tmp)
+	  return strdup(path);
+     tmp++;
+
+     len = tmp - path + 1;
+
+     dev = malloc(len);
+     if (dev) {
+	  strncpy(dev, path, len);
+	  dev[len - 1] = '\0';
+     }
+     return dev;
+}
+
 /* This function follows the device path in the devtree and separates
    the device name, partition number, and other datas (mostly file name)
    the string passed in parameters is changed since 0 are put in place
@@ -71,6 +177,7 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      char *ptr;
      char *ipath = NULL;
      char *defdev = NULL;
+     int device_kind;
 
      result->dev = NULL;
      result->part = -1;
@@ -81,22 +188,21 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      else if (!(ipath = strdup(imagepath))) 
 	  return 0;
 
-     if (defdevice)
+     if (defdevice) {
 	  defdev = strdup(defdevice);
+	  device_kind = prom_get_devtype(defdev);
+     } else
+	  device_kind = prom_get_devtype(ipath);
 
-     if (defdev) {
-	  if (!strstr(defdev, "ethernet") && !strstr(defdev, "enet")) {
-	       if ((ptr = strrchr(defdev, ':')) != NULL)
-		    *ptr = 0; /* remove trailing : from defdevice if necessary */
-	  }
-     } else {
-	  return 0;
+     if (device_kind != FILE_DEVICE_NET && strchr(defdev, ':') != NULL) {
+           if ((ptr = strrchr(defdev, ':')) != NULL)
+                *ptr = 0; /* remove trailing : from defdevice if necessary */
      }
 
-     /* if there is no : then there is no filename or partition.  must
-        use strrchr() since enet:,10.0.0.1,file is legal */
-
-     if (strchr(ipath, ':') != NULL) {
+     /* This will not properly handle an obp-tftp argument list
+      * with elements after the filename; that is handled below.
+      */
+     if (device_kind != FILE_DEVICE_NET && strchr(ipath, ':') != NULL) {
 	  if ((ptr = strrchr(ipath, ',')) != NULL) {
 	       char *colon = strrchr(ipath, ':');
 	       /* If a ':' occurs *after* a ',', then we assume that there is
@@ -109,13 +215,15 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 	  }
      }
 
-     if (strstr(ipath, "ethernet") || strstr(ipath, "enet"))
-	  if ((ptr = strstr(ipath, "bootp")) != NULL) { /* `n' key booting boots enet:bootp */
-	       *ptr = 0;
-	       result->dev = strdup(ipath);
-	  } else
-	       result->dev = strdup(ipath);
-     else if ((ptr = strchr(ipath, ':')) != NULL) {
+     if (device_kind == FILE_DEVICE_NET) {
+	  if (strchr(ipath, ':'))
+	       result->file = netdev_path_to_filename(ipath);
+	  else
+	       result->file = strdup(ipath);
+
+	  if (!defdev)
+	       result->dev = netdev_path_to_dev(ipath);
+     } else if ((ptr = strchr(ipath, ':')) != NULL) {
 	  *ptr = 0;
 	  result->dev = strdup(ipath);
 	  if (*(ptr+1))

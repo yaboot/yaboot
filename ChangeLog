@@ -2,6 +2,21 @@
 # arch-tag: automatic-ChangeLog--erbenson@alaska.net--public/yaboot--devel--1.3
 #
 
+2005-09-26 06:41:14 GMT	Ethan Benson <erbenson@alaska.net>	patch-88
+
+    Summary:
+      Replace netboot bootpath parser.
+    Revision:
+      yaboot--devel--1.3--patch-88
+
+    * second/file.c: Replace bootpath parser for netboot cases, the new
+      one should (hopefully) correctly handle most/all netboot
+      situations. (Nathan Lynch)
+
+    modified files:
+     0arch-timestamps0 ChangeLog second/file.c
+
+
 2005-09-26 06:36:30 GMT	Ethan Benson <erbenson@alaska.net>	patch-87
 
     Summary:
