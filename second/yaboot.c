@@ -963,7 +963,7 @@ yaboot_text_ui(void)
 		    prom_perror(result, params.rd.file);
 	       }
 	       else {
-#define INITRD_CHUNKSIZE 0x400000
+#define INITRD_CHUNKSIZE 0x100000
 		    initrd_base = prom_claim(loadinfo.base+loadinfo.memsize, INITRD_CHUNKSIZE, 0);
 		    if (initrd_base == (void *)-1) {
 			 prom_printf("Claim failed for initrd memory\n");
@@ -979,6 +979,7 @@ yaboot_text_ui(void)
 			      initrd_more = prom_claim(initrd_want, INITRD_CHUNKSIZE, 0);
 			      if (initrd_more != initrd_want) {
 				   prom_printf("Claim failed for initrd memory at %p rc=%p\n",initrd_want,initrd_more);
+				   prom_pause();
 				   break;
 			      }
 			      initrd_read = file.fs->read(&file, INITRD_CHUNKSIZE, initrd_more);
