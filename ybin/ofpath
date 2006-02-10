@@ -298,10 +298,10 @@ scsi_ofpath()
 	    echo "${DEVICE_PATH##*device-tree}/@$DEVICE_ID:$PARTITION"
 	    ;;
 	ata_k2|sata_svw)
-	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible` ; do
-			lgrep "$i" "k2-s-ata" ; done)"
+	    HOST_LIST="$(for i in `find /proc/device-tree -name compatible ` ; do
+			lgrep "$i" "k2-sata" ; done | sort)"
 	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
-	    echo "${DEVICE_PATH##*device-tree}/k2-sata@$DEVICE_ID/disk@0:$PARTITION"
+	    echo "${DEVICE_PATH##*device-tree}/disk@0:$PARTITION"
 	    ;;
 	*)
 	    echo 1>&2 "$PRG: Driver: $SCSI_DRIVER is not supported"
