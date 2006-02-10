@@ -916,6 +916,7 @@ yaboot_text_ui(void)
 		    sysmap_base = prom_claim(loadinfo.base+loadinfo.memsize, 0x100000, 0);
 		    if (sysmap_base == (void *)-1) {
 			 prom_printf("Claim failed for sysmap memory\n");
+			 prom_pause();
 			 sysmap_base = 0;
 		    } else {
 			 sysmap_size = file.fs->read(&file, 0xfffff, sysmap_base);
