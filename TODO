@@ -1,4 +1,5 @@
-* Yaboot 1.x is in strict maintenance mode, only critical bugfixes
-  will be done.  Please consult the yaboot 1.99 devel tree for the TODO
-  on the 2.0 rewrite.  See http://penguinppc.org/projects/yaboot/arch.shtml
-  for how to access the development tree.
+* Merge distro specific patches
+
+* Review malloc changes
+
+* Make zImage work
