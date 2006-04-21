@@ -23,12 +23,13 @@ Mailing lists
 -------------------------------------------------------------------
 The following mailing lists exist for yaboot:
 
-yaboot-announce   Announcements regarding yaboot (read-only)
 yaboot-users      User related questions/discussion regarding yaboot
 yaboot-devel      Technical and development discussion regarding yaboot
 
-Please see http://lists.penguinppc.org/LISTNAME where LISTNAME is one
+Please see https://ozlabs.org/mailman/listinfo/LISTNAME where LISTNAME is one
 of the above named lists.
+
+http://yaboot.ozlabs.org/
 
 -------------------------------------------------------------------
 Bootloader Installation Utilities  
