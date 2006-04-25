@@ -1,5 +1,5 @@
 <!DOCTYPE debiandoc PUBLIC "-//DebianDoc//DTD DebianDoc//EN" [
- <!-- 
+ <!--
         document conventions:
           file, directory, device == file
 	  program, command == prgn
@@ -92,7 +92,7 @@ those will require <prgn>quik</prgn> or (for MacOS Pre-9.0.4 only)
 The NewWorld PowerMacs, for which <prgn>yaboot</prgn> is designed, are
 any PowerMacs in translucent colored plastic cases. That includes all
 iMacs, iBooks, G4 systems, blue colored G3 systems, and most
-PowerBooks manufactured in and after 1999. 
+PowerBooks manufactured in and after 1999.
 
 
 <chapt>Obtaining Yaboot
@@ -146,11 +146,11 @@ you are creating a new Linux installation, the first partition you create
 with <prgn>mac-fdisk</prgn> should be the bootstrap partition. Just use the
 <prgn>mac-fdisk</prgn> <tt>b</tt> command to automatically create a
 bootstrap partition of the proper size and type. If your version of
-<prgn>mac-fdisk</prgn> doesn't include the <tt>b</tt> command, use: 
+<prgn>mac-fdisk</prgn> doesn't include the <tt>b</tt> command, use:
 
 <p>
 <example>
-     Command (? for help): C xxxx 800k bootstrap Apple_Bootstrap 
+     Command (? for help): C xxxx 800k bootstrap Apple_Bootstrap
 </example>
 <p>
 
@@ -164,7 +164,7 @@ id="http://penguinppc.org/~eb/files/">. To install this, use
      cd /
      gzip -dc mac-fdisk.tar.gz | tar -xvp
 </example>
- 
+
 <p>
 The bootstrap partition only takes 800k of space. If you are adding a
 bootstrap partition to your existing setup, you may have enough free
@@ -258,7 +258,7 @@ file must have unix newlines; be sure to save as a unix type file
 if you create or edit it within MacOS.
 
 
-<sect>Linux Style Device Paths 
+<sect>Linux Style Device Paths
 <p>
 
 For those unfamiliar with Linux device naming, partition paths are in
@@ -273,7 +273,7 @@ represents the partition number. Typical Linux device names are:
   hdc    secondary controller, master disk (often used for CD-ROM)
   hdd    secondary controller, slave disk (often used for Zip drive)
   sda    first SCSI disk (SCSI ID address-wise)
-  sdb    second SCSI disk 
+  sdb    second SCSI disk
   scd0   first CD-ROM (or sr0)
   fd0    first floppy drive
   fd1    second floppy drive
@@ -286,8 +286,8 @@ A utility for finding the OpenFirmware device path corresponding to a
 given Linux device path is provided: <prgn>ofpath</prgn>. <prgn>ybin</prgn>
 uses <prgn>ofpath</prgn>
 internally to convert Linux device names you use in <file>yaboot.conf</file> to
-OpenFirmware equivalents. Example: <tt>ofpath /dev/hda</tt> (should return hd:). 
-You can also figure out OpenFirmware device paths yourself, see 
+OpenFirmware equivalents. Example: <tt>ofpath /dev/hda</tt> (should return hd:).
+You can also figure out OpenFirmware device paths yourself, see
 Recovering From Misconfiguration below.
 
 <sect>Required Settings
@@ -300,7 +300,7 @@ that would be <tt>boot=/dev/hda2</tt>.
 
 <p>
 
-For PowerMacs, a magicboot line such as 
+For PowerMacs, a magicboot line such as
 <tt>magicboot=/usr/local/lib/yaboot/ofboot</tt> is also required. Several
 models cannot execute a straight ELF, and need a CHRP script (which this
 line in the <file>yaboot.conf</file> makes available).
@@ -315,9 +315,9 @@ kernel image settings below) are also required.
 
 A CHRP script (<file>ofboot</file>) has been provided which
 <prgn>ybin</prgn> will modify using <file>yaboot.conf</file> settings, to
-display a very handy multi-OS boot menu. 
+display a very handy multi-OS boot menu.
 
-<p> 
+<p>
 
 If you are setting up a multi-OS boot menu, you'll need to identify the
 partitions where each OS lives. You can use Linux-style or OpenFirmware
@@ -395,7 +395,7 @@ it starts up to let it know where its root filesystem is located. Many other
 options are available to pass additional boot parameters to the kernel
 (<tt>append=</tt>), specify initial ramdisk size (<tt>ramdisk=</tt>), load a
 ramdisk image (<tt>initrd=</tt>), and others. Refer to the yaboot.conf man
-page for details on kernel image options.  
+page for details on kernel image options.
 
 <p>
 
@@ -415,7 +415,7 @@ kernel image section:
   # How long to wait at the boot: prompt (tenths of a second)
   timeout=50
   # Globally identified root partition
-  root=/dev/hda3 
+  root=/dev/hda3
   # The device where the kernel lives
   device=hd:
 
@@ -437,12 +437,12 @@ To netboot a kernel image via tftp, use <tt>image=/tftpboot/vmlinux</tt> (the
 path on the tftp server) and <tt>device=enet:10.0.0.1</tt>
 (substituting the tftp boot server IP address).
 
-<p> 
+<p>
 
 Normally the first image specified in the <file>yaboot.conf</file> will be the
 image booted if no entry is made at the boot: prompt. To have another
 image loaded by default, add a <tt>default=label</tt> line in the global
-section. 
+section.
 
 
 <sect>Optional and Cool Settings
@@ -471,7 +471,7 @@ file or the <tt>default=</tt> image.
 
 <p>
 
-Booting password protection is available using a <tt>password=</tt> line. 
+Booting password protection is available using a <tt>password=</tt> line.
 When you add <tt>password=</tt>, a password will be required for all booting.
 Automatic booting is not possible unless a <tt>restricted</tt> line is added.
 
@@ -493,8 +493,8 @@ md5 hash use the following perl snippet:
 
 <example>
     $ perl -e 'printf("%s\n", crypt("secret", "\$1\$saltstrg"))'
-</example> 
-The saltstrg should be a random string, for example one generated by 
+</example>
+The saltstrg should be a random string, for example one generated by
 
 <example>
     makepasswd --chars=8
@@ -555,7 +555,7 @@ run <prgn>ybin</prgn> after making changes.
 <p>
 
 If you have a problem booting, don't panic. Yaboot can boot any
-installed Linux kernel and system from the boot: prompt. 
+installed Linux kernel and system from the boot: prompt.
 
 <sect>Resetting the NVRAM
 <p>
@@ -575,12 +575,12 @@ resolution will also be reset to their defaults.
 If a <tt>boot:</tt> prompt isn't presented, then <prgn>yaboot</prgn> isn't
 being loaded. You can load it manually from
 OpenFirmware. Holding the Command-Option-o-f keys all together after
-pressing the power-on key will give you an OpenFirmware prompt 
+pressing the power-on key will give you an OpenFirmware prompt
 
 <example>
     0 >
 </example>
-(Command is the key with the cloverleaf and/or apple engraved on it). 
+(Command is the key with the cloverleaf and/or apple engraved on it).
 
 <p>
 
@@ -591,7 +591,7 @@ boot command to directly boot your kernel.
 
 <p>
 
-The full OpenFirmware path consists of three parts in the format 
+The full OpenFirmware path consists of three parts in the format
 
 <example>
     device-name:partition-number,/filesystem-path
@@ -608,7 +608,7 @@ your system. You may see some of these:
   ultra1    internal ide drive (primary controller, slave disk)
   ide0      ide drive (secondary controller, master disk)
   ide1      ide drive (secondary controller, slave disk)
-  cd        CD-ROM 
+  cd        CD-ROM
   zip       Zip drive
   fw        FireWire interface
   fd        Floppy drive
@@ -620,7 +620,7 @@ and then follow that with <tt>,yaboot</tt> to boot the <prgn>yaboot</prgn>
 file on the boot partition.
 
 <example>
-    0 > boot hd:2,yaboot 
+    0 > boot hd:2,yaboot
 </example>
 <p>
 
@@ -628,7 +628,7 @@ Hit return, and <prgn>yaboot</prgn> should be loaded and display its
 <file>boot:</file> prompt. If you don't know the partition number, just
 start at 2 and work your way up until you hit it.
 
-<sect>Manually Loading a Kernel Image 
+<sect>Manually Loading a Kernel Image
 <p>
 
 Once you have the boot: prompt, you can enter a label defined in your
@@ -642,14 +642,14 @@ you can enter a full OpenFirmware path. A typical kernel path might be
 To pass parameters to the kernel, add them on to the <tt>boot:</tt> prompt
 line after the kernel label or path. You'll need to specify <tt>root=</tt>
 as a minimum, but you can add any kernel parameters desired. Here's an
-example; 
+example;
 
 <example>
     boot: hd:3,/vmlinux root=/dev/hda3 ro
 </example>
 
 
-<chapt>Yaboot as a Temporary Bootloader 
+<chapt>Yaboot as a Temporary Bootloader
 <p>
 It's very convenient for certain tasks like installing a new system
 the first time without a CD, or rescuing an existing system, to boot a
@@ -666,7 +666,7 @@ are placed at the root level on an existing partition.
 
 <p>
 
-The <file>yaboot.conf</file> file for this purpose contains just 
+The <file>yaboot.conf</file> file for this purpose contains just
 four lines:
 <example>
     image=linux
@@ -681,10 +681,10 @@ it to use Unix newlines (linefeeds only). If you use MacOS newlines
 (just carriage returns), <prgn>yaboot</prgn> will be unable to read the file.
 
 <p>
-You must pick a partition that is formatted with either HFS or HFS+.  If 
+You must pick a partition that is formatted with either HFS or HFS+.  If
 you have Mac OS X installed on a UFS partition (You can use the OS X "Disk
 Utility" app to check this), you will have to find another partition to use.
-If Mac OS X is installed on UFS, you probably have one or two partitions 
+If Mac OS X is installed on UFS, you probably have one or two partitions
 of the "Apple_Boot" type.  They have HFS filesystems on them.  Pick one,
 mount it under MacOS X, and store the files there.
 

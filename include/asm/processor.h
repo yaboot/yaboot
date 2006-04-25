@@ -138,5 +138,5 @@ static __inline__ unsigned long mfmsr(void)
 	return msr;
 }
 #endif
-  
+
 #endif /* __ASM_PPC_PROCESSOR_H */

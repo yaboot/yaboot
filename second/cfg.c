@@ -344,7 +344,7 @@ int cfg_parse (char *cfg_file, char *buff, int len)
 	  if (!cfg_set (item, value)) {
 #if DEBUG
 	       prom_printf("Can't set item %s to value %s\n", item, value);
-#endif	    
+#endif
 	  }
 	  free (item);
      }
@@ -455,7 +455,7 @@ char *cfg_get_default (void)
      return ret;
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

@@ -51,7 +51,7 @@ struct bi_record {
 
 #endif /* _PPC_BOOTINFO_H */
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

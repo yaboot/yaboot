@@ -1,5 +1,5 @@
 /*  malloc.c - Dumb memory allocation routines
- *  
+ *
  *  Copyright (C) 1997 Paul Mackerras
  *                1996 Maurizio Plaza
  *                1996 Jakub Jelinek

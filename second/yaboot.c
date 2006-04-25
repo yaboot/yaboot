@@ -1,25 +1,25 @@
 /*
- *  Yaboot - secondary boot loader for Linux on PowerPC. 
+ *  Yaboot - secondary boot loader for Linux on PowerPC.
  *
  *  Copyright (C) 2001, 2002 Ethan Benson
  *
  *  Copyright (C) 1999, 2000, 2001 Benjamin Herrenschmidt
- *  
+ *
  *  IBM CHRP support
- *  
+ *
  *  Copyright (C) 2001 Peter Bergner
  *
  *  portions based on poof
- *  
+ *
  *  Copyright (C) 1999 Marius Vollmer
- *  
+ *
  *  portions based on quik
- *  
+ *
  *  Copyright (C) 1996 Paul Mackerras.
- *  
+ *
  *  Because this program is derived from the corresponding file in the
  *  silo-0.64 distribution, it is also
- *  
+ *
  *  Copyright (C) 1996 Pete A. Zaitcev
  *                1996 Maurizio Plaza
  *                1996 David S. Miller
@@ -180,7 +180,7 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 
      /* OF seems to do it, but I'm not very confident */
      memset(&__bss_start, 0, &_end - &__bss_start);
-  	
+
      /* Check for quik first stage bootloader (but I don't think we are
       * compatible with it anyway, I'll look into backporting to older OF
       * versions later
@@ -192,7 +192,7 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 
      /* Initialize OF interface */
      prom_init ((prom_entry) r5);
-	
+
      /* Allocate some memory for malloc'ator */
      malloc_base = prom_claim((void *)MALLOCADDR, MALLOCSIZE, 0);
      if (malloc_base == (void *)-1) {
@@ -203,7 +203,7 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
      malloc_init(malloc_base, MALLOCSIZE);
      DEBUG_F("Malloc buffer allocated at %p (%d bytes)\n",
 	     malloc_base, MALLOCSIZE);
-		
+
      /* A few useless DEBUG_F's */
      DEBUG_F("reloc_offset :  %ld         (should be 0)\n", reloc_offset());
      DEBUG_F("test_bss     :  %d         (should be 0)\n", test_bss);
@@ -226,7 +226,7 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 		    _machine = _MACH_chrp;
 	  }
      }
-	
+
      DEBUG_F("Running on _machine = %d\n", _machine);
      DEBUG_SLEEP;
 
@@ -241,9 +241,9 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 
      /* Return to OF */
      prom_exit();
-	
+
      return result;
-	
+
 }
 
 #ifdef CONFIG_COLOR_TEXT
@@ -260,13 +260,13 @@ check_color_text_ui(char *color)
 	  i++;
      }
      return -1;
-}      
+}
 #endif /* CONFIG_COLOR_TEXT */
 
 
 void print_message_file(char *filename)
 {
-     char *msg = NULL; 
+     char *msg = NULL;
      char *p, *endp;
      char *defdev = boot.dev;
      int defpart = boot.part;
@@ -284,7 +284,7 @@ void print_message_file(char *filename)
 	  if (p) {
 	       n = simple_strtol(p, &endp, 10);
 	       if (endp != p && *endp == 0)
-		    defpart = n;	       
+		    defpart = n;
 	  }
 
      strncpy(msgpath, filename, sizeof(msgpath));
@@ -388,7 +388,7 @@ load_config_file(char *device, char* path, int partition)
 	  prom_interpret(p);
 
      password = cfg_get_strg(0, "password");
-	
+
 #ifdef CONFIG_COLOR_TEXT
      p = cfg_get_strg(0, "fgcolor");
      if (p) {
@@ -407,19 +407,19 @@ load_config_file(char *device, char* path, int partition)
      }
      if (bgcolor >= 0) {
 	  char temp[64];
-	  sprintf(temp, "%x to background-color", bgcolor); 
-	  prom_interpret(temp); 
+	  sprintf(temp, "%x to background-color", bgcolor);
+	  prom_interpret(temp);
 #if !DEBUG
 	  prom_printf("\xc");
 #endif /* !DEBUG */
      }
      if (fgcolor >= 0) {
 	  char temp[64];
-	  sprintf(temp, "%x to foreground-color", fgcolor); 
-	  prom_interpret(temp); 
+	  sprintf(temp, "%x to foreground-color", fgcolor);
+	  prom_interpret(temp);
      }
 #endif /* CONFIG_COLOR_TEXT */
-   
+
      p = cfg_get_strg(0, "init-message");
      if (p)
 	  prom_printf("%s\n", p);
@@ -429,15 +429,15 @@ load_config_file(char *device, char* path, int partition)
 	  print_message_file(p);
 
      result = 1;
-    
+
 bail:
 
      if (opened)
 	  file.fs->close(&file);
-    
+
      if (conf_file)
 	  free(conf_file);
-    	
+
      return result;
 }
 
@@ -559,7 +559,7 @@ void check_password(char *str)
 	  if (!strncmp (password, "$1$", 3)) {
 	       if (!check_md5_password(passwdbuff, password))
 		    return;
-	  } 
+	  }
 	  else if (!strcmp (password, passwdbuff))
 	       return;
 #else /* !MD5 */
@@ -602,7 +602,7 @@ int get_params(struct boot_param_t* params)
      params->rd.part = -1;
      params->sysmap.part = -1;
      defpart = boot.part;
-    
+
      cmdinit();
 
      if (first) {
@@ -747,7 +747,7 @@ int get_params(struct boot_param_t* params)
 	       check_password ("Restricted command.");
 	       return 1;
 	  }
-	  return 1; 
+	  return 1;
      }
 
      if (imagename[0] == '$') {
@@ -819,7 +819,7 @@ yaboot_text_ui(void)
      loadinfo_t          loadinfo;
      void                *initrd_more,*initrd_want;
      unsigned long       initrd_read;
-    
+
      loadinfo.load_loc = 0;
 
      for (;;) {
@@ -827,12 +827,12 @@ yaboot_text_ui(void)
 	  initrd_base = 0;
 	  sysmap_base = 0;
 	  sysmap_size = 0;
-    	
+
 	  if (get_params(&params))
 	       return;
 	  if (!params.kernel.file)
 	       continue;
-	
+
 	  prom_printf("Please wait, loading kernel...\n");
 
 	  memset(&file, 0, sizeof(file));
@@ -906,7 +906,7 @@ yaboot_text_ui(void)
 		    free(params.sysmap.file);
 		    params.sysmap.file=loc;
 	       }
-	     
+
 	       result = open_file(&params.sysmap, &file);
 	       if (result != FILE_ERR_OK) {
 		    prom_printf("%s:%d,", params.sysmap.dev, params.sysmap.part);
@@ -1007,7 +1007,7 @@ yaboot_text_ui(void)
 	  DEBUG_F(" done\n");
 
 	  if (flat_vmlinux) {
-	       /* 
+	       /*
 	        * Fill new boot infos (only if booting a vmlinux).
 	        *
 	        * The birec is low on memory, probably inside the malloc pool,
@@ -1027,12 +1027,12 @@ yaboot_text_ui(void)
 	       birec->tag = BI_FIRST;
 	       birec->size = sizeof(struct bi_record);
 	       birec = (struct bi_record *)((ulong)birec + birec->size);
-	
+
 	       birec->tag = BI_BOOTLOADER_ID;
 	       sprintf( (char *)birec->data, "yaboot");
 	       birec->size = sizeof(struct bi_record) + strlen("yaboot") + 1;
 	       birec = (struct bi_record *)((ulong)birec + birec->size);
-	
+
 	       birec->tag = BI_MACHTYPE;
 	       birec->data[0] = _machine;
 	       birec->size = sizeof(struct bi_record) + sizeof(ulong);
@@ -1176,7 +1176,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      if (loadinfo->base == (void *)-1) {
 	  prom_printf("Claim error, can't allocate kernel memory\n");
 	  goto bail;
-     }	
+     }
 
      DEBUG_F("After ELF parsing, load base: %p, mem_sz: 0x%08lx\n",
 	     loadinfo->base, loadinfo->memsize);
@@ -1205,7 +1205,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      }
 
      free(ph);
-    
+
      /* Return success at loading the Elf32 kernel */
      return 1;
 
@@ -1320,7 +1320,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      if (loadinfo->base == (void *)-1) {
 	  prom_printf("Claim error, can't allocate kernel memory\n");
 	  goto bail;
-     }	
+     }
 
      DEBUG_F("After ELF parsing, load base: %p, mem_sz: 0x%08lx\n",
 	     loadinfo->base, loadinfo->memsize);
@@ -1349,7 +1349,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      }
 
      free(ph);
-    
+
      /* Return success at loading the Elf64 kernel */
      return 1;
 
@@ -1433,7 +1433,7 @@ setup_display(void)
 	       DEBUG_F("Open screen result: %p\n", scrn);
 	  }
      }
-  	
+
      if (scrn == PROM_INVALID_HANDLE) {
 	  prom_printf("No screen device found !/n");
 	  return;
@@ -1442,7 +1442,7 @@ setup_display(void)
 	  prom_set_color(scrn, i, default_colors[i*3],
 			 default_colors[i*3+1], default_colors[i*3+2]);
      }
-     prom_printf("\x1b[1;37m\x1b[2;40m");	
+     prom_printf("\x1b[1;37m\x1b[2;40m");
 #ifdef COLOR_TEST
      for (i=0;i<16; i++) {
 	  prom_printf("\x1b[%d;%dm\x1b[1;47m%s \x1b[2;40m %s\n",
@@ -1456,7 +1456,7 @@ setup_display(void)
 		      ansi_color_table[i].name,
 		      ansi_color_table[i].name);
      }
-     prom_printf("\x1b[1;37m\x1b[2;40m");	
+     prom_printf("\x1b[1;37m\x1b[2;40m");
 #endif /* COLOR_TEST */
 
 #if !DEBUG
@@ -1473,7 +1473,7 @@ yaboot_main(void)
 
      if (_machine == _MACH_Pmac)
 	  setup_display();
-	
+
      prom_get_chosen("bootpath", bootdevice, sizeof(bootdevice));
      DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
      if (bootdevice[0] == 0) {
@@ -1544,7 +1544,7 @@ yaboot_main(void)
      return 0;
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

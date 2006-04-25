@@ -1,6 +1,6 @@
 /*
  * ext2fs.h --- ext2fs
- * 
+ *
  * Copyright (C) 1993, 1994, 1995, 1996 Theodore Ts'o.
  *
  * %Begin-Header%
@@ -251,7 +251,7 @@ struct struct_ext2_filsys {
  * This is used by ext2fs_expand_dir() to be able to add a new block
  * to an inode.  It can also be used for programs that want to be able
  * to deal with files that contain "holes".
- * 
+ *
  * BLOCK_FLAG_TRAVERSE indicates that the iterator function for the
  * indirect, doubly indirect, etc. blocks should be called after all
  * of the blocks containined in the indirect blocks are processed.
@@ -283,7 +283,7 @@ struct struct_ext2_filsys {
 /*
  * Flags for ext2fs_move_blocks
  */
-#define EXT2_BMOVE_GET_DBLIST	0x0001	
+#define EXT2_BMOVE_GET_DBLIST	0x0001
 #define EXT2_BMOVE_DEBUG	0x0002
 #endif
 
@@ -526,7 +526,7 @@ errcode_t ext2fs_block_iterate2(ext2_filsys fs,
 
 /* bmap.c */
 extern errcode_t ext2fs_bmap(ext2_filsys fs, ext2_ino_t ino,
-			     struct ext2_inode *inode, 
+			     struct ext2_inode *inode,
 			     char *block_buf, int bmap_flags,
 			     blk_t block, blk_t *phys_blk);
 
@@ -591,7 +591,7 @@ extern errcode_t ext2fs_write_dir_block(ext2_filsys fs, blk_t block,
 					void *buf);
 
 /* dir_iterate.c */
-extern errcode_t ext2fs_dir_iterate(ext2_filsys fs, 
+extern errcode_t ext2fs_dir_iterate(ext2_filsys fs,
 			      ext2_ino_t dir,
 			      int flags,
 			      char *block_buf,
@@ -611,7 +611,7 @@ extern errcode_t ext2fs_expand_dir(ext2_filsys fs, ext2_ino_t dir);
 /* ext_attr.c */
 void ext2fs_swap_ext_attr(ext2_filsys fs, char *to, char *from);
 extern errcode_t ext2fs_read_ext_attr(ext2_filsys fs, blk_t block, void *buf);
-extern errcode_t ext2fs_write_ext_attr(ext2_filsys fs, blk_t block, void *buf); 
+extern errcode_t ext2fs_write_ext_attr(ext2_filsys fs, blk_t block, void *buf);
 /* fileio.c */
 extern errcode_t ext2fs_file_open(ext2_filsys fs, ext2_ino_t ino,
 				  int flags, ext2_file_t *ret);
@@ -756,14 +756,14 @@ extern errcode_t ext2fs_read_bb_inode(ext2_filsys fs,
 				      ext2_badblocks_list *bb_list);
 
 /* read_bb_file.c */
-extern errcode_t ext2fs_read_bb_FILE2(ext2_filsys fs, FILE *f, 
+extern errcode_t ext2fs_read_bb_FILE2(ext2_filsys fs, FILE *f,
 				      ext2_badblocks_list *bb_list,
 				      void *private,
 				      void (*invalid)(ext2_filsys fs,
 						      blk_t blk,
 						      char *badstr,
 						      void *private));
-extern errcode_t ext2fs_read_bb_FILE(ext2_filsys fs, FILE *f, 
+extern errcode_t ext2fs_read_bb_FILE(ext2_filsys fs, FILE *f,
 				     ext2_badblocks_list *bb_list,
 				     void (*invalid)(ext2_filsys fs,
 						     blk_t blk));
@@ -855,7 +855,7 @@ _INLINE_ errcode_t ext2fs_free_mem(void **ptr)
 	*ptr = 0;
 	return 0;
 }
-	
+
 /*
  *  Resize memory
  */

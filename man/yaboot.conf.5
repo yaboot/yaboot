@@ -19,7 +19,7 @@ and
 The \fByaboot.conf\fP file is a configuration file for \fByaboot\fP
 which is read during booting, and for \fBybin\fR(8) to generate a boot
 menu and to properly install \fByaboot\fP onto the \fBbootstrap\fP(8)
-partition. 
+partition.
 
 \fByaboot.conf\fP provides instructions for \fByaboot\fP. This
 includes which kernels to load and what options to pass to them.
@@ -63,7 +63,7 @@ is:
 The first form refers to a file or directory on some supported filesystem
 (currently \fIext2\fP, \fIhfs\fP, \fIhfs+\fP or \fIiso9660\fP), the latter
 refers to a range of 512B blocks on a device. For a device block range,
-either <devicename>, or <part>, or [<m>-<n>] must be given. 
+either <devicename>, or <part>, or [<m>-<n>] must be given.
 
 Optional <devicename> is the OpenFirmware name of the device the file or range
 is located on. See below for its syntax. For OpenFirmware the device
@@ -340,7 +340,7 @@ filesystem MacOS will mount and debless the OSX partition.  Add this
 option if the OSX menu entry breaks after booting MacOS.  You should
 not use this option if OSX is installed on a UFS filesystem, for UFS
 installs you specify the OSX bootstrap partition which is protected
-against MacOS.  This option requires \fImacosx=\fR to be set.  
+against MacOS.  This option requires \fImacosx=\fR to be set.
 .TP
 .BI "darwin=" of-path
 The OpenFirmware or unix device path to a Darwin boot partition.
@@ -353,7 +353,7 @@ use the \fBofpath\fR(8) utility to determine the OpenFirmware device
 path.
 .TP
 .B "enablecdboot"
-This option adds an entry to the multiboot menu to boot from the CDROM drive. 
+This option adds an entry to the multiboot menu to boot from the CDROM drive.
 .TP
 .B "enablenetboot"
 This option adds an entry to the multiboot menu to boot from the network.
@@ -618,7 +618,7 @@ macosx=/dev/hda10
 .SH NOTES
 The format defined in this man page will not work with versions of
 \fByaboot\fR(8) older then 0.6.  The color options only work with
-yaboot 1.0 and later. 
+yaboot 1.0 and later.
 .SH BUGS
 Some
 .B yaboot

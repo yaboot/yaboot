@@ -35,7 +35,7 @@ delay=10
 
 ## timeout is the amount of time in tenths of a second that yaboot
 ## will wait before booting the default kernel image (the first image=
-## section in this config file or the value of default=).  
+## section in this config file or the value of default=).
 
 timeout=20
 install=/usr/local/lib/yaboot/yaboot

@@ -9,13 +9,13 @@ includes the following capabilities:
 
 * Automatic configuration by ybin.  This script should NOT be edited
   by the user.  It should also not be used without ybin, its not
-  directly useable by OpenFirmware. 
+  directly useable by OpenFirmware.
 
 * Configurable colors.  (see the yaboot.conf(5) man page).
 
 The multiboot menu is only presented when an extra OS is defined in
 /etc/yaboot.conf, otherwise this script loads yaboot without any user
-interaction. 
+interaction.
 
 To enable a multi boot menu add bsd=ofpath and/or macos=ofpath and/or
 macosx=ofpath, and/or darwin=ofpath where ofpath is the OpenFirmware
@@ -41,7 +41,7 @@ The name and letter used to load MacOS or MacOSX (M and X
 respectively) cannot be be configured.  (others are D for Darwin, C
 for CDROM, N for network, and O for OpenFirmware)
 
-The Forth code in this script was written by Chris Emerson and iNOUE Koich!.  
+The Forth code in this script was written by Chris Emerson and iNOUE Koich!.
 
 This script has only been formally tested on a Rev 1 Blue G3, a G4,
 and an ibook, please report any incompatibilities.

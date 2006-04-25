@@ -99,7 +99,7 @@ struct reiserfs_journal_header {
                            || ih_version(ih) == ITEM_VERSION_1) \
                            ? le32_to_cpu ((ih)->ih_key.u.k_offset_v1.k_offset) \
                            : offset_v2_k_offset(&(ih)->ih_key.u.k_offset_v2))
- 
+
 #define IH_KEY_ISTYPE(ih, type) ((INFO->version < 2 \
                 || ih_version(ih) == ITEM_VERSION_1) \
                 ? le32_to_cpu((ih)->ih_key.u.k_offset_v1.k_uniqueness) == V1_##type \
@@ -154,7 +154,7 @@ struct key {
 #define TYPE_DIRECT 2
 #define TYPE_DIRENTRY 3
 #define TYPE_ANY 15 // FIXME: comment is required
- 
+
 //
 // in old version uniqueness field shows key type
 //
@@ -196,7 +196,7 @@ struct item_head
 
 /* Header of a disk block.  More precisely, header of a formatted leaf
    or internal node, and not the header of an unformatted node. */
-struct block_head {       
+struct block_head {
     __u16 blk_level;                  /* Level of a block in the tree */
     __u16 blk_nr_item;                /* Number of keys/items in a block */
     __u16 blk_free_space;             /* Block free space in bytes */
@@ -322,7 +322,7 @@ struct reiserfs_de_head
 #define DOT_OFFSET 1
 #define DOT_DOT_OFFSET 2
 #define DIRENTRY_UNIQUENESS 500
- 
+
 #define V1_TYPE_STAT_DATA 0x0
 #define V1_TYPE_DIRECT 0xffffffff
 #define V1_TYPE_INDIRECT 0xfffffffe
@@ -332,14 +332,14 @@ struct reiserfs_de_head
 #define V2_TYPE_DIRECT 2
 #define V2_TYPE_DIRENTRY 3
 
- 
+
 #define REISERFS_ROOT_OBJECTID 2
 #define REISERFS_ROOT_PARENT_OBJECTID 1
 #define REISERFS_SUPERBLOCK_BLOCK 16
 /* the spot for the super in versions 3.5 - 3.5.11 (inclusive) */
 #define REISERFS_OLD_SUPERBLOCK_BLOCK 2
 #define REISERFS_OLD_BLOCKSIZE 4096
- 
+
 #define S_ISREG(mode) (((mode) & 0170000) == 0100000)
 #define S_ISDIR(mode) (((mode) & 0170000) == 0040000)
 #define S_ISLNK(mode) (((mode) & 0170000) == 0120000)
@@ -367,7 +367,7 @@ struct reiserfs_state
     __u32 journal_block_count; /* The size of the journal */
     __u32 journal_first_desc;  /* The first valid descriptor block in journal
                                  (relative to journal_block) */
-    
+
    __u16 version;              /* The ReiserFS version. */
    __u16 tree_depth;           /* The current depth of the reiser tree. */
    __u8  blocksize_shift;      /* 1 << blocksize_shift == blocksize. */

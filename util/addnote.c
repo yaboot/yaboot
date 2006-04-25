@@ -212,7 +212,7 @@ nospace:
      exit(1);
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

@@ -78,7 +78,7 @@ iso_close(	struct boot_file_t*	file)
      return 0;
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

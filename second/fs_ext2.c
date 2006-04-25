@@ -65,7 +65,7 @@ struct fs_t ext2_filesystem =
 };
 
 /* IO manager structure for the ext2 library */
- 
+
 static errcode_t linux_open (const char *name, int flags, io_channel * channel);
 static errcode_t linux_close (io_channel channel);
 static errcode_t linux_set_blksize (io_channel channel, int blksize);
@@ -129,7 +129,7 @@ ext2_open(	struct boot_file_t*	file,
      int error = FILE_ERR_NOTFOUND;
      static char buffer[1024];
      int ofopened = 0;
-	
+
      DEBUG_ENTER;
      DEBUG_OPEN;
 
@@ -143,7 +143,7 @@ ext2_open(	struct boot_file_t*	file,
      }
 
      fs = NULL;
-	
+
      /* We don't care too much about the device block size since we run
       * thru the deblocker. We may have to change that is we plan to be
       * compatible with older versions of OF
@@ -174,7 +174,7 @@ ext2_open(	struct boot_file_t*	file,
 	  return FILE_IOERR;
      }
      ofopened = 1;
-	
+
      /* Open the ext2 filesystem */
      result = ext2fs_open (buffer, EXT2_FLAG_RW, 0, 0, linux_io_manager, &fs);
      if (result) {
@@ -201,7 +201,7 @@ ext2_open(	struct boot_file_t*	file,
 	  error = FILE_IOERR;
 	  goto bail;
      }
-	
+
      /* Lookup file by pathname */
      root = cwd = EXT2_ROOT_INO;
      result = ext2fs_namei_follow(fs, root, cwd, file_name, &file->inode);
@@ -225,7 +225,7 @@ ext2_open(	struct boot_file_t*	file,
 	  error = FILE_ERR_NOTFOUND;
 	  goto bail;
      }
-#endif	
+#endif
 
 #ifndef FAST_VERSION
      result = ext2fs_read_inode(fs, file->inode, &cur_inode);
@@ -244,7 +244,7 @@ ext2_open(	struct boot_file_t*	file,
      }
 #endif /* FAST_VERSION */
      file->pos = 0;
-	
+
      opened = 1;
 bail:
      if (!opened) {
@@ -257,7 +257,7 @@ bail:
 	       free(block_buffer);
 	  block_buffer = NULL;
 	  cur_file = NULL;
-	    
+
 	  DEBUG_LEAVE_F(error);
 	  return error;
      }
@@ -282,7 +282,7 @@ read_dump_range(void)
      if ((count * bs) > read_max)
 	  count--;
      if (count) {
-	  size = count * bs;	
+	  size = count * bs;
 	  read_result = io_channel_read_blk(fs->io, read_range_start, count, read_buffer);
 	  if (read_result)
 	       return BLOCK_ABORT;
@@ -293,7 +293,7 @@ read_dump_range(void)
 	  read_range_count -= count;
 	  read_range_start += count;
 	  read_last_logical += count;
-     }	
+     }
      /* Handle remaining block */
      if (read_max && read_range_count) {
 	  read_result = io_channel_read_blk(fs->io, read_range_start, 1, block_buffer);
@@ -343,7 +343,7 @@ read_iterator(ext2_filsys fs, blk_t *blocknr, int lg_block, void *private)
 	  ++read_range_count;
 	  return ((read_range_count * bs) >= read_max) ? BLOCK_ABORT : 0;
      }
-    
+
      /* Range doesn't match. Dump existing range */
      if (read_range_start) {
 #ifdef VERBOSE_DEBUG
@@ -418,7 +418,7 @@ read_iterator(ext2_filsys fs, blk_t *blocknr, int lg_block, void *private)
 	  read_range_count = 1;
 	  return (bs >= read_max) ? BLOCK_ABORT : 0;
      }
-    
+
 #ifdef VERBOSE_DEBUG
      DEBUG_F("\n");
 #endif
@@ -450,7 +450,7 @@ ext2_read(	struct boot_file_t*	file,
      read_max = size;
      read_buffer = (unsigned char*)buffer;
      read_result = 0;
-    
+
      retval = ext2fs_block_iterate(fs, file->inode, 0, 0, read_iterator, 0);
      if (retval == BLOCK_ABORT)
 	  retval = read_result;
@@ -464,13 +464,13 @@ ext2_read(	struct boot_file_t*	file,
      }
      if (retval)
 	  prom_printf ("ext2: i/o error %ld in read\n", (long) retval);
-		
+
      return read_total;
 
 #else /* FAST_VERSION */
      int status;
      unsigned int read = 0;
-	
+
      if (!opened)
 	  return FILE_IOERR;
 
@@ -478,11 +478,11 @@ ext2_read(	struct boot_file_t*	file,
      DEBUG_F("ext_read() from pos 0x%x, size: 0x%x\n", file->pos, size);
 
 
-     while(size) {	
+     while(size) {
 	  blk_t fblock = file->pos / bs;
 	  blk_t pblock;
 	  unsigned int blkorig, s, b;
-	
+
 	  pblock = 0;
 	  status = ext2fs_bmap(fs, file->inode, &cur_inode,
 			       block_buffer, 0, fblock, &pblock);
@@ -515,7 +515,7 @@ ext2_read(	struct boot_file_t*	file,
 	  file->pos += s;
      }
      return read;
-#endif /* FAST_VERSION */	
+#endif /* FAST_VERSION */
 }
 
 static int
@@ -542,12 +542,12 @@ ext2_close(	struct boot_file_t*	file)
      if (fs)
 	  ext2fs_close(fs);
      fs = NULL;
-	
+
      prom_close(file->of_device);
      DEBUG_F("ext2_close called\n");
 
      opened = 0;
-	    
+
      return 0;
 }
 
@@ -586,7 +586,7 @@ static errcode_t linux_set_blksize (io_channel channel, int blksize)
      if (block_buffer) {
 	  free(block_buffer);
 	  block_buffer = malloc(bs * 2);
-     }	
+     }
      return 0;
 }
 
@@ -597,7 +597,7 @@ static errcode_t linux_read_blk (io_channel channel, unsigned long block, int co
 
      if (count == 0)
 	  return 0;
-    
+
      tempb = (((unsigned long long) block) *
 	      ((unsigned long long)bs)) + (unsigned long long)doff;
      size = (count < 0) ? -count : count * bs;
@@ -619,7 +619,7 @@ static errcode_t linux_flush (io_channel channel)
      return 0;
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

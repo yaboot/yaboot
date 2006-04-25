@@ -56,7 +56,7 @@ static const char *valid_mac_partition_types[] = {
      NULL
 };
 #endif
-    
+
 
 /* Local functions */
 static unsigned long swab32(unsigned long value);
@@ -71,7 +71,7 @@ add_new_partition(struct partition_t**	list, int part_number, const char *part_t
 {
      struct partition_t*	part;
      part = (struct partition_t*)malloc(sizeof(struct partition_t));
-	
+
      part->part_number = part_number;
      strncpy(part->part_type, part_type, MAX_PART_NAME);
      strncpy(part->part_name, part_name, MAX_PART_NAME);
@@ -99,7 +99,7 @@ partition_mac_lookup( const char *dev_name, prom_handle disk,
      struct mac_partition* part = (struct mac_partition *)block_buffer;
      unsigned short ptable_block_size =
 	  ((struct mac_driver_desc *)block_buffer)->block_size;
-	
+
      map_size = 1;
      for (block=1; block < map_size + 1; block++)
      {
@@ -119,9 +119,9 @@ partition_mac_lookup( const char *dev_name, prom_handle disk,
 	  }
 	  if (block == 1)
 	       map_size = part->map_count;
-		
+
 #ifdef CHECK_FOR_VALID_MAC_PARTITION_TYPE
-	  /* We don't bother looking at swap partitions of any type, 
+	  /* We don't bother looking at swap partitions of any type,
 	   * and the rest are the ones we know about */
 	  for (ptype = valid_mac_partition_types; ptype; ptype++)
 	       if (!strcmp (part->type, ptype))
@@ -155,7 +155,7 @@ partition_mac_lookup( const char *dev_name, prom_handle disk,
      }
 }
 
-/* 
+/*
  * Same function as partition_mac_lookup(), except for fdisk
  * partitioned disks.
  */
@@ -168,7 +168,7 @@ partition_fdisk_lookup( const char *dev_name, prom_handle disk,
      /* fdisk partition tables start at offset 0x1be
       * from byte 0 of the boot drive.
       */
-     struct fdisk_partition* part = 
+     struct fdisk_partition* part =
 	  (struct fdisk_partition *) (block_buffer + 0x1be);
 
      for (partition=1; partition <= 4 ;partition++, part++) {
@@ -203,11 +203,11 @@ identify_iso_fs(ihandle device, unsigned int *iso_root_block)
 	       prom_printf("Can't read volume desc block %d\n", block);
 	       break;
 	  }
- 		
+
 	  vdp = (struct iso_volume_descriptor *)block_buffer;
-	    
-	  /* Due to the overlapping physical location of the descriptors, 
-	   * ISO CDs can match hdp->id==HS_STANDARD_ID as well. To ensure 
+
+	  /* Due to the overlapping physical location of the descriptors,
+	   * ISO CDs can match hdp->id==HS_STANDARD_ID as well. To ensure
 	   * proper identification in this case, we first check for ISO.
 	   */
 	  if (strncmp (vdp->id, ISO_STANDARD_ID, sizeof vdp->id) == 0) {
@@ -215,11 +215,11 @@ identify_iso_fs(ihandle device, unsigned int *iso_root_block)
 	       return 1;
 	  }
      }
-	
+
      return 0;
 }
 
-/* 
+/*
  * Detects and read amiga partition tables.
  */
 
@@ -251,7 +251,7 @@ _amiga_find_rdb (const char *dev_name, prom_handle disk, unsigned int prom_blksi
 			if (prom_readblocks(disk, i, 1, block_buffer) != 1) {
 	  			prom_printf("Can't read boot block %d\n", i);
 	  			break;
-			}	
+			}
 		}
 		if ((amiga_block[AMIGA_ID] == AMIGA_ID_RDB) && (_amiga_checksum (prom_blksize) == 0))
 			return 1;
@@ -260,7 +260,7 @@ _amiga_find_rdb (const char *dev_name, prom_handle disk, unsigned int prom_blksi
 	if (prom_readblocks(disk, 0, 1, block_buffer) != 1) {
   		prom_printf("Can't read boot blocks\n");
   		return 0; /* TODO: something bad happened, should fail more verbosely */
-	}	
+	}
 	return 0;
 }
 
@@ -295,7 +295,7 @@ partition_amiga_lookup( const char *dev_name, prom_handle disk,
 		if (prom_readblocks(disk, part, 1, block_buffer) != 1) {
 	  		prom_printf("Can't read partition block %d\n", part);
 	  		break;
-		}	
+		}
 		checksum = _amiga_checksum (prom_blksize);
 		if ((amiga_block[AMIGA_ID] == AMIGA_ID_PART) &&
 			(checksum == 0) &&
@@ -326,7 +326,7 @@ partition_amiga_lookup( const char *dev_name, prom_handle disk,
 		    prom_blksize,
 		    0 );
 	}
-	if (used) 
+	if (used)
 		free(used);
 }
 
@@ -337,10 +337,10 @@ partitions_lookup(const char *device)
      struct mac_driver_desc *desc = (struct mac_driver_desc *)block_buffer;
      struct partition_t* list = NULL;
      unsigned int prom_blksize, iso_root_block;
-	
+
      strncpy(block_buffer, device, 2040);
      strcat(block_buffer, ":0");
-	
+
      /* Open device */
      disk = prom_open(block_buffer);
      if (disk == NULL) {
@@ -356,12 +356,12 @@ partitions_lookup(const char *device)
 	  prom_printf("block_size %d not supported !\n", prom_blksize);
 	  goto bail;
      }
-	
+
      /* Read boot blocs */
      if (prom_readblocks(disk, 0, 1, block_buffer) != 1) {
 	  prom_printf("Can't read boot blocks\n");
 	  goto bail;
-     }	
+     }
      if (desc->signature == MAC_DRIVER_MAGIC) {
 	  /* pdisk partition format */
 	  partition_mac_lookup(device, disk, prom_blksize, &list);
@@ -388,7 +388,7 @@ partitions_lookup(const char *device)
 
 bail:
      prom_close(disk);
-	
+
      return list;
 }
 
@@ -415,7 +415,7 @@ get_part_type(char *device, int partition)
 	  if ((partition >= 0) && (partition == p->part_number)) {
 	       type = strdup(p->part_type);
 	       break;
-	  }	  
+	  }
      }
      if (parts)
 	  partitions_free(parts);
@@ -427,7 +427,7 @@ void
 partitions_free(struct partition_t* list)
 {
      struct partition_t*	next;
-	
+
      while(list) {
 	  next = list->next;
 	  free(list);
@@ -448,7 +448,7 @@ swab32(unsigned long value)
 }
 
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

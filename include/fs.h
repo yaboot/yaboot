@@ -35,14 +35,14 @@ struct fs_t {
 			const char*		dev_name,
 			struct partition_t*	part,
 			const char*		file_name);
-			
+
 	int (*read)(	struct boot_file_t*	file,
 			unsigned int		size,
 			void*			buffer);
-				
+
 	int (*seek)(	struct boot_file_t*	file,
 			unsigned int		newpos);
-					
+
 	int (*close)(	struct boot_file_t*	file);
 };
 

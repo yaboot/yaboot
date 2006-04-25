@@ -1,5 +1,5 @@
 This utility is used to find the OpenFirmware device path to a unix
-device node (ie /dev/hda2).  
+device node (ie /dev/hda2).
 
 Ofpath will work on Newworld PowerMacs only if yaboot is used as the
 bootloader, it will not work on newworld macs booted with BootX.
@@ -22,4 +22,4 @@ ofpath is based on show_of_path.sh written by Olaf Hering, this
 version unlike show_of_path.sh works with /bin/ash and is fully
 functional on stripped down systems such as boot or rescue floppies.
 It has been tested on the Debian GNU/Linux 2.2 (potato) boot
-floppies. 
+floppies.

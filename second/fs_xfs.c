@@ -92,7 +92,7 @@ xfs_open(struct boot_file_t *file, const char *dev_name,
 	DEBUG_F("%p was successfully opened\n", file->of_device);
 
 	xfs_file = file;
-    
+
 	if (xfs_mount() != 1)
 	{
 		DEBUG_F("Couldn't open XFS @ %s/%Lu\n", buffer, partition_offset);
@@ -241,7 +241,7 @@ ino2offset (xfs_ino_t ino)
 static xfs_fsblock_t
 xt_start (xfs_bmbt_rec_32_t *r)
 {
-	return (((xfs_fsblock_t)(le32 (r->l1) & mask32lo(9))) << 43) | 
+	return (((xfs_fsblock_t)(le32 (r->l1) & mask32lo(9))) << 43) |
 	       (((xfs_fsblock_t)le32 (r->l2)) << 11) |
 	       (((xfs_fsblock_t)le32 (r->l3)) >> 21);
 }
@@ -512,7 +512,7 @@ next_dentry (xfs_ino_t *ino)
 			++name;
 			++namelen;
 			sfe = (xfs_dir2_sf_entry_t *)
-				(inode->di_u.di_c 
+				(inode->di_u.di_c
 				 + sizeof(xfs_dir2_sf_hdr_t)
 				 - xfs.i8param);
 			break;
@@ -666,7 +666,7 @@ xfs_read_data (char *buf, int len)
 		offset = xad->offset;
 		xadlen = xad->len;
 		if (isinxt (xfs_file->pos >> xfs.blklog, offset, xadlen)) {
-			endofcur = (offset + xadlen) << xfs.blklog; 
+			endofcur = (offset + xadlen) << xfs.blklog;
 			toread = (endofcur >= endpos)
 				  ? len : (endofcur - xfs_file->pos);
 			read_disk_block(xfs_file, fsb2daddr (xad->start),
@@ -684,7 +684,7 @@ xfs_read_data (char *buf, int len)
 			}
 			continue;
 		}
-		endofprev = offset + xadlen; 
+		endofprev = offset + xadlen;
 	}
 
 	return xfs_file->pos - startpos;
@@ -778,7 +778,7 @@ xfs_dir (char *dirname)
 	}
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 8

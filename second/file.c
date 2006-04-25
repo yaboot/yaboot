@@ -147,7 +147,7 @@ static char *netdev_path_to_dev(const char *path)
 /* This function follows the device path in the devtree and separates
    the device name, partition number, and other datas (mostly file name)
    the string passed in parameters is changed since 0 are put in place
-   of some separators to terminate the various strings.  
+   of some separators to terminate the various strings.
 
    when a default device is supplied imagepath will be assumed to be a
    plain filename unless it contains a : otherwise if defaultdev is
@@ -185,7 +185,7 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
      if (!imagepath)
 	  return 0;
-     else if (!(ipath = strdup(imagepath))) 
+     else if (!(ipath = strdup(imagepath)))
 	  return 0;
 
      if (defdevice) {
@@ -229,7 +229,7 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 	  if (*(ptr+1))
 	       result->part = simple_strtol(ptr+1, NULL, 10);
      } else if (!defdev) {
-	  result->dev = strdup(ipath); 
+	  result->dev = strdup(ipath);
      } else if (strlen(ipath)) {
           result->file = strdup(ipath);
      } else {
@@ -239,10 +239,10 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
      if (!result->dev && defdev)
 	  result->dev = strdup(defdev);
-     
+
      if (result->part < 0)
 	  result->part = defpart;
-     
+
      if (!result->file)
 	  result->file = strdup(deffile);
 
@@ -262,10 +262,10 @@ file_block_open(	struct boot_file_t*	file,
      struct partition_t*	parts;
      struct partition_t*	p;
      struct partition_t*	found;
-	
+
      parts = partitions_lookup(dev_name);
      found = NULL;
-			
+
 #if DEBUG
      if (parts)
 	  prom_printf("partitions:\n");
@@ -289,7 +289,7 @@ file_block_open(	struct boot_file_t*	file,
 #if DEBUG
 	  if (found)
 	       prom_printf(" (match)\n");
-#endif						
+#endif
      }
 
      /* Note: we don't skip when found is NULL since we can, in some
@@ -351,7 +351,7 @@ static struct fs_t fs_default =
 int open_file(const struct boot_fspec_t* spec, struct boot_file_t* file)
 {
      int result;
-	
+
      memset(file, 0, sizeof(struct boot_file_t*));
      file->fs        = &fs_default;
 
@@ -363,7 +363,7 @@ int open_file(const struct boot_fspec_t* spec, struct boot_file_t* file)
 	  file->device_kind = result;
      else
 	  return result;
-	
+
      switch(file->device_kind) {
      case FILE_DEVICE_BLOCK:
 	  DEBUG_F("device is a block device\n");
@@ -375,7 +375,7 @@ int open_file(const struct boot_fspec_t* spec, struct boot_file_t* file)
      return 0;
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

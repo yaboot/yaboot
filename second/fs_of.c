@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-/* 
+/*
  * BrokenFirmware cannot "read" from the network. We use tftp "load"
  * method for network boot for now, we may provide our own NFS
  * implementation in a later version. That means that we allocate a
@@ -86,7 +86,7 @@ of_open(struct boot_file_t* file, const char* dev_name,
      static char	buffer[1024];
      char               *filename;
      char               *p;
-	
+
      DEBUG_ENTER;
      DEBUG_OPEN;
 
@@ -107,7 +107,7 @@ of_open(struct boot_file_t* file, const char* dev_name,
 	       strcat(buffer, ",");
 	  filename = strdup(file_name);
 	  for (p = filename; *p; p++)
-	       if (*p == '/') 
+	       if (*p == '/')
 		    *p = '\\';
 	  strcat(buffer, filename);
 	  free(filename);
@@ -126,7 +126,7 @@ of_open(struct boot_file_t* file, const char* dev_name,
 	  DEBUG_LEAVE(FILE_ERR_BAD_FSYS);
 	  return FILE_ERR_BAD_FSYS;
      }
-	
+
      DEBUG_LEAVE(FILE_ERR_OK);
      return FILE_ERR_OK;
 }
@@ -147,12 +147,12 @@ of_net_open(struct boot_file_t* file, const char* dev_name,
 	  strcat(buffer, ",");
 	  filename = strdup(file_name);
 	  for (p = filename; *p; p++)
-	       if (*p == '/') 
+	       if (*p == '/')
 		    *p = '\\';
 	  strcat(buffer, filename);
 	  free(filename);
      }
-			
+
      DEBUG_F("Opening: \"%s\"\n", buffer);
 
      file->of_device = prom_open(buffer);
@@ -165,7 +165,7 @@ of_net_open(struct boot_file_t* file, const char* dev_name,
 	  DEBUG_LEAVE(FILE_ERR_BAD_FSYS);
 	  return FILE_ERR_BAD_FSYS;
      }
-	
+
      file->buffer = prom_claim((void *)LOAD_BUFFER_POS, LOAD_BUFFER_SIZE, 0);
      if (file->buffer == (void *)-1) {
 	  prom_printf("Can't claim memory for TFTP download\n");
@@ -178,9 +178,9 @@ of_net_open(struct boot_file_t* file, const char* dev_name,
      DEBUG_F("TFP...\n");
 
      file->len = prom_loadmethod(file->of_device, file->buffer);
-	
+
      DEBUG_F("result: %Ld\n", file->len);
-	
+
      DEBUG_LEAVE(FILE_ERR_OK);
      return FILE_ERR_OK;
 }
@@ -189,7 +189,7 @@ static int
 of_read(struct boot_file_t* file, unsigned int size, void* buffer)
 {
      unsigned int count;
-	
+
      count = prom_read(file->of_device, buffer, size);
      file->pos += count;
      return count;
@@ -199,9 +199,9 @@ static int
 of_net_read(struct boot_file_t* file, unsigned int size, void* buffer)
 {
      unsigned int count, av;
-	
+
      av = file->len - file->pos;
-     count = size > av ? av : size; 
+     count = size > av ? av : size;
      memcpy(buffer, file->buffer + file->pos, count);
      file->pos += count;
      return count;
@@ -214,7 +214,7 @@ of_seek(struct boot_file_t* file, unsigned int newpos)
 	  file->pos = newpos;
 	  return FILE_ERR_OK;
      }
-		
+
      return FILE_CANT_SEEK;
 }
 
@@ -238,11 +238,11 @@ of_close(struct boot_file_t* file)
      prom_close(file->of_device);
      DEBUG_F("of_close called\n");
 
-     DEBUG_LEAVE(0);	
+     DEBUG_LEAVE(0);
      return 0;
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

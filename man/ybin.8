@@ -13,8 +13,8 @@
 .\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 .\" GNU General Public License for more details.
 .\"
-.\" You should have received a copy of the GNU General Public License          
-.\" along with this program; if not, write to the Free Software                
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 .\"
 .TH YBIN 8 "21 November 2001" "GNU/Linux PowerPC" "System Manager's Manual"
@@ -22,7 +22,7 @@
 .B ybin
 \- install the yaboot boot loader to a bootstrap partition.
 .SH SYNOPSIS
-.B ybin 
+.B ybin
 .RB [ \ \-b | \-\-boot\ \fIdevice\  ]
 .RB [ \ \-o | \-\-ofboot\ \fIof-path\  ]
 .RB [ \ \-i | \-\-install\ \fIboot-file\  ]
@@ -40,18 +40,18 @@
 .RB [ \ \-h | \-\-help\  ]
 .RB [ \ \-V | \-\-version\  ]
 .SH DESCRIPTION
-This manual page explains 
-.B ybin 
-the installer for the  
-.BR yaboot (8) 
+This manual page explains
+.B ybin
+the installer for the
+.BR yaboot (8)
 boot loader enabling GNU/Linux to be booted by OpenFirmware.
-Specifically it copies the 
+Specifically it copies the
 .B yaboot
-binary and 
+binary and
 .BR yaboot.conf (5)
-and usually a \*(lqmagicboot\*(rq script to a 
+and usually a \*(lqmagicboot\*(rq script to a
 .BR bootstrap (8)
-partition.  
+partition.
 
 .B Ybin
 will set attributes on the boot loader files and to the
@@ -64,18 +64,18 @@ will also set the OpenFirmware boot-device variable to the device path
 of the \fBbootstrap\fR(8) partition using \fBnvsetenv\fR(8) when a
 NewWorld compatible version of \fBnvsetenv\fR(8) is available.
 
-.B Ybin 
-requires that the 
+.B Ybin
+requires that the
 .BR bootstrap (8)
 partition have an HFS filesystem already on it.  For IBM
 hardware there is no filesystem on the \fBbootstrap\fR(8) partition,
 in this case use fstype=raw.  When using the raw filesystem type
 \fBybin\fR requires that an ELF binary have already been installed on
 the \fBbootstrap\fR(8) partition.  Use the companion
-.BR mkofboot (8) 
-utility to install the boot loader onto a new 
+.BR mkofboot (8)
+utility to install the boot loader onto a new
 .BR bootstrap (8)
-partition. 
+partition.
 
 The \fBbootstrap\fR(8) need not and should not be mounted anywhere on
 your filesystem, especially not on top of /boot.  \fBYaboot\fR is able
@@ -87,7 +87,7 @@ they should be kept. \fBYbin\fR will refuse to operate on the
 .BR \-b ,\  \-\-boot\ \fIdevice
 Install the boot loader onto the specified device, this device should
 be that of your \fBbootstrap\fR(8) partition. For example, if your
-\fBbootstrap\fR partition is located on your first primary IDE drive in the 
+\fBbootstrap\fR partition is located on your first primary IDE drive in the
 second partition, your device would be: \fI/dev/hda2\fR.
 .TP
 .BR \-o ,\  \-\-ofboot\ \fIof-path
@@ -188,7 +188,7 @@ The temporary directory \fBybin\fR will use.
 .SH SECURITY
 Temporary files are created with
 .BR mktemp (1).
-It is important that your system use a secure 
+It is important that your system use a secure
 .BR mktemp (1)
 program, otherwise \fBybin\fR will be vulnerable to race conditions.
 The Debian mktemp is derived from OpenBSD and thus should be secure.
@@ -199,12 +199,12 @@ root.  It is also critical that \fI/etc/yaboot.conf\fR not be writable
 by anyone but root since a different \fIofboot\fR script could be
 specified there.
 .SH BUGS
-.B Ybin 
+.B Ybin
 should be able to take care of OpenFirmware variables as needed on IBM
 hardware.
 .SH AUTHORS
 .B ybin
-and this man page was written by Ethan Benson. 
+and this man page was written by Ethan Benson.
 .br
 .B yaboot
 was written by Benjamin Herrenschmidt.

@@ -19,7 +19,7 @@ int
 isonum_712 (char * p)
 {
      int val;
-	
+
      val = *p;
      if (val & 0x80)
 	  val |= 0xffffff00;
@@ -84,7 +84,7 @@ isonum_733 (char * p)
      return (isonum_731 (p));
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 8

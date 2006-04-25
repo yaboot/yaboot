@@ -1,5 +1,5 @@
 This script is deprecated in favor of a much nicer and more robust
-script ofboot, see README.ofboot for more information. 
+script ofboot, see README.ofboot for more information.
 
 This script was written by Benjamin Herrenschmidt, I added a X to the
 OpenFirmware pathnames, you should replace that X with the proper

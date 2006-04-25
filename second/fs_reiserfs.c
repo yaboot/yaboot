@@ -191,7 +191,7 @@ journal_read( __u32 block, __u32 len, char *buffer )
 
 /* Read a block from ReiserFS file system, taking the journal into
  * account.  If the block nr is in the journal, the block from the
- * journal taken.  
+ * journal taken.
  */
 static int
 block_read( __u32 blockNr, __u32 start, __u32 len, char *buffer )
@@ -259,7 +259,7 @@ block_read( __u32 blockNr, __u32 start, __u32 len, char *buffer )
 	  DEBUG_F( "block_read: block %u is mapped to journal block %u.\n",
 		   blockNr, translatedNr - INFO->journal_block );
 
-	  /* We must continue the search, as this block may be overwritten in 
+	  /* We must continue the search, as this block may be overwritten in
 	   * later transactions. */
      not_found:
 	  desc_block = (desc_block + 2 + j_len) & journal_mask;
@@ -273,8 +273,8 @@ block_read( __u32 blockNr, __u32 start, __u32 len, char *buffer )
  * we can still read the rest from the disk on demand.
  *
  * The first number of valid transactions and the descriptor block of the
- * first valid transaction are held in INFO.  The transactions are all 
- * adjacent, but we must take care of the journal wrap around. 
+ * first valid transaction are held in INFO.  The transactions are all
+ * adjacent, but we must take care of the journal wrap around.
  */
 static int
 journal_init( void )
@@ -335,7 +335,7 @@ journal_init( void )
 	       {
 		    int i;
 
-		    /* Cache the length and the realblock numbers in the table. * 
+		    /* Cache the length and the realblock numbers in the table. *
 		     * The block number of descriptor can easily be computed. *
 		     * and need not to be stored here. */
 		    *journal_table++ = desc.j_len;
@@ -505,7 +505,7 @@ reiserfs_read_super( void )
  * My tree node cache is organized as following
  *   0   ROOT node
  *   1   LEAF node  (if the ROOT is also a LEAF it is copied here
- *   2-n other nodes on current path from bottom to top.  
+ *   2-n other nodes on current path from bottom to top.
  *       if there is not enough space in the cache, the top most are
  *       omitted.
  *
@@ -515,7 +515,7 @@ reiserfs_read_super( void )
  *   next_key() gets the next key in tree order.
  *
  * This means, that I can only sequential reads of files are
- * efficient, but this really doesn't hurt for grub.  
+ * efficient, but this really doesn't hurt for grub.
  */
 
 /* Read in the node at the current path and depth into the node cache.
@@ -565,7 +565,7 @@ read_tree_node( __u32 blockNr, __u16 depth )
 }
 
 /* Get the next key, i.e. the key following the last retrieved key in
- * tree order.  INFO->current_ih and 
+ * tree order.  INFO->current_ih and
  * INFO->current_info are adapted accordingly.  */
 static int
 next_key( void )
@@ -626,7 +626,7 @@ next_key( void )
 	       DEBUG_F( "  depth=%u, i=%u/%u\n", depth, key_nr, nr_item );
 
 	       if ( key_nr == nr_item )
-		    /* This is the last item in this block, set the next_key_nr * 
+		    /* This is the last item in this block, set the next_key_nr *
 		     * to 0 */
 		    INFO->next_key_nr[depth] = 0;
 
@@ -654,11 +654,11 @@ found:
      return 1;
 }
 
-/* preconditions: reiserfs_read_super already executed, therefore 
+/* preconditions: reiserfs_read_super already executed, therefore
  *   INFO block is valid
- * returns: 0 if error (errnum is set), 
+ * returns: 0 if error (errnum is set),
  *   nonzero iff we were able to find the key successfully.
- * postconditions: on a nonzero return, the current_ih and 
+ * postconditions: on a nonzero return, the current_ih and
  *   current_item fields describe the key that equals the
  *   searched key.  INFO->next_key contains the next key after
  *   the searched key.
@@ -819,11 +819,11 @@ done:
 }
 
 
-/* preconditions: reiserfs_read_super already executed, therefore 
+/* preconditions: reiserfs_read_super already executed, therefore
  *   INFO block is valid
  * returns: 0 if error, nonzero iff we were able to find the file successfully
  * postconditions: on a nonzero return, INFO->fileinfo contains the info
- *   of the file we were trying to look up, filepos is 0 and filemax is 
+ *   of the file we were trying to look up, filepos is 0 and filemax is
  *   the size of the file.
  */
 static int
@@ -885,7 +885,7 @@ reiserfs_open_file( char *dirname )
 		    return 0;
 	       }
 
-	       /* Copy the remaining name to the end of the symlink data. Note * 
+	       /* Copy the remaining name to the end of the symlink data. Note *
 		* that DIRNAME and LINKBUF may overlap! */
 	       memmove( linkbuf + INFO->file->len, dirname, len + 1 );
 
@@ -976,7 +976,7 @@ reiserfs_open_file( char *dirname )
 		    {
 			 int cmp;
 
-			 /* Directory names in ReiserFS are not null * terminated. 
+			 /* Directory names in ReiserFS are not null * terminated.
 			  * We write a temporary 0 behind it. * NOTE: that this
 			  * may overwrite the first block in * the tree cache.
 			  * That doesn't hurt as long as we * don't call next_key
@@ -987,7 +987,7 @@ reiserfs_open_file( char *dirname )
 			 if ( cmp == 0 )
 			      goto found;
 		    }
-		    /* The beginning of this name marks the end of the next name. 
+		    /* The beginning of this name marks the end of the next name.
 		     */
 		    name_end = filename;
 		    de_head++;
@@ -1025,7 +1025,7 @@ offset_v2_k_type( struct offset_v2 *v2 )
      tmp.linear = le64_to_cpu( tmp.linear );
      return tmp.offset_v2.k_type;
 }
- 
+
 inline loff_t
 offset_v2_k_offset( struct offset_v2 *v2 )
 {
@@ -1047,7 +1047,7 @@ uniqueness2type (__u32 uniqueness)
      return TYPE_ANY;
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

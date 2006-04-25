@@ -8,7 +8,7 @@ filetype of `tbxi' if found it loads this file. Unfortunately OF is
 being far to picky about the format of this file, while it will load a
 ELF executable just fine when directed to, if the tbxi file it finds
 is just a plain ELF executable, as yaboot is, then it refuses to load
-it.  
+it.
 
 The best longterm solution is to embed a small CHRP boot script to the
 head of of the yaboot executable, but until we can find the right way

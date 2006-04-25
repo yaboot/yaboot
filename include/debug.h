@@ -44,7 +44,7 @@
 #define DEBUG_SLEEP
 #endif
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

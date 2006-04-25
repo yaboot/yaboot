@@ -53,7 +53,7 @@ static inline unsigned char __toupper(unsigned char c)
 
 #endif
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

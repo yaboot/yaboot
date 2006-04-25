@@ -8,7 +8,7 @@
 ## Portions based on show_of_path.sh:
 ##
 ## Copyright (C) 2000 Olaf Hering <olh@suse.de>
-## 
+##
 ## This program is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License
 ## as published by the Free Software Foundation; either version 2
@@ -116,11 +116,11 @@ linecount()
 ## small tr replacment which handles a specific need of this script.
 smalltr()
 {
-    case "$1" in 
+    case "$1" in
 	a) echo 1 ;; b) echo 2 ;; c) echo 3 ;; d) echo 4 ;; e) echo 5 ;; f) echo 6 ;;
 	g) echo 7 ;; h) echo 8 ;; i) echo 9 ;; j) echo 10 ;; k) echo 11 ;; l) echo 12 ;;
 	m) echo 13 ;; n) echo 14 ;; o) echo 15 ;; p) echo 16 ;;
-	1) echo a ;; 2) echo b ;; 3) echo c ;; 4) echo d ;; 5) echo e ;; 
+	1) echo a ;; 2) echo b ;; 3) echo c ;; 4) echo d ;; 5) echo e ;;
 	6) echo f ;; 7) echo g ;; 8) echo h ;; 9) echo i ;; 10) echo j ;;
 	11) echo k ;; 12) echo l ;; 13) echo m ;; 14) echo n ;; 15) echo o ;;
 	16) echo p ;;
@@ -429,7 +429,7 @@ newworld()
 	    scsiinfo || return 1
 
 	    ## now we have the data for /@$DEVID:$PARTITION
-	    ## find the actual OF path.	
+	    ## find the actual OF path.
 	    scsi_ofpath || return 1
 	    ;;
 	hd*)
@@ -670,7 +670,7 @@ chrp()
 	    scsiinfo || return 1
 
 	    ## now we have the data for /@$DEVID:$PARTITION
-	    ## find the actual OF path.	
+	    ## find the actual OF path.
 	    scsi_ofpath || return 1
 	    ;;
 	*)

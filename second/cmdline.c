@@ -52,7 +52,7 @@ void cmdedit (void (*tabfunc) (void), int password)
      }
      if (!password)
 	  prom_printf(buff, x);
-     
+
      for (;;) {
 	  c = prom_getchar ();
 	  if (c == -1)

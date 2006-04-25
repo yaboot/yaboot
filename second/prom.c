@@ -58,7 +58,7 @@ call_prom (const char *service, int nargs, int nret, ...)
      va_list list;
      int i;
      struct prom_args prom_args;
-  
+
      prom_args.service = service;
      prom_args.nargs = nargs;
      prom_args.nret = nret;
@@ -82,7 +82,7 @@ call_prom_return (const char *service, int nargs, int nret, ...)
      int i;
      void* result;
      struct prom_args prom_args;
-  
+
      prom_args.service = service;
      prom_args.nargs = nargs;
      prom_args.nret = nret;
@@ -111,7 +111,7 @@ call_method_1 (char *method, prom_handle h, int nargs, ...)
      va_list list;
      int i;
      struct prom_args prom_args;
-  
+
      prom_args.service = "call-method";
      prom_args.nargs = nargs+2;
      prom_args.nret = 2;
@@ -123,7 +123,7 @@ call_method_1 (char *method, prom_handle h, int nargs, ...)
      va_end(list);
      prom_args.args[2+nargs] = 0;
      prom_args.args[2+nargs+1] = 0;
-  
+
      prom (&prom_args);
 
      if (prom_args.args[2+nargs] != 0)
@@ -221,11 +221,11 @@ prom_init (prom_entry pp)
      /* Add a few OF methods (thanks Darwin) */
 #if DEBUG
      prom_printf ("Adding OF methods...\n");
-#endif  
+#endif
 
      prom_interpret (
 	  /* All values in this forth code are in hex */
-	  "hex "	
+	  "hex "
 	  /* Those are a few utilities ripped from Apple */
 	  ": D2NIP decode-int nip nip ;\r"	// A useful function to save space
 	  ": GPP$ get-package-property 0= ;\r"	// Another useful function to save space
@@ -278,7 +278,7 @@ prom_read (prom_handle file, void *buf, int n)
 {
      int result = 0;
      int retries = 10;
-  
+
      if (n == 0)
 	  return 0;
      while(--retries) {
@@ -287,7 +287,7 @@ prom_read (prom_handle file, void *buf, int n)
 	       break;
 	  call_prom("interpret", 1, 1, " 10 ms");
      }
-  
+
      return result;
 }
 
@@ -330,7 +330,7 @@ prom_readblocks (prom_handle dev, int blockNum, int blockCount, void *buffer)
 #if READ_BLOCKS_USE_READ
      int status;
      unsigned int blksize;
-  
+
      blksize = prom_getblksize(dev);
      if (blksize <= 1)
 	  blksize = 512;
@@ -339,16 +339,16 @@ prom_readblocks (prom_handle dev, int blockNum, int blockCount, void *buffer)
 	  return 0;
 	  prom_printf("Can't seek to 0x%x\n", blockNum * blksize);
      }
-  	
+
      status = prom_read(dev, buffer, blockCount * blksize);
 //  prom_printf("prom_readblocks, bl: %d, cnt: %d, status: %d\n",
 //  	blockNum, blockCount, status);
 
      return status == (blockCount * blksize);
-#else 
+#else
      int result;
      int retries = 10;
-  
+
      if (blockCount == 0)
 	  return blockCount;
      while(--retries) {
@@ -357,9 +357,9 @@ prom_readblocks (prom_handle dev, int blockNum, int blockCount, void *buffer)
 	       break;
 	  call_prom("interpret", 1, 1, " 10 ms");
      }
-  
+
      return result;
-#endif  
+#endif
 }
 
 int
@@ -399,20 +399,20 @@ prom_puts (prom_handle file, char *s)
 {
      const char *p, *q;
 
-     for (p = s; *p != 0; p = q) 
+     for (p = s; *p != 0; p = q)
      {
 	  for (q = p; *q != 0 && *q != '\n'; ++q)
 	       ;
 	  if (q > p)
 	       call_prom ("write", 3, 1, file, p, q - p);
-	  if (*q != 0) 
+	  if (*q != 0)
 	  {
 	       ++q;
 	       call_prom ("write", 3, 1, file, "\r\n", 2);
 	  }
      }
 }
- 
+
 void
 prom_vfprintf (prom_handle file, char *fmt, va_list ap)
 {
@@ -459,7 +459,7 @@ prom_perror (int error, char *filename)
      else if (error == FILE_IOERR)
 	  prom_printf("%s: Input/output error\n", filename);
      else if (error == FILE_BAD_PATH)
-	  prom_printf("%s: Path too long\n", filename); 
+	  prom_printf("%s: Path too long\n", filename);
      else if (error == FILE_ERR_BAD_TYPE)
 	  prom_printf("%s: Not a regular file\n", filename);
      else if (error == FILE_ERR_NOTDIR)
@@ -570,7 +570,7 @@ prom_release(void *virt, unsigned int size)
 		"2dup \" unmap\" ^mmu "			// Unmap the space first
 		"2dup \" release\" ^mmu "		// Then free the virtual pages
 		"\" release\" ^mem "			// Then free the physical pages
-		,size, virt 
+		,size, virt
 	  );
 #endif /* bullshit */
 }
@@ -631,7 +631,7 @@ prom_pause(void)
      call_prom("enter", 0, 0);
 }
 
-/* 
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

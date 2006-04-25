@@ -1,6 +1,6 @@
 /*
  * io.h --- the I/O manager abstraction
- * 
+ *
  * Copyright (C) 1993, 1994, 1995, 1996 Theodore Ts'o.
  *
  * %Begin-Header%
@@ -83,7 +83,7 @@ struct struct_io_manager {
 #define io_channel_flush(c) 		((c)->manager->flush((c)))
 #define io_channel_write_byte(c,b,n,d)	((c)->manager->write_byte((c),b,n,d))
 #define io_channel_bumpcount(c)		((c)->refcount++)
-	
+
 /* unix_io.c */
 extern io_manager unix_io_manager;
 
@@ -97,4 +97,4 @@ extern void (*test_io_cb_set_blksize)
 	(int blksize, errcode_t err);
 
 #endif /* _EXT2FS_EXT2_IO_H */
-	
+

@@ -63,7 +63,7 @@ fi
 ## define default configuration
 boot=unconfigured
 
-## allow default to work on packaged and non-packaged yaboot. 
+## allow default to work on packaged and non-packaged yaboot.
 ## no default for magicboot since it is not required everywhere.
 if [ -f /usr/local/lib/yaboot/yaboot ] ; then
     install=/usr/local/lib/yaboot/yaboot
@@ -124,7 +124,7 @@ fi
 
 ## make fake `id' if its missing, outputs 0 since if its missing we
 ## are probably running on boot floppies and thus are root.
-if (command -v id > /dev/null 2>&1) ; then 
+if (command -v id > /dev/null 2>&1) ; then
     true
 else
     id()
@@ -300,7 +300,7 @@ checkconf()
 	    fi
 	    local CONFERR=1
 	fi
-	
+
 	if [ `echo ${#hfscreator}` != 4 ] ; then
 	    if [ "$ARGCT" = 1 ] ; then
 		echo 1>&2 "$PRG: --creator must be 4 characters"
@@ -386,7 +386,7 @@ checkconf()
 	fi
 
 	## convert defaultos variable
-	case "$defaultos" in 
+	case "$defaultos" in
 	    linux|Linux|GNU|Gnu|gnu)
 		defaultos=bootyaboot
 		;;
@@ -728,7 +728,7 @@ checkhfsutils()
 
 ## This is gross, IBM CHRP OF needs a .note added to the yaboot
 ## binary, nobody knows whether this note will affect PowerMac OF or
-## not (or could in the future). 
+## not (or could in the future).
 hack_yaboot()
 {
     local YBDIR="${install%/*}"
@@ -790,7 +790,7 @@ util_install()
 
     ## repoint magicboot as the real first stage loader if using the
     ## modern automatic generating ofboot.b.
-    if [ -n "$FIRST" ] ; then	
+    if [ -n "$FIRST" ] ; then
 	magicboot="$FIRST"
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: set magicboot to $FIRST"
     fi
@@ -804,7 +804,7 @@ util_install()
 	if [ "$protect" = yes ] ; then
 	    local LOCK="+l"
 	fi
-	
+
 	if [ "$hide" = yes ] ; then
 	    local INVISIBLE="+i"
 	fi
@@ -1008,7 +1008,7 @@ umnt()
 mnt_install()
 {
     local BTFILE=yaboot
-  
+
     ## msdosfs is broken, yaboot may not support this filename.
     if [ "$fstype" = msdos ] ; then
 	local CFFILE=yaboot.cnf
@@ -1122,7 +1122,7 @@ mnt_install()
 }
 
 ## raw installation, for IBM RS/6000 hardware, yaboot is dded to the
-## bootstrap partition. 
+## bootstrap partition.
 raw_install()
 {
     ## make sure the device is not mounted as a filesystem before
@@ -1244,7 +1244,7 @@ mkoffs()
 	    [ "$VERBOSE" = 1 ] && echo "$PRG: Creating DOS filesystem on $boot..."
             if (command -v dd > /dev/null 2>&1) ; then
                 dd if=/dev/zero of="$boot" bs=512 count=1600 > /dev/null 2>&1
-            fi  
+            fi
 	    mkdosfs -n bootstrap "$boot" > /dev/null
             if [ $? != 0 ] ; then
 		echo 1>&2 "$PRG: DOS filesystem creation failed!"
@@ -1326,7 +1326,7 @@ cleanup()
 ## absurdly bloated case statement to parse command line options.
 if [ $# != 0 ] ; then
     while true ; do
-	case "$1" in 
+	case "$1" in
 	    -V|--version)
 		version
 		exit 0

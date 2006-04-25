@@ -116,7 +116,7 @@ the NewWorld version will not attempt to read a boot sector.  By
 default OpenFirmware attempts to load a file with HFS file type
 \*(lqtbxi\*(rq in the \*(lqblessed\*(rq directory from each partition
 of each disk OpenFirmware is aware of, the first partition/disk that
-is found to be bootable is booted immediately. 
+is found to be bootable is booted immediately.
 
 .BR Ybin (8)
 configures a \fBbootstrap\fR partition to pass all of OpenFirmware's
@@ -140,7 +140,7 @@ partition for \fByaboot\fR(8).
 Since OpenFirmware boots the first partition it finds to be bootable
 it is important that the \fBbootstrap\fR partition be first on the
 disk before any MacOS partition, otherwise MacOS will be booted
-instead of a dual boot menu used with \fByaboot\fR(8).  
+instead of a dual boot menu used with \fByaboot\fR(8).
 
 The \fBbootstrap\fR partition should also NOT be mountable by MacOS,
 the reason is MacOS will (almost always) closely inspect any blessed
@@ -194,7 +194,7 @@ the built in ATA hard disk you can use the alias \*(lqhd:\*(rq.
 
 \fBYbin\fR also includes a utility \fBofpath\fR(8) which can in most
 cases find the OpenFirmware device path from a unix device node (ie
-/dev/hda2).  
+/dev/hda2).
 
 In addition to binary executables OpenFirmware can also execute a CHRP
 script.  This is somewhat similar to a shell script.  A CHRP script is
@@ -250,7 +250,7 @@ In order to boot from the disk they require a type 0x41 PReP Boot
 \fBbootstrap\fR partition large enough to hold the bootloader
 (typically \fByaboot\fR(8)).  The bootloader is copied onto the raw
 partition as there is no filesystem.  This is done either with \fBdd\fR(1)
-or \fBmkofboot\fR(8).  
+or \fBmkofboot\fR(8).
 .SH BUGS
 OpenFirmware
 .SH AUTHORS

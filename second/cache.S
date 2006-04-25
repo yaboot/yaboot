@@ -1,5 +1,5 @@
 /*
- *  cache.S - PowerPC version 
+ *  cache.S - PowerPC version
  *
  *  Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
@@ -22,7 +22,7 @@
 
 #include "asm/ppc_asm.tmpl"
 #include "asm/processor.h"
-	
+
 /*
  * Write any modified data cache blocks out to memory
  * and invalidate the corresponding instruction cache blocks.

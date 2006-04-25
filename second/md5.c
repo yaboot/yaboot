@@ -2,9 +2,9 @@
  *  md5.c - an implementation of the MD5 algorithm and MD5 crypt
  *
  *  Copyright (C) 2001, 2002 Ethan Benson
- * 
+ *
  *  Adapted from GRUB
- * 
+ *
  *  Copyright (C) 2000  Free Software Foundation, Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -62,7 +62,7 @@ typedef unsigned int UINT4;
 
 static UINT4 initstate[4] =
 {
-  0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476 
+  0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
 };
 
 static char s1[4] = {  7, 12, 17, 22 };
@@ -160,13 +160,13 @@ md5_update (const char *input, int inputlen)
 {
   int buflen = length & 63;
   length += inputlen;
-  if (buflen + inputlen < 64) 
+  if (buflen + inputlen < 64)
     {
       memcpy (buffer + buflen, input, inputlen);
       buflen += inputlen;
       return;
     }
-  
+
   memcpy (buffer + buflen, input, 64 - buflen);
   md5_transform (buffer);
   input += 64 - buflen;
@@ -194,7 +194,7 @@ md5_final()
       memset (buffer, 0, 64);
       buflen = 0;
     }
-  
+
   *(UINT4 *) (buffer + 56) = cpu_to_le32 (8 * length);
   *(UINT4 *) (buffer + 60) = 0;
   md5_transform (buffer);
@@ -215,7 +215,7 @@ md5_password (const char *key, char *crypted, int check)
 {
   int keylen = strlen (key);
   char *salt = crypted + 3; /* skip $1$ header */
-  char *p; 
+  char *p;
   int saltlen;
   int i, n;
   unsigned char alt_result[16];
@@ -233,14 +233,14 @@ md5_password (const char *key, char *crypted, int check)
 
       salt[saltlen] = '$';
     }
-  
+
   md5_init ();
   md5_update (key, keylen);
   md5_update (salt, saltlen);
   md5_update (key, keylen);
   digest = md5_final ();
   memcpy (alt_result, digest, 16);
-  
+
   memcpy ((char *) state, (char *) initstate, sizeof (initstate));
   length = 0;
   md5_update (key, keylen);
@@ -263,7 +263,7 @@ md5_password (const char *key, char *crypted, int check)
 	md5_update (key, keylen);
       else
 	md5_update (alt_result, 16);
-      
+
       if (i % 3 != 0)
 	md5_update (salt, saltlen);
 
@@ -280,7 +280,7 @@ md5_password (const char *key, char *crypted, int check)
   p = salt + saltlen + 1;
   for (i = 0; i < 5; i++)
     {
-      unsigned int w = 
+      unsigned int w =
 	digest[i == 4 ? 5 : 12+i] | (digest[6+i] << 8) | (digest[i] << 16);
       for (n = 4; n-- > 0;)
 	{
@@ -293,7 +293,7 @@ md5_password (const char *key, char *crypted, int check)
 	    {
 	      *p++ = b64t[w & 0x3f];
 	    }
-	  
+
 	  w >>= 6;
 	}
     }
@@ -310,21 +310,21 @@ md5_password (const char *key, char *crypted, int check)
 	  {
 	    *p++ = b64t[w & 0x3f];
 	  }
-	
+
 	w >>= 6;
       }
   }
 
   if (! check)
     *p = '\0';
-  
+
   return *p;
 }
 #endif
 
 #ifdef TEST
 static char *
-md5 (const char *input) 
+md5 (const char *input)
 {
   memcpy ((char *) state, (char *) initstate, sizeof (initstate));
   length = 0;
@@ -333,7 +333,7 @@ md5 (const char *input)
 }
 
 static void
-test (char *buffer, char *expected) 
+test (char *buffer, char *expected)
 {
   char result[16 * 3 +1];
   unsigned char* digest = md5 (buffer);

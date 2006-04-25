@@ -1,25 +1,25 @@
 /*
- *  Yaboot - secondary boot loader for Linux on PowerPC. 
+ *  Yaboot - secondary boot loader for Linux on PowerPC.
  *
  *  Copyright (C) 2001 Ethan Benson
  *
  *  Copyright (C) 1999, 2000, 2001 Benjamin Herrenschmidt
- *  
+ *
  *  IBM CHRP support
- *  
+ *
  *  Copyright (C) 2001 Peter Bergner
  *
  *  portions based on poof
- *  
+ *
  *  Copyright (C) 1999 Marius Vollmer
- *  
+ *
  *  portions based on quik
- *  
+ *
  *  Copyright (C) 1996 Paul Mackerras.
- *  
+ *
  *  Because this program is derived from the corresponding file in the
  *  silo-0.64 distribution, it is also
- *  
+ *
  *  Copyright (C) 1996 Pete A. Zaitcev
  *                1996 Maurizio Plaza
  *                1996 David S. Miller

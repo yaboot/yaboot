@@ -26,7 +26,7 @@ KERNELADDR	= 0x01400000
 # Set this to the prefix of your cross-compiler, if you have one.
 # Else leave it empty.
 #
-CROSS = 
+CROSS =
 
 CC		:= $(CROSS)gcc
 LD		:= $(CROSS)ld
@@ -64,7 +64,7 @@ endif
 
 # Link flags
 #
-LFLAGS = -Ttext $(TEXTADDR) -Bstatic 
+LFLAGS = -Ttext $(TEXTADDR) -Bstatic
 
 # Libraries
 #
