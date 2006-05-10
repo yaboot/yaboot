@@ -303,6 +303,12 @@ scsi_ofpath()
 	    DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
 	    echo "${DEVICE_PATH##*device-tree}/disk@0:$PARTITION"
 	    ;;
+        sbp2)
+            HOST_LIST="$(for i in `find /proc/device-tree -name name` ; do
+                        lgrep "$i" "sbp-2" ; done)"
+            DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
+            echo "${DEVICE_PATH##*device-tree}/disk@0:$PARTITION"
+	    ;;
 	*)
 	    echo 1>&2 "$PRG: Driver: $SCSI_DRIVER is not supported"
 	    return 1
@@ -395,6 +401,10 @@ ide_ofpath()
 	    scsi) ## some lame controllers pretend they are scsi, hopefully all kludges are created equal.
 		local MASTER="/@$(($(cat /proc/ide/${IDEBUS}/channel) * 2 + 0))"
 		local SLAVE="/@$(($(cat /proc/ide/${IDEBUS}/channel) * 2 + 1))"
+		;;
+	    spi)
+		local MASTER="/disk@$(cat /proc/ide/${IDEBUS}/channel),0"
+		local SLAVE="/disk@$(cat /proc/ide/${IDEBUS}/channel),1"
 		;;
 	    *)
 		echo 1>&2 "$PRG: Unsupported IDE device type: \"$(cat /proc/device-tree${DEVSPEC}/device_type 2> /dev/null)\""
@@ -659,7 +669,7 @@ chrp()
 {
     case "$DEVNODE" in
 	sd*)
-	    if ls -l /proc/device-tree | grep -q ^lr ; then
+	    if ls -l /proc/device-tree | grep -q ^d ; then
 		true
 	    else
 		echo 1>&2 "$PRG: /proc/device-tree is broken."
@@ -906,6 +916,8 @@ elif (cat /proc/cpuinfo 2>/dev/null | grep ^motherboard | grep -q AAPL) ; then
     SUBARCH=OldWorld
 elif (cat /proc/cpuinfo 2> /dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
     SUBARCH=CHRP
+elif (cat /proc/cpuinfo 2>/dev/null | grep ^machine | grep -q 'CHRP Pegasos') ; then
+    SUBARCH=Pegasos
 else
     echo 1>&2 "$PRG: This machine is not yet supported"
     exit 1
@@ -928,7 +940,8 @@ PARTITION="${DEVICE##*[a-z]}"
 
 ## use appropriate search for right sub arch.
 case "$SUBARCH" in
-    NewWorld)
+    # Pegasos OF seems to be NewWorld-ish enough to cope with this.
+    NewWorld|Pegasos)
 	newworld || exit 1
 	;;
     OldWorld)
