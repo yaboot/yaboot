@@ -452,52 +452,52 @@ if [ "$QUIET" = 0 ] ; then
     confirm || exit 2
 fi
 
+READLINKKV=`readlink /usr/src/linux`
 ## find the kernel in the usual places and (if not --quiet) ask the
 ## user if we cannot find one.
-if [ -f "${CHROOT}vmlinux" ] ; then
-    KERNEL="${CHROOT}vmlinux"
-    if [ -f "${CHROOT}initrd" ] ; then
-	INITRD="${CHROOT}initrd"
-    elif [ -f "${CHROOT}initrd.img" ] ; then
-	INITRD="${CHROOT}initrd.img"
-    elif [ -f "${CHROOT}initrd.gz" ] ; then
-	INITRD="${CHROOT}initrd.gz"
-    fi
-elif [ -f "${CHROOT}boot/vmlinux" ] ; then
-    KERNEL="${CHROOT}boot/vmlinux"
-    if [ -f "${CHROOT}boot/initrd" ] ; then
-	INITRD="${CHROOT}boot/initrd"
-    elif [ -f "${CHROOT}boot/initrd.img" ] ; then
-	INITRD="${CHROOT}boot/initrd.img"
-    elif [ -f "${CHROOT}boot/initrd.gz" ] ; then
-	INITRD="${CHROOT}boot/initrd.gz"
-    fi
-elif [ -f "${CHROOT}boot/vmlinux-`uname -r`" ] ; then
-    KERNEL="${CHROOT}boot/vmlinux-`uname -r`"
-    if [ -f "${CHROOT}boot/initrd-`uname -r`" ] ; then
-	INITRD="${CHROOT}boot/initrd-`uname -r`"
-    elif [ -f "${CHROOT}boot/initrd-`uname -r`.img" ] ; then
-	INITRD="${CHROOT}boot/initrd-`uname -r`.img"
-    elif [ -f "${CHROOT}boot/initrd-`uname -r`.gz" ] ; then
-	INITRD="${CHROOT}boot/initrd-`uname -r`.gz"
-    fi
-elif [ -f "${CHROOT}vmlinux-`uname -r`" ] ; then
-    KERNEL="${CHROOT}vmlinux-`uname -r`"
-    if [ -f "${CHROOT}initrd-`uname -r`" ] ; then
-	INITRD="${CHROOT}initrd-`uname -r`"
-    elif [ -f "${CHROOT}initrd-`uname -r`.img" ] ; then
-	INITRD="${CHROOT}initrd-`uname -r`.img"
-    elif [ -f "${CHROOT}initrd-`uname -r`.gz" ] ; then
-	INITRD="${CHROOT}initrd-`uname -r`.gz"
-    fi
-elif [ "$QUIET" = 0 ] ; then
-    echo 1>&2 "$PRG: Cannot find a kernel, please locate one"
+for k in "vmlinux" "vmlinux-`uname -r`" "vmlinux-`uname -r`" "$READLINKKV" ; do
+	if [ -f "${CHROOT}${k}" ] ; then
+	    KERNEL="${CHROOT}${k}"
+	    break;
+	elif [ -f "${CHROOT}boot/${k}" ] ; then
+	    KERNEL="${CHROOT}boot/${k}"
+	    break;
+	fi
+done
+
+for i in "initrd" "initrd-`uname -r`" "`echo $READLINKKV | cut -f1 -d- --complement`" ; do
+    for b in "" "boot/" ; do
+	    if [ -f "${CHROOT}${b}${i}" ] ; then
+		INITRD="${CHROOT}${b}${i}"
+	    elif [ -f "${CHROOT}${b}${i}.img" ] ; then
+		INITRD="${CHROOT}${b}${i}.img"
+	    elif [ -f "${CHROOT}${b}${i}.gz" ] ; then
+		INITRD="${CHROOT}${b}${i}.gz"
+	    fi
+    done
+done
+
+if [ ! -f "$KERNEL" ] && [ ${QUIET} == 0 ] ; then
+    echo 1>&2 "$PRG: Cannot find a kernel, please provide one"
     while true ; do
-	$PRINTF 1>&2 "Enter path to a kernel image: "
+    	if [ "$CHROOT" == "/" ] ; then
+		$PRINTF 1>&2 "Enter path to a kernel image: "
+	else
+		$PRINTF 1>&2 "Enter path to a kernel image (not including chroot): "
+	fi
 	read KERN
+
+	### Remove leading /
+	case "${KERN}" in
+	/*)	KERN=${CHROOT}${KERN:1} ;;
+	*)	KERN=${CHROOT}${KERN} ;;
+	esac
+
 	if [ -f "$KERN" ] ; then
 	    KERNEL="$KERN"
 	    break
+	elif [ ${KERN} == ${CHROOT} ] ; then
+	    echo 1>&2 "$PRG: You must provide a valid kernel"
 	elif [ ! -e "$KERN" ] ; then
 	    echo 1>&2 "$PRG: $KERN: No such file or directory"
 	elif [ -d "$KERN" ] ; then
@@ -507,11 +507,23 @@ elif [ "$QUIET" = 0 ] ; then
 	fi
     done
     while true ; do
-	$PRINTF 1>&2 "Enter path to an initrd image (hit Enter for none): "
+    	if [ "$CHROOT" == "/" ] ; then
+		$PRINTF 1>&2 "Enter path to an initrd image (hit Enter for none): "
+	else
+		$PRINTF 1>&2 "Enter path to an initrd image (hit Enter for none, don't include the chroot): "
+	fi
 	read IRD
-	if [ -z "$IRD" ] ; then
+
+	if [ "$IRD" == "" ]; then
 	    break
 	fi
+	
+	### Remove leading /
+	case "${IRD}" in
+	/*)	IRD=${CHROOT}${IRD:1} ;;
+	*)	IRD=${CHROOT}${IRD} ;;
+	esac
+
 	if [ -f "$IRD" ] ; then
 	    INITRD="$IRD"
 	    break
@@ -523,7 +535,7 @@ elif [ "$QUIET" = 0 ] ; then
 	    echo 1>&2 "$PRG: $IRD: Is not a regular file"
 	fi
     done
-else
+elif [ ! -f "$KERNEL" ] ; then
     echo 1>&2 "$PRG: Cannot find a kernel, aborting..."
     exit 1
 fi
