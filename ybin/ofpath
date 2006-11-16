@@ -250,7 +250,7 @@ scsiinfo()
 	DEVHOST="$(v=$(echo ${DEVINFO##*Host: scsi}) ; echo ${v%% *})"
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVHOST=$DEVHOST"
 
-	if [ "$DEVTYPE" = "Direct-Access" ] ; then
+	if [ "$DEVTYPE" = "Direct-Access" ] || [ "$DEVTYPE" = "Direct-Access-RBC" ] ; then
 	    DEVCOUNT="$(($DEVCOUNT + 1))"
 	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: DEVCOUNT=$DEVCOUNT"
 	    if [ "$SUBDEV" = "$DEVCOUNT" ] ; then
@@ -311,9 +311,19 @@ scsi_ofpath()
 	    done
 	    echo "${DEVICE_PATH##*device-tree}/k2-sata@$K2_DEVICE_ID/disk@0:$PARTITION"
 	    ;;
-        sbp2)
+	usb-storage)
+            HOST_LIST="$(for i in `find /proc/device-tree -name name | grep usb` ; do
+                        lgrep "$i" "disk" ; done)"
+            DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
+            echo "${DEVICE_PATH##*device-tree}:$PARTITION"
+	    ;;
+	sbp2|"")
+            # sbp-2 driver may not have a dir in /proc/scsi
             HOST_LIST="$(for i in `find /proc/device-tree -name name` ; do
                         lgrep "$i" "sbp-2" ; done)"
+            if [ "$SCSI_HOSTNUMBER" = "" ] ; then
+                SCSI_HOSTNUMBER=1
+            fi
             DEVICE_PATH="$(printhost $SCSI_HOSTNUMBER $HOST_LIST)"
             echo "${DEVICE_PATH##*device-tree}/disk@0:$PARTITION"
 	    ;;
@@ -784,7 +794,7 @@ fixdevfs()
 	    local DEVTYPE="$(v=$(echo ${DEVINFO##*Type: }) ; echo ${v%% *})"
 	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: fixdevfs: DEVTYPE=$DEVTYPE"
 
-	    if [ "$DEVTYPE" = "Direct-Access" ] ; then
+	    if [ "$DEVTYPE" = "Direct-Access" ] || [ "$DEVTYPE" = "Direct-Access-RBC" ] ; then
 		## Lets find out some more information
 		## get the device id.
 		local DEVID="$(v=$(echo ${DEVINFO##*Id: }) ; n=$(echo ${v%% *}) ; echo ${n#*0})"
