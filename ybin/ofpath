@@ -687,12 +687,6 @@ chrp()
 {
     case "$DEVNODE" in
 	sd*)
-	    if ls -l /proc/device-tree | grep -q ^d ; then
-		true
-	    else
-		echo 1>&2 "$PRG: /proc/device-tree is broken."
-		return 1
-	    fi
 
 	    ## use common scsiinfo function to get info we need.
 	    scsiinfo || return 1
