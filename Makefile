@@ -68,7 +68,7 @@ LFLAGS = -Ttext $(TEXTADDR) -Bstatic
 
 # Libraries
 #
-LLIBS = lib/libext2fs.a
+LLIBS = -lext2fs
 
 # For compiling userland utils
 #
