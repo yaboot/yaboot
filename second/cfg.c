@@ -28,6 +28,7 @@
 
 /* Imported functions */
 extern int strcasecmp(const char *s1, const char *s2);
+extern int strncasecmp(const char *cs, const char *ct, size_t n);
 
 typedef enum {
      cft_strg, cft_flag, cft_end
@@ -101,10 +102,12 @@ static char *currp = NULL;
 static char *endp = NULL;
 static char *file_name = NULL;
 static CONFIG *curr_table = cf_options;
+static int ignore_entry;
 static jmp_buf env;
 
 static struct IMAGES {
      CONFIG table[sizeof (cf_image) / sizeof (cf_image[0])];
+     int obsolete;
      struct IMAGES *next;
 } *images = NULL;
 
@@ -277,6 +280,16 @@ static int cfg_next (char **item, char **value)
      return 1;
 }
 
+static char *cfg_get_strg_i (CONFIG * table, char *item)
+{
+     CONFIG *walk;
+
+     for (walk = table; walk->type != cft_end; walk++)
+          if (walk->name && !strcasecmp (walk->name, item))
+               return walk->data;
+     return 0;
+}
+
 #if 0
 // The one and only call to this procedure is commented out
 // below, so we don't need this unless we decide to use it again.
@@ -287,13 +300,85 @@ static void cfg_return (char *item, char *value)
 }
 #endif
 
+static int match_arch(const char *name)
+{
+	static prom_handle root;
+	static char model[256], *p;
+
+	if (!root) {
+		if (!(root = prom_finddevice("/")))
+			return 0;
+	}
+
+	if (!model[0]) {
+		if (!prom_getprop(root, "compatible", model, sizeof(model)))
+			return 0;
+	}
+
+	for (p = model; *p; p += strlen(p) + 1) {
+		if (!strcasecmp(p, name))
+			return 1;
+	}
+
+	return 0;
+}
+
+static void check_for_obsolete(const char *label)
+{
+	struct IMAGES *p;
+	char *cur_label;
+
+	/* Make sure our current entry isn't obsolete (ignored) */
+	for (p = images; p; p = p->next) {
+		if (curr_table == p->table && p->obsolete)
+			return;
+	}
+
+	for (p = images; p; p = p->next) {
+		if (curr_table == p->table)
+			continue;
+
+		cur_label = cfg_get_strg_i (p->table, "label");
+		if (!cur_label)
+			cur_label = cfg_get_strg_i (p->table, "image");
+
+		if (!cur_label)
+			continue;
+
+		if (!strcasecmp(cur_label, label))
+			p->obsolete = 1;
+	}
+}
+
 static int cfg_set (char *item, char *value)
 {
      CONFIG *walk;
 
-     if (!strcasecmp (item, "image")) {
+     if (!strncasecmp (item, "image", 5)) {
 	  struct IMAGES **p = &images;
+	  int ignore = 0;
 
+	  if (item[5] == '[' && item[strlen(item) - 1] == ']') {
+		char *s, *q = item;
+
+		/* Get rid of braces */
+		item[strlen(item) - 1] = 0;
+		item[5] = 0;
+
+		for (s = item + 6; q; s = q) {
+			q = strchr(s, '|');
+			if (q)
+				*q++ = 0;
+
+			if (match_arch(s))
+				goto cfg_set_cont;
+                }
+		/* This just creates an unused table. It will get ignored */
+		ignore = 1;
+	  } else if (item[5])
+                goto cfg_set_redo;
+
+cfg_set_cont:
 	  while (*p)
 	       p = &((*p)->next);
 	  *p = (struct IMAGES *)malloc (sizeof (struct IMAGES));
@@ -302,9 +387,12 @@ static int cfg_set (char *item, char *value)
 	       return -1;
 	  }
 	  (*p)->next = 0;
+	  (*p)->obsolete = ignore;
 	  curr_table = ((*p)->table);
 	  memcpy (curr_table, cf_image, sizeof (cf_image));
      }
+
+cfg_set_redo:
      for (walk = curr_table; walk->type != cft_end; walk++) {
 	  if (walk->name && !strcasecmp (walk->name, item)) {
 	       if (value && walk->type != cft_strg)
@@ -312,6 +400,8 @@ static int cfg_set (char *item, char *value)
 	       else if (!value && walk->type == cft_strg)
 		    cfg_warn ("Value expected for '%s'", walk->name);
 	       else {
+		    if (!strcasecmp (item, "label"))
+			 check_for_obsolete(value);
 		    if (walk->data)
 			 cfg_warn ("Duplicate entry '%s'", walk->name);
 		    if (walk->type == cft_flag)
@@ -322,9 +412,12 @@ static int cfg_set (char *item, char *value)
 	       break;
 	  }
      }
+
      if (walk->type != cft_end)
 	  return 1;
-//    cfg_return (item, value);
+
+     //cfg_return (item, value);
+
      return 0;
 }
 
@@ -369,6 +462,9 @@ char *cfg_get_strg (char *image, char *item)
      if (!image)
 	  return cfg_get_strg_i (cf_options, item);
      for (p = images; p; p = p->next) {
+	  if (p->obsolete)
+		  continue;
+
 	  label = cfg_get_strg_i (p->table, "label");
 	  if (!label) {
 	       label = cfg_get_strg_i (p->table, "image");
@@ -417,6 +513,9 @@ void cfg_print_images (void)
 
      printl_count = 0;
      for (p = images; p; p = p->next) {
+	  if (p->obsolete)
+		  continue;
+
 	  label = cfg_get_strg_i (p->table, "label");
 	  if (!label) {
 	       label = cfg_get_strg_i (p->table, "image");
@@ -439,15 +538,21 @@ void cfg_print_images (void)
 char *cfg_get_default (void)
 {
      char *label;
+     struct IMAGES *p;
      char *ret = cfg_get_strg_i (cf_options, "default");
 
      if (ret)
 	  return ret;
      if (!images)
 	  return 0;
-     ret = cfg_get_strg_i (images->table, "label");
+
+     for (p = images; p && p->obsolete; p = p->next);
+     if (!p)
+	     return 0;
+
+     ret = cfg_get_strg_i (p->table, "label");
      if (!ret) {
-	  ret = cfg_get_strg_i (images->table, "image");
+	  ret = cfg_get_strg_i (p->table, "image");
 	  label = strrchr (ret, '/');
 	  if (label)
 	       ret = label + 1;

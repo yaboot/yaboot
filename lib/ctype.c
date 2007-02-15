@@ -44,3 +44,11 @@ int strcasecmp(const char *s1, const char *s2)
     }
 }
 
+int strncasecmp(const char *cs,const char *ct,size_t n)
+{
+	signed char __res = 0;
+	while (n--)
+		if ((__res = tolower(*cs) - tolower(*ct++)) != 0 || !*cs++)
+			break;
+	return __res;
+}
