@@ -40,6 +40,7 @@
 #include "linux/iso_fs.h"
 #include "debug.h"
 #include "errors.h"
+#include "byteorder.h"
 
 /* We currently don't check the partition type, some users
  * are putting crap there and still expect it to work...
@@ -57,9 +58,6 @@ static const char *valid_mac_partition_types[] = {
 };
 #endif
 
-
-/* Local functions */
-static unsigned long swab32(unsigned long value);
 
 #define MAX_BLOCK_SIZE	2048
 static unsigned char block_buffer[MAX_BLOCK_SIZE];
@@ -177,8 +175,8 @@ partition_fdisk_lookup( const char *dev_name, prom_handle disk,
 				   partition,
 				   "Linux", /* type */
 				   '\0', /* name */
-				   swab32(*(unsigned int *)(part->start4)),
-				   swab32(*(unsigned int *)(part->size4)),
+				   le32_to_cpu(*(unsigned int *)part->start4),
+				   le32_to_cpu(*(unsigned int *)part->size4),
 				   512 /*blksize*/,
 				   part->sys_ind /* partition type */ );
 	  }
@@ -433,18 +431,6 @@ partitions_free(struct partition_t* list)
 	  free(list);
 	  list = next;
      }
-}
-unsigned long
-swab32(unsigned long value)
-{
-     __u32 result;
-
-     __asm__("rlwimi %0,%1,24,16,23\n\t"
-	     "rlwimi %0,%1,8,8,15\n\t"
-	     "rlwimi %0,%1,24,0,7"
-	     : "=r" (result)
-	     : "r" (value), "0" (value >> 24));
-     return result;
 }
 
 

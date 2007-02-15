@@ -93,6 +93,7 @@ static io_manager linux_io_manager = &struct_linux_manager;
 static int opened = 0;		/* We can't open twice ! */
 static unsigned int bs;		/* Blocksize */
 static unsigned long long doff;	/* Byte offset where partition starts */
+static unsigned long long dend;	/* Byte offset where partition ends */
 static ino_t root,cwd;
 static ext2_filsys fs = 0;
 static struct boot_file_t* cur_file;
@@ -149,13 +150,23 @@ ext2_open(	struct boot_file_t*	file,
       * compatible with older versions of OF
       */
      bs = 1024;
-     doff = 0;
-     if (part)
+
+     /*
+      * On the other hand, we do care about the actual size of the
+      * partition, reads or seeks past the end may cause undefined
+      * behavior on some devices.  A netapp that tries to seek and
+      * read past the end of the lun takes ~30 secs to recover per
+      * attempt.
+      */
+     doff = dend = 0;
+     if (part) {
 	  doff = (unsigned long long)(part->part_start) * part->blocksize;
+	  dend = doff + (unsigned long long)part->part_size * part->blocksize;
+     }
      cur_file = file;
 
 
-     DEBUG_F("partition offset: %Lu\n", doff);
+     DEBUG_F("partition offset: %Lx, end: %Lx\n", doff, dend);
 
      /* Open the OF device for the entire disk */
      strncpy(buffer, dev_name, 1020);
@@ -582,6 +593,7 @@ static errcode_t linux_close (io_channel channel)
 
 static errcode_t linux_set_blksize (io_channel channel, int blksize)
 {
+     DEBUG_F("bs set to 0x%x\n", blksize);
      channel->block_size = bs = blksize;
      if (block_buffer) {
 	  free(block_buffer);
@@ -600,6 +612,15 @@ static errcode_t linux_read_blk (io_channel channel, unsigned long block, int co
 
      tempb = (((unsigned long long) block) *
 	      ((unsigned long long)bs)) + (unsigned long long)doff;
+     /*
+      * Only test tempb exceeding dend if dend is set to allow things
+      * like boot: hd:0,\xxxx
+      */
+     if (dend && tempb > dend) {
+	  DEBUG_F("\nSeek error on block %lx, tempb=%Lx\n", block, tempb >> 9);
+	  return EXT2_ET_LLSEEK_FAILED;
+     }
+
      size = (count < 0) ? -count : count * bs;
      prom_lseek(cur_file->of_device, tempb);
      if (prom_read(cur_file->of_device, data, size) != size) {
