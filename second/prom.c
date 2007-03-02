@@ -154,6 +154,12 @@ prom_getprop (prom_handle pack, char *name, void *mem, int len)
 }
 
 int
+prom_getproplen(prom_handle pack, const char *name)
+{
+     return (int)call_prom("getproplen", 2, 1, pack, name);
+}
+
+int
 prom_get_chosen (char *name, void *mem, int len)
 {
      return prom_getprop (prom_chosen, name, mem, len);

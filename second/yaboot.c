@@ -324,13 +324,13 @@ done:
  * config file. Handle the "\\" (blessed system folder)
  */
 static int
-load_config_file(char *device, char* path, int partition)
+load_config_file(struct boot_fspec_t *orig_fspec)
 {
      char *conf_file = NULL, *p;
      struct boot_file_t file;
      int sz, opened = 0, result = 0;
      char conf_path[512];
-     struct boot_fspec_t fspec;
+     struct boot_fspec_t fspec = *orig_fspec;
 
      /* Allocate a buffer for the config file */
      conf_file = malloc(CONFIG_FILE_MAX);
@@ -342,16 +342,15 @@ load_config_file(char *device, char* path, int partition)
      /* Build the path to the file */
      if (_machine == _MACH_chrp)
 	  strcpy(conf_path, "/etc/");
-     else if (path && *path)
-	  strcpy(conf_path, path);
      else
 	  conf_path[0] = 0;
+     if (fspec.file && *fspec.file)
+	  strcat(conf_path, fspec.file);
+     else
      strcat(conf_path, CONFIG_FILE_NAME);
 
      /* Open it */
-     fspec.dev = device;
      fspec.file = conf_path;
-     fspec.part = partition;
      result = open_file(&fspec, &file);
      if (result != FILE_ERR_OK) {
 	  prom_printf("%s:%d,", fspec.dev, fspec.part);
@@ -439,6 +438,138 @@ bail:
 	  free(conf_file);
 
      return result;
+}
+
+/*
+ * "bootp-response" is the property name which is specified in
+ * the recommended practice doc for obp-tftp. However, pmac
+ * provides a "dhcp-response" property and chrp provides a
+ * "bootpreply-packet" property.  The latter appears to begin the
+ * bootp packet at offset 0x2a in the property for some reason.
+ */
+
+struct bootp_property_offset {
+     char *name; /* property name */
+     int offset; /* offset into property where bootp packet occurs */
+};
+static const struct bootp_property_offset bootp_response_properties[] = {
+     { .name = "bootp-response", .offset = 0 },
+     { .name = "dhcp-response", .offset = 0 },
+     { .name = "bootpreply-packet", .offset = 0x2a },
+};
+
+struct bootp_packet {
+     u8 op, htype, hlen, hops;
+     u32 xid;
+     u16 secs, flags;
+     u32 ciaddr, yiaddr, siaddr, giaddr;
+     unsigned char chaddr[16];
+     unsigned char sname[64];
+     unsigned char file[128];
+     /* vendor options go here if we need them */
+};
+
+/*
+ * Search for config file by MAC address, then by IP address.
+ * Basically copying pxelinux's algorithm.
+ * http://syslinux.zytor.com/pxe.php#config
+ */
+static int load_my_config_file(struct boot_fspec_t *orig_fspec)
+{
+     void *bootp_response = NULL;
+     char *propname;
+     struct bootp_packet *packet;
+     int i = 0, size, offset = 0, rc = 0;
+     prom_handle chosen;
+     struct boot_fspec_t fspec = *orig_fspec;
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
+     chosen = prom_finddevice("/chosen");
+     if (chosen < 0) {
+          prom_printf("chosen=%d\n", chosen);
+	  return 0;
+     }
+          prom_printf("ici\n");
+
+     for (i = 0; i < ARRAY_SIZE(bootp_response_properties); i++) {
+	  propname = bootp_response_properties[i].name;
+	  size = prom_getproplen(chosen, propname);
+	  if (size <= 0)
+	       continue;
+
+	  DEBUG_F("using /chosen/%s\n", propname);
+	  offset = bootp_response_properties[i].offset;
+	  break;
+     }
+          prom_printf("ici 2\n");
+
+     if (size <= 0)
+	  goto out;
+          prom_printf("ici 3\n");
+
+     if (sizeof(*packet) > size - offset) {
+	  prom_printf("Malformed %s property?\n", propname);
+	  goto out;
+     }
+          prom_printf("ici 4\n");
+
+     bootp_response = malloc(size);
+     if (!bootp_response)
+	  goto out;
+          prom_printf("ici 5\n");
+
+     if (prom_getprop(chosen, propname, bootp_response, size) < 0)
+	  goto out;
+          prom_printf("ici 6\n");
+
+     packet = bootp_response + offset;
+
+     /*
+      * First, try to match on mac address with the hardware type
+      * prepended.
+      */
+
+     /* 3 chars per byte in chaddr + 2 chars for htype + \0 */
+     fspec.file = malloc(packet->hlen * 3 + 2 + 1);
+     if (!fspec.file)
+	  goto out;
+
+     sprintf(fspec.file, "%02x", packet->htype);
+
+     for (i = 0; i < packet->hlen; i++) {
+	  char tmp[4];
+	  sprintf(tmp, "-%02x", packet->chaddr[i]);
+	  strcat(fspec.file, tmp);
+     }
+          prom_printf("ici 7\n");
+
+     rc = load_config_file(&fspec);
+     if (rc)
+	  goto out;
+
+
+     /*
+      * Now try to match on IP.
+      */
+     free(fspec.file);
+     fspec.file = malloc(9);
+     sprintf(fspec.file, "%08X", packet->yiaddr);
+
+     while (strlen(fspec.file)) {
+	  rc = load_config_file(&fspec);
+	  if (rc)
+	       goto out;
+	  /* Chop one digit off the end, try again */
+	  fspec.file[strlen(fspec.file) - 1] = '\0';
+     }
+
+ out:
+     if (rc) /* modify original only on success */
+	  orig_fspec->file = fspec.file;
+     else
+	  free(fspec.file);
+     free(bootp_response);
+     return rc;
 }
 
 void maintabfunc (void)
@@ -1514,7 +1645,17 @@ yaboot_main(void)
      DEBUG_F("After pmac path kludgeup: dev=%s, part=%d, file=%s\n",
 	     boot.dev, boot.part, boot.file);
 
-     useconf = load_config_file(boot.dev, boot.file, boot.part);
+     /*
+      * If we're doing a netboot, first look for one which matches our
+      * MAC address.
+      */
+     if (prom_get_devtype(boot.dev) == FILE_DEVICE_NET) {
+          prom_printf("Try to netboot\n");
+	  useconf = load_my_config_file(&boot);
+     }
+
+     if (!useconf)
+         useconf = load_config_file(&boot);
 
      prom_printf("Welcome to yaboot version " VERSION "\n");
      prom_printf("Enter \"help\" to get some basic usage information\n");
