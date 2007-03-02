@@ -36,7 +36,7 @@
 #include "errors.h"
 #include "debug.h"
 
-extern char bootdevice[1024];
+extern char bootdevice[];
 
 static char *netdev_path_to_filename(const char *path)
 {
@@ -177,7 +177,7 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      char *ptr;
      char *ipath = NULL;
      char *defdev = NULL;
-     int device_kind;
+     int device_kind = -1;
 
      result->dev = NULL;
      result->part = -1;
@@ -185,16 +185,45 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
      if (!imagepath)
 	  return 0;
+
+      /*
+       * Do preliminary checking for an iscsi device; it may appear as
+       * pure a network device (device_type == "network") if this is
+       * ISWI.  This is the case on IBM systems doing an iscsi OFW
+       * boot.
+       */
+     if (strstr(imagepath, TOK_ISCSI)) {
+ 	  /*
+	   * get the virtual device information from the
+	   * "nas-bootdevice" property.
+	   */
+ 	  if (prom_get_chosen("nas-bootdevice", bootdevice, BOOTDEVSZ)) {
+	       DEBUG_F("reset boot-device to"
+		       " /chosen/nas-bootdevice = %s\n", bootdevice);
+	       device_kind = FILE_DEVICE_ISCSI;
+	       ipath = strdup(bootdevice);
+	       if (!ipath)
+		    return 0;
+ 	  }
+ 	  else
+ 	       return 0;
+     }
      else if (!(ipath = strdup(imagepath)))
 	  return 0;
 
      if (defdevice) {
 	  defdev = strdup(defdevice);
 	  device_kind = prom_get_devtype(defdev);
-     } else
+     } else if (device_kind == -1)
 	  device_kind = prom_get_devtype(ipath);
 
-     if (device_kind != FILE_DEVICE_NET && strchr(defdev, ':') != NULL) {
+     /*
+      * When an iscsi iqn is present, it may have embedded colons, so
+      * don't parse off anything.
+      */
+     if (device_kind != FILE_DEVICE_NET &&
+	 device_kind != FILE_DEVICE_ISCSI &&
+	 strchr(defdev, ':') != NULL) {
            if ((ptr = strrchr(defdev, ':')) != NULL)
                 *ptr = 0; /* remove trailing : from defdevice if necessary */
      }
@@ -202,7 +231,9 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      /* This will not properly handle an obp-tftp argument list
       * with elements after the filename; that is handled below.
       */
-     if (device_kind != FILE_DEVICE_NET && strchr(ipath, ':') != NULL) {
+     if (device_kind != FILE_DEVICE_NET &&
+	 device_kind != FILE_DEVICE_ISCSI &&
+	 strchr(ipath, ':') != NULL) {
 	  if ((ptr = strrchr(ipath, ',')) != NULL) {
 	       char *colon = strrchr(ipath, ':');
 	       /* If a ':' occurs *after* a ',', then we assume that there is
@@ -223,7 +254,8 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
 	  if (!defdev)
 	       result->dev = netdev_path_to_dev(ipath);
-     } else if ((ptr = strchr(ipath, ':')) != NULL) {
+     } else if (device_kind != FILE_DEVICE_ISCSI &&
+		(ptr = strrchr(ipath, ':')) != NULL) {
 	  *ptr = 0;
 	  result->dev = strdup(ipath);
 	  if (*(ptr+1))

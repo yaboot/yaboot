@@ -174,6 +174,9 @@ prom_get_devtype (char *device)
      int        result;
      char       tmp[64];
 
+     if (strstr(device, TOK_ISCSI))
+	  device = strcpy(tmp, "/vdevice/gscsi/disk");
+
      /* Find OF device phandle */
      dev = prom_finddevice(device);
      if (dev == PROM_INVALID_HANDLE) {

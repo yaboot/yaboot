@@ -111,7 +111,7 @@ static void     setup_display(void);
 /* Locals & globals */
 
 int useconf = 0;
-char bootdevice[1024];
+char bootdevice[BOOTDEVSZ];
 char *password = NULL;
 struct boot_fspec_t boot;
 int _machine = _MACH_Pmac;
@@ -1474,10 +1474,10 @@ yaboot_main(void)
      if (_machine == _MACH_Pmac)
 	  setup_display();
 
-     prom_get_chosen("bootpath", bootdevice, sizeof(bootdevice));
+     prom_get_chosen("bootpath", bootdevice, BOOTDEVSZ);
      DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
      if (bootdevice[0] == 0) {
-	  prom_get_options("boot-device", bootdevice, sizeof(bootdevice));
+	  prom_get_options("boot-device", bootdevice, BOOTDEVSZ);
 	  DEBUG_F("boot-device = %s\n", bootdevice);
      }
      if (bootdevice[0] == 0) {

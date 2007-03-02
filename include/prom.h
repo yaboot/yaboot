@@ -34,6 +34,8 @@ typedef void *ihandle;
 typedef void *phandle;
 
 #define PROM_INVALID_HANDLE	((prom_handle)-1UL)
+#define BOOTDEVSZ               (2048) /* iscsi args can be in excess of 1040 bytes */
+#define TOK_ISCSI               "iscsi"
 
 struct prom_args;
 typedef int (*prom_entry)(struct prom_args *);

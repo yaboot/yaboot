@@ -38,3 +38,4 @@
 /* Device kind */
 #define FILE_DEVICE_BLOCK       1
 #define FILE_DEVICE_NET         2
+#define FILE_DEVICE_ISCSI       3
