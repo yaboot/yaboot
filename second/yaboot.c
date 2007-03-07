@@ -489,7 +489,6 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
           prom_printf("chosen=%d\n", chosen);
 	  return 0;
      }
-          prom_printf("ici\n");
 
      for (i = 0; i < ARRAY_SIZE(bootp_response_properties); i++) {
 	  propname = bootp_response_properties[i].name;
@@ -501,26 +500,21 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
 	  offset = bootp_response_properties[i].offset;
 	  break;
      }
-          prom_printf("ici 2\n");
 
      if (size <= 0)
 	  goto out;
-          prom_printf("ici 3\n");
 
      if (sizeof(*packet) > size - offset) {
 	  prom_printf("Malformed %s property?\n", propname);
 	  goto out;
      }
-          prom_printf("ici 4\n");
 
      bootp_response = malloc(size);
      if (!bootp_response)
 	  goto out;
-          prom_printf("ici 5\n");
 
      if (prom_getprop(chosen, propname, bootp_response, size) < 0)
 	  goto out;
-          prom_printf("ici 6\n");
 
      packet = bootp_response + offset;
 
@@ -541,7 +535,6 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
 	  sprintf(tmp, "-%02x", packet->chaddr[i]);
 	  strcat(fspec.file, tmp);
      }
-          prom_printf("ici 7\n");
 
      rc = load_config_file(&fspec);
      if (rc)
