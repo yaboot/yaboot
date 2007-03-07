@@ -443,16 +443,6 @@ int cfg_parse (char *cfg_file, char *buff, int len)
      }
 }
 
-static char *cfg_get_strg_i (CONFIG * table, char *item)
-{
-     CONFIG *walk;
-
-     for (walk = table; walk->type != cft_end; walk++)
-	  if (walk->name && !strcasecmp (walk->name, item))
-	       return walk->data;
-     return 0;
-}
-
 char *cfg_get_strg (char *image, char *item)
 {
      struct IMAGES *p;
