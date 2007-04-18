@@ -112,6 +112,7 @@ static void     setup_display(void);
 
 int useconf = 0;
 char bootdevice[BOOTDEVSZ];
+char bootargs[1024];
 char *password = NULL;
 struct boot_fspec_t boot;
 int _machine = _MACH_Pmac;
@@ -324,13 +325,11 @@ done:
  * config file. Handle the "\\" (blessed system folder)
  */
 static int
-load_config_file(struct boot_fspec_t *orig_fspec)
+load_config_file(struct boot_fspec_t *fspec)
 {
      char *conf_file = NULL, *p;
      struct boot_file_t file;
      int sz, opened = 0, result = 0;
-     char conf_path[512];
-     struct boot_fspec_t fspec = *orig_fspec;
 
      /* Allocate a buffer for the config file */
      conf_file = malloc(CONFIG_FILE_MAX);
@@ -339,22 +338,11 @@ load_config_file(struct boot_fspec_t *orig_fspec)
 	  goto bail;
      }
 
-     /* Build the path to the file */
-     if (_machine == _MACH_chrp)
-	  strcpy(conf_path, "/etc/");
-     else
-	  conf_path[0] = 0;
-     if (fspec.file && *fspec.file)
-	  strcat(conf_path, fspec.file);
-     else
-     strcat(conf_path, CONFIG_FILE_NAME);
-
      /* Open it */
-     fspec.file = conf_path;
-     result = open_file(&fspec, &file);
+     result = open_file(fspec, &file);
      if (result != FILE_ERR_OK) {
-	  prom_printf("%s:%d,", fspec.dev, fspec.part);
-	  prom_perror(result, fspec.file);
+	  prom_printf("%s:%d,", fspec->dev, fspec->part);
+	  prom_perror(result, fspec->file);
 	  prom_printf("Can't open config file\n");
 	  goto bail;
      }
@@ -374,7 +362,7 @@ load_config_file(struct boot_fspec_t *orig_fspec)
      opened = 0;
 
      /* Call the parsing code in cfg.c */
-     if (cfg_parse(conf_path, conf_file, sz) < 0) {
+     if (cfg_parse(fspec->file, conf_file, sz) < 0) {
 	  prom_printf ("Syntax error or read error config\n");
 	  goto bail;
      }
@@ -714,7 +702,6 @@ int get_params(struct boot_param_t* params)
      int singlekey = 0;
      int restricted = 0;
      static int first = 1;
-     static char bootargs[1024];
      static char imagepath[1024];
      static char initrdpath[1024];
      static char sysmappath[1024];
@@ -731,7 +718,6 @@ int get_params(struct boot_param_t* params)
 
      if (first) {
 	  first = 0;
-	  prom_get_chosen("bootargs", bootargs, sizeof(bootargs));
 	  imagename = bootargs;
 	  word_split(&imagename, &params->args);
 	  timeout = DEFAULT_TIMEOUT;
@@ -856,7 +842,11 @@ int get_params(struct boot_param_t* params)
 	       "If you omit \"device:\" and \"partno\" yaboot will use the values of \n"
 	       "\"device=\" and \"partition=\" in yaboot.conf, right now those are set to: \n"
 	       "device=%s\n"
-	       "partition=%d\n\n", defdevice, defpart);
+	       "partition=%d\n\n"
+	       "To use an alternative config file rather than /etc/yaboot.conf, type on\n"
+	       " Open FirmWare Prompt: \"boot conf=device:partition,/path/to/configfile\"\n"
+	       "where \"device\" and \"partition\" are defined like above.\n\n", defdevice, defpart);
+
 	  return 0;
      }
 
@@ -1594,12 +1584,38 @@ int
 yaboot_main(void)
 {
      char *ptype;
+     int conf_given = 0;
+     char conf_path[1024];
 
      if (_machine == _MACH_Pmac)
 	  setup_display();
 
+     prom_get_chosen("bootargs", bootargs, sizeof(bootargs));
+     DEBUG_F("/chosen/bootargs = %s\n", bootargs);
      prom_get_chosen("bootpath", bootdevice, BOOTDEVSZ);
      DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
+
+     /* If conf= specified on command line, it overrides
+        Usage: conf=device:partition,/path/to/conffile
+        Example: On Open Firmware Prompt, type
+                 boot conf=/pci@8000000f8000000/pci@1/pci1014,028C@1/scsi@0/sd@1,0:3,/etc/yaboot.conf */
+
+     if (!strncmp(bootargs, "conf=", 5)) {
+        DEBUG_F("Using conf argument in Open Firmware\n");
+        char *end = strchr(bootargs,' ');
+        if (end)
+            *end = 0;
+
+        strcpy(bootdevice, bootargs + 5);
+        conf_given = 1;
+        DEBUG_F("Using conf=%s\n", bootdevice);
+
+        /* Remove conf=xxx from bootargs */
+        if (end)
+            memmove(bootargs, end+1, strlen(end+1)+1);
+        else
+            bootargs[0] = 0;
+     }
      if (bootdevice[0] == 0) {
 	  prom_get_options("boot-device", bootdevice, BOOTDEVSZ);
 	  DEBUG_F("boot-device = %s\n", bootdevice);
@@ -1616,27 +1632,34 @@ yaboot_main(void)
      DEBUG_F("After parse_device_path: dev=%s, part=%d, file=%s\n",
 	     boot.dev, boot.part, boot.file);
 
-     if (strlen(boot.file)) {
-	  if (!strncmp(boot.file, "\\\\", 2))
-	       boot.file = "\\\\";
-	  else {
-	       char *p, *last;
-	       p = last = boot.file;
-	       while(*p) {
-		    if (*p == '\\')
-			 last = p;
-		    p++;
-	       }
-	       if (p)
-		    *(last) = 0;
-	       else
-		    boot.file = "";
-	       if (strlen(boot.file))
-		    strcat(boot.file, "\\");
-	  }
+     if (!conf_given) {
+         if (_machine == _MACH_chrp)
+             boot.file = "/etc/";
+         else if (strlen(boot.file)) {
+             if (!strncmp(boot.file, "\\\\", 2))
+                 boot.file = "\\\\";
+             else {
+                 char *p, *last;
+                 p = last = boot.file;
+                 while(*p) {
+                     if (*p == '\\')
+                         last = p;
+                     p++;
+                 }
+                 if (p)
+                     *(last) = 0;
+                 else
+                     boot.file = "";
+                 if (strlen(boot.file))
+                     strcat(boot.file, "\\");
+             }
+         }
+         strcpy(conf_path, boot.file);
+         strcat(conf_path, CONFIG_FILE_NAME);
+         boot.file = conf_path;
+         DEBUG_F("After path kludgeup: dev=%s, part=%d, file=%s\n",
+            boot.dev, boot.part, boot.file);
      }
-     DEBUG_F("After pmac path kludgeup: dev=%s, part=%d, file=%s\n",
-	     boot.dev, boot.part, boot.file);
 
      /*
       * If we're doing a netboot, first look for one which matches our
