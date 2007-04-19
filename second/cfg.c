@@ -29,6 +29,7 @@
 /* Imported functions */
 extern int strcasecmp(const char *s1, const char *s2);
 extern int strncasecmp(const char *cs, const char *ct, size_t n);
+extern char bootoncelabel[1024];
 
 typedef enum {
      cft_strg, cft_flag, cft_end
@@ -482,10 +483,16 @@ static int printl_count = 0;
 static void printlabel (char *label, int defflag)
 {
      int len = strlen (label);
+     char a = ' ';
 
      if (!printl_count)
 	  prom_printf ("\n");
-     prom_printf ("%s %s",defflag?"*":" ", label);
+     switch (defflag) {
+	  case 1:  a='*'; break;
+	  case 2:  a='&'; break;
+	  default: a=' '; break;
+     }
+     prom_printf ("%c %s", a, label);
      while (len++ < 25)
 	  prom_putchar (' ');
      printl_count++;
@@ -513,7 +520,9 @@ void cfg_print_images (void)
 	       if (alias)
 		    label = alias + 1;
 	  }
-	  if(!strcmp(ret,label))
+	  if(!strcmp(bootoncelabel,label))
+	       defflag=2;
+	  else if(!strcmp(ret,label))
 	       defflag=1;
 	  else
 	       defflag=0;
