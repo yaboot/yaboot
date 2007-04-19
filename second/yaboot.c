@@ -710,6 +710,7 @@ int get_params(struct boot_param_t* params)
 {
      int defpart;
      char *defdevice = 0;
+     char defdevice_bak[1024];
      char *p, *q, *endp;
      int c, n;
      char *imagename = 0, *label;
@@ -807,6 +808,8 @@ int get_params(struct boot_param_t* params)
      label = 0;
      defdevice = boot.dev;
 
+     strcpy(defdevice_bak,defdevice);
+
      if (useconf) {
 	  defdevice = cfg_get_strg(0, "device");
 	  p = cfg_get_strg(0, "partition");
@@ -859,13 +862,14 @@ int get_params(struct boot_param_t* params)
 	       "resides on, and \"partno\" is the partition number the image resides on.\n"
 	       "Note that the comma (,) is only required if you specify an OpenFirmware\n"
 	       "device, if you only specify a filename you should not start it with a \",\"\n\n"
-	       "If you omit \"device:\" and \"partno\" yaboot will use the values of \n"
-	       "\"device=\" and \"partition=\" in yaboot.conf, right now those are set to: \n"
-	       "device=%s\n"
-	       "partition=%d\n\n"
-	       "To use an alternative config file rather than /etc/yaboot.conf, type on\n"
-	       " Open FirmWare Prompt: \"boot conf=device:partition,/path/to/configfile\"\n"
-	       "where \"device\" and \"partition\" are defined like above.\n\n", defdevice, defpart);
+	       "To load an alternative config file rather than /etc/yaboot.conf, enter\n"
+	       "its device, partno and path, on Open Firmware Prompt:\n"
+	       "boot conf=device:partno,/path/to/configfile\n."
+	       "To reload the config file or load a new one, use the \"conf\" command\n"
+	       "on Yaboot's prompt:\n"
+	       "conf [device=device] [partition=partno] [file=/path/to/configfile]\n\n"
+	       "If you omit \"device\" and \"partno\", Yaboot will use their current\n"
+	       "values. You can check them by entering \"conf\" on Yaboot's prompt.\n");
 
 	  return 0;
      }
@@ -882,6 +886,91 @@ int get_params(struct boot_param_t* params)
 	       return 1;
 	  }
 	  return 1;
+     }
+
+     if (!strncmp (imagename, "conf", 4)) {
+
+         // imagename = "conf file=blah dev=bleh part=blih"
+         DEBUG_F("Loading user-specified config file: %s\n",imagename);
+         if (password) {
+             check_password ("Restricted command.");
+             return 1;
+         }
+
+         // args= "file=blah dev=bleh part=blih"
+         char *args = params->args;
+
+         if (strlen(args)){
+
+            // set a pointer to the first space in args
+            char *space = strchr(args,' ');
+
+            int loop = 3;
+            while (loop > 0){
+                char temp[1024] = "0";
+
+                // copy next argument to temp
+                strncpy(temp, args, space-args);
+
+                // parse temp and set boot arguments
+                if (!strncmp (temp, "file=", 5)){
+                   DEBUG_F("conf file: %s\n", temp+5);
+                   strcpy(boot.file, temp+5);
+                } else if (!strncmp (temp, "device=", 7)){
+                   DEBUG_F("conf device: %s\n", temp+7);
+                   strcpy(boot.dev, temp+7);
+                } else if (!strncmp (temp, "partition=", 10)){
+                   DEBUG_F("conf partition: %s\n", temp+10);
+                   boot.part=simple_strtol(temp+10,NULL,10);
+                } else
+                   space = NULL;
+
+                // set the pointer to the next space in args;
+                // set the loop control variable
+                if (strlen(space)>1){
+                    // Go to the next argument
+                    args = space+1;
+
+                    loop--;
+                    if (strchr(args,' ') == NULL)
+                        space = &args[strlen(args)];
+                    else
+                        space = strchr(args,' ');
+                } else {
+                    loop = -1;
+                    space = NULL;
+                }
+            }
+
+            prom_printf("Loading config file...\n");
+            useconf = load_config_file(&boot);
+            if (useconf > 0){
+                if ((q = cfg_get_strg(0, "timeout")) != 0 && *q != 0)
+                   timeout = simple_strtol(q, NULL, 0);
+            } else {
+               prom_printf("Restoring default values.\n");
+               strcpy(boot.file,"");
+               strcpy(boot.dev, defdevice_bak);
+               boot.part = defpart;
+            }
+
+         } else {
+             prom_printf("Current configuration:\n");
+             prom_printf("device: %s\n", boot.dev);
+             if (boot.part < 0)
+                 prom_printf("partition: auto\n");
+             else
+                 prom_printf("partition: %d\n", boot.part);
+             if (strlen(boot.file))
+                 prom_printf("file: %s\n", boot.file);
+             else
+                 prom_printf("file: /etc/%s\n",CONFIG_FILE_NAME);
+         }
+
+         imagename = "\0";
+         params->args = "\0";
+
+         return 0;
      }
 
      if (imagename[0] == '$') {
