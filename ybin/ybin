@@ -155,6 +155,8 @@ Update/install bootloader onto a bootstrap partition.
   -b, --boot                 set bootstrap partition device [ -b /dev/hda2 ]
   -o, --ofboot               set bootstrap partition OpenFirmware device
 			       default: automatically determined [ -o hd:2 ]
+       --bootonce            override default boot label for ONLY next boot
+                                eg: --bootonce linux-2.6.20-testing
   -i, --install              pathname to the actual bootloader binary
                                default: /usr/{local/}lib/yaboot/yaboot same as
                                install= in config file [ -i bootloader_file ]
@@ -1377,6 +1379,17 @@ if [ $# != 0 ] ; then
 		    exit 1
 		fi
 		;;
+	    --bootonce)
+		if [ -n "$2" ] ; then
+		    bootonce="$2"
+		    ARGS="$ARGS $1 $2"
+		    shift 2
+		else
+		    echo 1>&2 "$PRG: option requires an argument $1"
+		    echo 1>&2 "Try \`$PRG --help' for more information."
+		    exit 1
+		fi
+		;;
 	    -i|--install)
 		if [ -n "$2" ] ; then
 		    install="$2"
@@ -1642,6 +1655,28 @@ fi
 
 ## validate configuration for sanity.
 checkconf || exit 1
+
+if [ "x$bootonce" != "x" ]; then
+    foundlabel=`sed s/\#.*// $bootconf | grep "label=$bootonce$" | wc -l`
+    if [ "$nonvram" = 0 ]; then
+	echo 1>&2 "$PRG: --bootonce specified, but nvsetenv not available."
+	exit 1
+    fi
+    if [ "$foundlabel" = 1 ]; then
+	nvsetenv boot-once "$bootonce"
+	foundlabel=`nvsetenv boot-once`
+	if [ "$foundlabel" != "boot-once=$bootonce" ]; then
+	    echo 1>&2 "$PRG: Could not nvsetenv boot-once $bootonce"
+	    exit 1
+	fi
+	[ "$VERBOSE" = 1 ] && echo "$PRG: nvsetenv boot-once $bootonce"
+    else
+	echo 1>&2 "$PRG: Could not find bootonce label [$bootonce] in $bootconf"
+	exit 1
+    fi
+fi
+
+bootparts=0
 
 ## check that we can use ofpath, its only needed for magicboot script
 ## building and nvram updates.
