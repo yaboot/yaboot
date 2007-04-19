@@ -112,6 +112,7 @@ static void     setup_display(void);
 
 int useconf = 0;
 char bootdevice[BOOTDEVSZ];
+char bootoncelabel[1024];
 char bootargs[1024];
 char *password = NULL;
 struct boot_fspec_t boot;
@@ -764,8 +765,12 @@ int get_params(struct boot_param_t* params)
      }
 
      if (c == '\n' || c == '\r') {
-	  if (!imagename)
-	       imagename = cfg_get_default();
+	  if (!imagename) {
+	       if (bootoncelabel[0] != 0)
+		    imagename = bootoncelabel;
+	       else
+		    imagename = cfg_get_default();
+	  }
 	  if (imagename)
 	       prom_printf("%s", imagename);
 	  if (params->args)
@@ -1624,6 +1629,14 @@ yaboot_main(void)
 	  prom_printf("Couldn't determine boot device\n");
 	  return -1;
      }
+
+     if (bootoncelabel[0] == 0) {
+	  prom_get_options("boot-once", bootoncelabel, 
+			   sizeof(bootoncelabel));
+     	  if (bootoncelabel[0] != 0)
+		DEBUG_F("boot-once: [%s]\n", bootoncelabel);
+     }
+     prom_set_options("boot-once", NULL, 0);
 
      if (!parse_device_path(bootdevice, NULL, -1, "", &boot)) {
 	  prom_printf("%s: Unable to parse\n", bootdevice);
