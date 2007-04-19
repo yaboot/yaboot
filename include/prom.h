@@ -93,6 +93,7 @@ void prom_map (void *phys, void *virt, int size);
 prom_handle prom_finddevice (char *name);
 prom_handle prom_findpackage (char *path);
 int prom_getprop (prom_handle dev, char *name, void *buf, int len);
+int prom_setprop (prom_handle dev, char *name, void *buf, int len);
 int prom_getproplen(prom_handle, const char *);
 int prom_get_devtype (char *device);
 
@@ -109,6 +110,7 @@ int prom_interpret (char *forth);
 
 int prom_get_chosen (char *name, void *mem, int len);
 int prom_get_options (char *name, void *mem, int len);
+int prom_set_options (char *name, void *mem, int len);
 
 extern int prom_getms(void);
 extern void prom_pause(void);

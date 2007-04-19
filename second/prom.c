@@ -160,6 +160,12 @@ prom_getproplen(prom_handle pack, const char *name)
 }
 
 int
+prom_setprop (prom_handle pack, char *name, void *mem, int len)
+{
+     return (int)call_prom ("setprop", 4, 1, pack, name, mem, len);
+}
+
+int
 prom_get_chosen (char *name, void *mem, int len)
 {
      return prom_getprop (prom_chosen, name, mem, len);
@@ -171,6 +177,14 @@ prom_get_options (char *name, void *mem, int len)
      if (prom_options == (void *)-1)
 	  return -1;
      return prom_getprop (prom_options, name, mem, len);
+}
+
+int
+prom_set_options (char *name, void *mem, int len)
+{
+     if (prom_options == (void *)-1)
+	  return -1;
+     return prom_setprop (prom_options, name, mem, len);
 }
 
 int
