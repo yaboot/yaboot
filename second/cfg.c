@@ -586,6 +586,43 @@ char *cfg_get_default (void)
 }
 
 /*
+ * cfg_set_default_by_mac ()
+ * return 1 if the default cf_option was changed to label with the MAC addr
+ * return 0 if not changed
+ */
+int cfg_set_default_by_mac (char *mac_addr)
+{
+     CONFIG *walk;
+     struct IMAGES *tmp;
+     char * label = NULL;
+     int haslabel = 0;
+
+     /* check if there is an image label equal to mac_addr */
+     for (tmp = images; tmp; tmp = tmp->next) {
+        label = cfg_get_strg_i (tmp->table, "label");
+        if (!strcmp(label,mac_addr)){
+            haslabel = 1;
+        }
+     }
+
+     if (!haslabel)
+         return 0;
+     else {
+         /*
+          * if there is an image label equal to mac_addr, change the default
+          * cf_options to this image label
+          */
+         for (walk = cf_options; walk->type != cft_end; walk++) {
+             if (!strcasecmp(walk->name,"default")) {
+                 walk->data = mac_addr;
+                 return 1;
+             }
+         }
+         return 0;
+     }
+}
+
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

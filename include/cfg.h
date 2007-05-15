@@ -28,5 +28,6 @@ extern char*	cfg_get_strg(char *image, char *item);
 extern int	cfg_get_flag(char *image, char *item);
 extern void	cfg_print_images(void);
 extern char*	cfg_get_default(void);
+extern char*    cfg_set_default_by_mac(char *mac_addr);
 
 #endif
