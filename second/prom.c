@@ -655,6 +655,102 @@ prom_pause(void)
 }
 
 /*
+ * prom_get_netinfo()
+ * returns the packet with all needed info for netboot
+ */
+struct bootp_packet * prom_get_netinfo (void)
+{
+     void *bootp_response = NULL;
+     char *propname;
+     struct bootp_packet *packet;
+     int i = 0, size, offset = 0;
+     prom_handle chosen;
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+
+     chosen = prom_finddevice("/chosen");
+     if (chosen < 0) {
+          DEBUG_F("chosen=%d\n", chosen);
+      return 0;
+     }
+
+     for (i = 0; i < ARRAY_SIZE(bootp_response_properties); i++) {
+         propname = bootp_response_properties[i].name;
+         size = prom_getproplen(chosen, propname);
+         if (size <= 0)
+             continue;
+
+         DEBUG_F("using /chosen/%s\n", propname);
+         offset = bootp_response_properties[i].offset;
+         break;
+     }
+
+     if (size <= 0)
+         return NULL;
+
+     if (sizeof(*packet) > size - offset) {
+         prom_printf("Malformed %s property?\n", propname);
+         return NULL;
+     }
+
+     bootp_response = malloc(size);
+     if (!bootp_response)
+         return NULL;
+
+     if (prom_getprop(chosen, propname, bootp_response, size) < 0)
+         return NULL;
+
+     packet = bootp_response + offset;
+     return packet;
+}
+
+/*
+ * prom_get_mac()
+ * returns the mac addr of an net card
+ */
+char * prom_get_mac (struct bootp_packet * packet)
+{
+     char * conf_path;
+     int i;
+
+     if (!packet)
+        return NULL;
+
+     /* 3 chars per byte in chaddr + \0 */
+     conf_path = malloc(packet->hlen * 3 + 1);
+     if (!conf_path)
+         return NULL;
+     sprintf(conf_path, "%02x", packet->chaddr[0]);
+
+     for (i = 1; i < packet->hlen; i++) {
+      char tmp[4];
+      sprintf(tmp, "-%02x", packet->chaddr[i]);
+      strcat(conf_path, tmp);
+     }
+
+     return conf_path;
+}
+
+/*
+ * prom_get_ip()
+ * returns the ip addr of an net card
+ */
+char * prom_get_ip (struct bootp_packet * packet)
+{
+     char * conf_path;
+
+     if (!packet)
+        return NULL;
+
+     /* 8 chars in yiaddr + \0 */
+     conf_path = malloc(9);
+     if (!conf_path)
+         return NULL;
+     sprintf(conf_path, "%08x", packet->yiaddr);
+
+     return conf_path;
+}
+
+/*
  * Local variables:
  * c-file-style: "k&r"
  * c-basic-offset: 5

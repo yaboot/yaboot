@@ -27,6 +27,7 @@
 #ifndef PROM_H
 #define PROM_H
 
+#include "types.h"
 #include "stdarg.h"
 
 typedef void *prom_handle;
@@ -117,5 +118,41 @@ extern void prom_pause(void);
 
 extern void *call_prom (const char *service, int nargs, int nret, ...);
 extern void *call_prom_return (const char *service, int nargs, int nret, ...);
+
+/* Netboot stuffs */
+
+/*
+ * "bootp-response" is the property name which is specified in
+ * the recommended practice doc for obp-tftp. However, pmac
+ * provides a "dhcp-response" property and chrp provides a
+ * "bootpreply-packet" property.  The latter appears to begin the
+ * bootp packet at offset 0x2a in the property for some reason.
+ */
+
+struct bootp_property_offset {
+     char *name; /* property name */
+     int offset; /* offset into property where bootp packet occurs */
+};
+
+static const struct bootp_property_offset bootp_response_properties[] = {
+     { .name = "bootp-response", .offset = 0 },
+     { .name = "dhcp-response", .offset = 0 },
+     { .name = "bootpreply-packet", .offset = 0x2a },
+};
+
+struct bootp_packet {
+     __u8 op, htype, hlen, hops;
+     __u32 xid;
+     __u16 secs, flags;
+     __u32 ciaddr, yiaddr, siaddr, giaddr;
+     unsigned char chaddr[16];
+     unsigned char sname[64];
+     unsigned char file[128];
+     /* vendor options go here if we need them */
+};
+
+struct bootp_packet * prom_get_netinfo (void);
+char * prom_get_mac (struct bootp_packet * packet);
+char * prom_get_ip (struct bootp_packet * packet);
 
 #endif
