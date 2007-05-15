@@ -331,7 +331,6 @@ load_config_file(struct boot_fspec_t *fspec)
      char *conf_file = NULL, *p;
      struct boot_file_t file;
      int sz, opened = 0, result = 0;
-     char conf_path[512];
 
      /* Allocate a buffer for the config file */
      conf_file = malloc(CONFIG_FILE_MAX);
@@ -340,19 +339,7 @@ load_config_file(struct boot_fspec_t *fspec)
 	  goto bail;
      }
 
-     /* Build the path to the file */
-     if (_machine == _MACH_chrp)
-         strcpy(conf_path, "/etc/");
-     else
-         conf_path[0] = 0;
-     if (fspec->file && *fspec->file)
-         strcat(conf_path, fspec->file);
-     else
-         strcat(conf_path, CONFIG_FILE_NAME);
-
-
      /* Open it */
-     fspec->file = conf_path;
      result = open_file(fspec, &file);
      if (result != FILE_ERR_OK) {
 	  prom_printf("%s:%d,", fspec->dev, fspec->part);
@@ -525,20 +512,21 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
       * prepended.
       */
 
-     /* 3 chars per byte in chaddr + 2 chars for htype + \0 */
-     fspec.file = malloc(packet->hlen * 3 + 2 + 1);
+     /* 3 chars per byte in chaddr + 2 chars for htype + /etc/ +\0 */
+     fspec.file = malloc(packet->hlen * 3 + 2 + 6);
      if (!fspec.file)
 	  goto out;
 
-     sprintf(fspec.file, "%02x", packet->htype);
+     if (_machine == _MACH_chrp)
+         sprintf(fspec.file, "/etc/%02x", packet->htype);
+     else
+         sprintf(fspec.file, "%02x", packet->htype);
 
      for (i = 0; i < packet->hlen; i++) {
 	  char tmp[4];
 	  sprintf(tmp, "-%02x", packet->chaddr[i]);
 	  strcat(fspec.file, tmp);
      }
-
-     //DEBUG_F("----> mac addr: %s\n", fspec.file);
 
      rc = load_config_file(&fspec);
      if (rc)
