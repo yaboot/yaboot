@@ -430,82 +430,18 @@ bail:
 }
 
 /*
- * "bootp-response" is the property name which is specified in
- * the recommended practice doc for obp-tftp. However, pmac
- * provides a "dhcp-response" property and chrp provides a
- * "bootpreply-packet" property.  The latter appears to begin the
- * bootp packet at offset 0x2a in the property for some reason.
- */
-
-struct bootp_property_offset {
-     char *name; /* property name */
-     int offset; /* offset into property where bootp packet occurs */
-};
-static const struct bootp_property_offset bootp_response_properties[] = {
-     { .name = "bootp-response", .offset = 0 },
-     { .name = "dhcp-response", .offset = 0 },
-     { .name = "bootpreply-packet", .offset = 0x2a },
-};
-
-struct bootp_packet {
-     u8 op, htype, hlen, hops;
-     u32 xid;
-     u16 secs, flags;
-     u32 ciaddr, yiaddr, siaddr, giaddr;
-     unsigned char chaddr[16];
-     unsigned char sname[64];
-     unsigned char file[128];
-     /* vendor options go here if we need them */
-};
-
-/*
  * Search for config file by MAC address, then by IP address.
  * Basically copying pxelinux's algorithm.
  * http://syslinux.zytor.com/pxe.php#config
  */
 static int load_my_config_file(struct boot_fspec_t *orig_fspec)
 {
-     void *bootp_response = NULL;
-     char *propname;
      struct bootp_packet *packet;
-     int i = 0, size, offset = 0, rc = 0;
-     prom_handle chosen;
+     int rc = 0;
      struct boot_fspec_t fspec = *orig_fspec;
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
-     chosen = prom_finddevice("/chosen");
-     if (chosen < 0) {
-          prom_printf("chosen=%d\n", chosen);
-	  return 0;
-     }
-
-     for (i = 0; i < ARRAY_SIZE(bootp_response_properties); i++) {
-	  propname = bootp_response_properties[i].name;
-	  size = prom_getproplen(chosen, propname);
-	  if (size <= 0)
-	       continue;
-
-	  DEBUG_F("using /chosen/%s\n", propname);
-	  offset = bootp_response_properties[i].offset;
-	  break;
-     }
-
-     if (size <= 0)
-	  goto out;
-
-     if (sizeof(*packet) > size - offset) {
-	  prom_printf("Malformed %s property?\n", propname);
-	  goto out;
-     }
-
-     bootp_response = malloc(size);
-     if (!bootp_response)
-	  goto out;
-
-     if (prom_getprop(chosen, propname, bootp_response, size) < 0)
-	  goto out;
-
-     packet = bootp_response + offset;
+     packet = prom_get_netinfo();
 
      /*
       * First, try to match on mac address with the hardware type
@@ -518,15 +454,10 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
 	  goto out;
 
      if (_machine == _MACH_chrp)
-         sprintf(fspec.file, "/etc/%02x", packet->htype);
+         sprintf(fspec.file, "/etc/%02x-", packet->htype);
      else
-         sprintf(fspec.file, "%02x", packet->htype);
-
-     for (i = 0; i < packet->hlen; i++) {
-	  char tmp[4];
-	  sprintf(tmp, "-%02x", packet->chaddr[i]);
-	  strcat(fspec.file, tmp);
-     }
+         sprintf(fspec.file, "%02x-", packet->htype);
+     strcat(fspec.file, prom_get_mac(packet));
 
      rc = load_config_file(&fspec);
      if (rc)
@@ -537,8 +468,12 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
       * Now try to match on IP.
       */
      free(fspec.file);
+     /* 8 chars in yiaddr + \0 */
      fspec.file = malloc(9);
-     sprintf(fspec.file, "%08X", packet->yiaddr);
+     if (!fspec.file)
+         goto out;
+
+     strcat(fspec.file, prom_get_ip(packet));
 
      while (strlen(fspec.file)) {
 	  rc = load_config_file(&fspec);
@@ -553,7 +488,6 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
 	  orig_fspec->file = fspec.file;
      else
 	  free(fspec.file);
-     free(bootp_response);
      return rc;
 }
 
