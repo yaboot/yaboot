@@ -422,6 +422,30 @@ cfg_set_redo:
      return 0;
 }
 
+static int cfg_reset ()
+{
+    CONFIG *walk;
+#if DEBUG
+    prom_printf("Resetting image table\n");
+#endif
+    line_num = 0;
+    images = NULL;
+    curr_table = NULL;
+    curr_table = cf_options;
+    for (walk = curr_table; walk->type != cft_end; walk++) {
+#if DEBUG
+        prom_printf("ItemA %s = %s\n", walk->name, walk->data);
+#endif
+        if (walk->data != NULL)
+            walk->data = NULL;
+#if DEBUG
+        prom_printf("ItemB %s = %s\n\n", walk->name, walk->data);
+#endif
+    }
+
+    return 0;
+}
+
 int cfg_parse (char *cfg_file, char *buff, int len)
 {
      char *item, *value;
@@ -429,6 +453,8 @@ int cfg_parse (char *cfg_file, char *buff, int len)
      file_name = cfg_file;
      currp = buff;
      endp = currp + len;
+
+     cfg_reset();
 
      if (setjmp (env))
 	  return -1;
