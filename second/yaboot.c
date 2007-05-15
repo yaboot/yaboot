@@ -368,6 +368,22 @@ load_config_file(struct boot_fspec_t *fspec)
 	  goto bail;
      }
 
+     /* 
+      * set the default cf_option to label that has the same MAC addr 
+      * it only works if there is a label with the MAC addr on yaboot.conf
+      */
+     if (prom_get_devtype(fspec->dev) == FILE_DEVICE_NET) {
+         /* change the variable bellow to get the MAC dinamicaly */
+         char * macaddr = NULL;
+         int default_mac = 0;
+
+         macaddr = prom_get_mac(prom_get_netinfo());
+         default_mac = cfg_set_default_by_mac(macaddr);
+         if (default_mac >= 1) {
+            prom_printf("Default label was changed to macaddr label.\n");
+         }
+     }
+
      DEBUG_F("Config file successfully parsed, %d bytes\n", sz);
 
      /* Now, we do the initialisations stored in the config file */
