@@ -455,7 +455,9 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
      struct bootp_packet *packet;
      int rc = 0;
      struct boot_fspec_t fspec = *orig_fspec;
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+     char *cfgpath = (_machine == _MACH_chrp) ? "/etc/" : "";
+     int flen;
+     int minlen;
 
      packet = prom_get_netinfo();
 
@@ -469,35 +471,26 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
      if (!fspec.file)
 	  goto out;
 
-     if (_machine == _MACH_chrp)
-         sprintf(fspec.file, "/etc/%02x-", packet->htype);
-     else
-         sprintf(fspec.file, "%02x-", packet->htype);
+     sprintf(fspec.file, "%s%02x-", cfgpath, packet->htype);
      strcat(fspec.file, prom_get_mac(packet));
 
      rc = load_config_file(&fspec);
      if (rc)
 	  goto out;
 
-
      /*
       * Now try to match on IP.
       */
-     free(fspec.file);
-     /* 8 chars in yiaddr + \0 */
-     fspec.file = malloc(9);
-     if (!fspec.file)
-         goto out;
+     /* no need to realloc for /etc/ + 8 chars in yiaddr + \0 */
+     sprintf(fspec.file, "%s%s", cfgpath, prom_get_ip(packet));
 
-     strcpy(fspec.file, "/etc/");
-     strcat(fspec.file, prom_get_ip(packet));
-
-     while (strlen(strrchr(fspec.file, '/')+1)) {
+     for (flen = strlen(fspec.file),
+          minlen = strlen(cfgpath); flen > minlen; flen--) {
 	  rc = load_config_file(&fspec);
 	  if (rc)
 	       goto out;
 	  /* Chop one digit off the end, try again */
-	  fspec.file[strlen(fspec.file) - 1] = '\0';
+	  fspec.file[flen - 1] = '\0';
      }
 
  out:
