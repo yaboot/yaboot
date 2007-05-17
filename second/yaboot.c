@@ -489,9 +489,10 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
      if (!fspec.file)
          goto out;
 
+     strcpy(fspec.file, "/etc/");
      strcat(fspec.file, prom_get_ip(packet));
 
-     while (strlen(fspec.file)) {
+     while (strlen(strrchr(fspec.file, '/')+1)) {
 	  rc = load_config_file(&fspec);
 	  if (rc)
 	       goto out;
