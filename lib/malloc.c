@@ -21,6 +21,7 @@
 
 #include "types.h"
 #include "stddef.h"
+#include "string.h"
 
 /* Imported functions */
 extern void prom_printf (char *fmt, ...);

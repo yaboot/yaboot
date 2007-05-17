@@ -33,6 +33,7 @@
 #include "asm/processor.h"
 #include "errors.h"
 #include "debug.h"
+#include "string.h"
 
 #define READ_BLOCKS_USE_READ	1
 
