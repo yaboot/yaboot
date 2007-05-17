@@ -105,12 +105,12 @@ main(int ac, char **av)
 
      if (ac != 2) {
 	  fprintf(stderr, "Usage: %s elf-file\n", av[0]);
-	  exit(1);
+	  return(1);
      }
      fd = open(av[1], O_RDWR);
      if (fd < 0) {
 	  perror(av[1]);
-	  exit(1);
+	  return(1);
      }
 
      nnote = 12 + ROUNDUP(strlen(arch) + 1) + sizeof(descr);
@@ -119,7 +119,7 @@ main(int ac, char **av)
      n = read(fd, buf, sizeof(buf));
      if (n < 0) {
 	  perror("read");
-	  exit(1);
+	  return(1);
      }
 
      if (n < E_HSIZE || memcmp(&buf[E_IDENT+EI_MAGIC], elf_magic, 4) != 0)
@@ -129,7 +129,7 @@ main(int ac, char **av)
 	 || buf[E_IDENT+EI_DATA] != ELFDATA2MSB) {
 	  fprintf(stderr, "%s is not a big-endian 32-bit ELF image\n",
 		  av[1]);
-	  exit(1);
+	  return(1);
      }
 
      ph = GET_32BE(E_PHOFF);
@@ -144,7 +144,7 @@ main(int ac, char **av)
 	  if (GET_32BE(ph + PH_TYPE) == PT_NOTE) {
 	       fprintf(stderr, "%s already has a note entry\n",
 		       av[1]);
-	       exit(0);
+	       return(0);
 	  }
 	  ph += ps;
      }
@@ -193,23 +193,23 @@ main(int ac, char **av)
      i = write(fd, buf, n);
      if (i < 0) {
 	  perror("write");
-	  exit(1);
+	  return(1);
      }
      if (i < n) {
 	  fprintf(stderr, "%s: write truncated\n", av[1]);
-	  exit(1);
+	  return(1);
      }
 
-     exit(0);
+     return(0);
 
 notelf:
      fprintf(stderr, "%s does not appear to be an ELF file\n", av[1]);
-     exit(1);
+     return(1);
 
 nospace:
      fprintf(stderr, "sorry, I can't find space in %s to put the note\n",
 	     av[1]);
-     exit(1);
+     return(1);
 }
 
 /*
