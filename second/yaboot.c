@@ -1590,7 +1590,7 @@ setup_display(void)
      }
 
      if (scrn == PROM_INVALID_HANDLE) {
-	  prom_printf("No screen device found !/n");
+	  prom_printf("No screen device found !\n");
 	  return;
      }
      for(i=0;i<16;i++) {
