@@ -20,8 +20,8 @@ TEXTADDR	= 0x200000
 # Malloc block at 3Mb -> 4Mb
 MALLOCADDR	= 0x300000
 MALLOCSIZE	= 0x100000
-# Load kernel at 20Mb and ramdisk just after
-KERNELADDR	= 0x01400000
+# Load kernel and ramdisk at real-base.  If there is overlap, will retry until find open space
+KERNELADDR	= 0x00C00000
 
 # Set this to the prefix of your cross-compiler, if you have one.
 # Else leave it empty.
