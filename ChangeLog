@@ -1,3 +1,87 @@
+commit 58838f4a6973c60dc1b764fba20682ce07bb6c96
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Fri Aug 17 15:22:00 2007 +0100
+
+    On some of the larger kernels we are starting to see a space squeeze.
+    The kernel is currently being put at 20MBs and on some of the newer
+    pSeries systems we are getting real-bases at 32MBs (plus AIX 5.3 has
+    real-base at 32MB, so if AIX is ever booted, everything gets shifted).
+    
+    If the uncompressed kernel+initrd is larger than 12MBs then we see
+    truncation (typical on install kernels).
+    
+    This patch moves the KERNELADDR to 0x00C00000 (12MB).  If real-base is
+    12MB and is loaed there, yaboot will keep going up by a megabyte until
+    prom_claim finds space.  And the uncompressed kernel should be
+    indifferent where it's loaded because there's nothing at 32MB (ie it
+    will operate as it does today).  If OF is loaded at 32MB then the 12MB
+    region is free and the uncompressed kernel will have more space to grow.
+    
+    I have tested this on numerous pSeries boxes.  I have not tested on
+    anything else.
+    
+    Signed-off-by: Jake Moilanen <moilanen@austin.ibm.com>
+
+commit 1bea6140c2894b1259fd07f323b25fd846bd5acf
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Thu Jul 26 09:27:58 2007 +0100
+
+    Fix typo courtesy of Kenichi Nagai
+
+commit 58096e43b6efd2fb51e81866fff9660b70d5df64
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Thu Jul 19 14:16:30 2007 +0100
+
+    Prepare 1.3.14
+
+commit 6166753b1295119cfd8f7a5973b0b523098ef263
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Thu May 17 13:54:20 2007 +0100
+
+    Netboot fixes:
+    - the ARRAY_SIZE macro is no more needed here,
+    - use of cfgpath to have the actual config path to apply for mac *and* ip
+    lookup,
+    - no need to free a buffer big enough, and besides malloc(9) was not
+    enough ("/etc/" missed),
+    - use of intermediate length variables to avoid unneeded calls to strlen()
+    and strrchr().
+    benoit.guillon <benoit.guillon@tele2.fr>
+
+commit cfe3648f1f16d7399a2f0818ffb4e64da0c07cf5
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Thu May 17 11:30:59 2007 +0100
+
+    Correct return type
+    Leonardo Rangel <lrangel@linux.vnet.ibm.com>
+
+commit 6084bb9a372a5fb9fa3e63a26c1770036c31883d
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Thu May 17 11:29:29 2007 +0100
+
+    Add missing includes
+    Leonardo Rangel <lrangel@linux.vnet.ibm.com>
+
+commit 8aeef6f3fcbe661003268ee598de5601a192b965
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Thu May 17 11:28:19 2007 +0100
+
+    Fix compilation warnings by using return not exit.
+    Leonardo Rangel <lrangel@linux.vnet.ibm.com>
+
+commit 1d2796d399a2076511df671e2f35eb0869085a6a
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Thu May 17 11:27:23 2007 +0100
+
+    Now we stop truncating characters for pxelinux style boot at the directory seperator.
+    Leonardo Rangel <lrangel@linux.vnet.ibm.com>
+
+commit 06c6d687b3e76b2e728b1d59aaf408c20df029cb
+Author: Paul Nasrat <pnasrat@redhat.com>
+Date:   Wed May 16 10:22:59 2007 +0100
+
+    Update ChangeLog from git
+
 commit fa024941f8f1237e01e2ecf338442be9062953cc
 Author: Paul Nasrat <pnasrat@redhat.com>
 Date:   Tue May 15 14:28:02 2007 +0100
