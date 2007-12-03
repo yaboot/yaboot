@@ -178,6 +178,7 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 {
      int result;
      void* malloc_base = NULL;
+     unsigned long addr;
      prom_handle root;
 
      /* OF seems to do it, but I'm not very confident */
@@ -196,7 +197,10 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
      prom_init ((prom_entry) r5);
 
      /* Allocate some memory for malloc'ator */
-     malloc_base = prom_claim((void *)MALLOCADDR, MALLOCSIZE, 0);
+     for (addr = MALLOCADDR; addr <= MALLOCADDR * 16 ;addr+=0x100000) {
+	  malloc_base = prom_claim((void *)addr, MALLOCSIZE, 0);
+	  if (malloc_base != (void *)-1) break;
+     }
      if (malloc_base == (void *)-1) {
 	  prom_printf("Can't claim malloc buffer (%d bytes at 0x%08x)\n",
 		      MALLOCSIZE, MALLOCADDR);
