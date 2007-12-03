@@ -654,6 +654,8 @@ int get_params(struct boot_param_t* params)
      static char imagepath[1024];
      static char initrdpath[1024];
      static char sysmappath[1024];
+     static char manualinitrd[1024];
+     static int definitrd = 1, hasarg = 0;
 
      pause_after = 0;
      memset(params, 0, sizeof(*params));
@@ -733,6 +735,46 @@ int get_params(struct boot_param_t* params)
 	  word_split(&imagename, &params->args);
      }
 
+     /* initrd setup via cmd console */
+     /* first, check if the user uses it with some label */
+     if (!strncmp(params->args, "initrd=", 7)) {
+         DEBUG_F("params->args: %s\n", params->args);
+         definitrd = 0;
+     }
+     /* after, check if there is the 'initrd=' in the imagename string */
+     if (!strncmp(imagename, "initrd=", 7) || !definitrd) {
+
+         /* return the value of definitrd to 1 */
+         if (!definitrd)
+             definitrd = 1;
+
+         /* args = "initrd=blah" */
+         char *args = NULL;
+
+         if (params->args) {
+            args = params->args;
+            params->args = NULL;
+            hasarg = 1;
+         } else
+            args = imagename;
+
+         if (strlen(args)){
+             /* copy the string after the '=' to manualinitrd */
+             strcpy(manualinitrd, args+7);
+             definitrd = 0;
+             prom_printf("New initrd file specified: %s\n", manualinitrd);
+         } else {
+             prom_printf("ERROR: no initrd specified!\n");
+             return 0;
+         }
+
+         /* set imagename with the default values of the config file */
+         if ((prom_get_devtype(boot.dev) == FILE_DEVICE_NET) && !hasarg)
+             imagename = cfg_get_default();
+         else
+             imagename = cfg_get_default();
+     }
+
      /* chrp gets this wrong, force it -- Cort */
      if ( useconf && (!imagename || imagename[0] == 0 ))
 	  imagename = cfg_get_default();
@@ -794,6 +836,12 @@ int get_params(struct boot_param_t* params)
 	       "resides on, and \"partno\" is the partition number the image resides on.\n"
 	       "Note that the comma (,) is only required if you specify an OpenFirmware\n"
 	       "device, if you only specify a filename you should not start it with a \",\"\n\n"
+           "To boot a alternative initrd file rather than specified in the yaboot\n"
+           "configuration file, use the \"initrd\" command on Yaboot's prompt: \n"
+           "\"initrd=[name.img]\". This will load the \"name.img\" file after the default\n"
+           "kernel image. You can, also, specify a different initrd file to any other\n"
+           "label of the yaboot configuration file. Just type \"label initrd=[name.img]\"\n"
+           "and the specified initrd file will be loaded.\n\n"
 	       "To load an alternative config file rather than /etc/yaboot.conf, enter\n"
 	       "its device, partno and path, on Open Firmware Prompt:\n"
 	       "boot conf=device:partno,/path/to/configfile\n."
@@ -923,14 +971,22 @@ int get_params(struct boot_param_t* params)
 	  prom_printf("%s: Unable to parse\n", imagepath);
 	  return 0;
      }
-     DEBUG_F("after parse_device_path: dev=%s part=%d file=%s\n", params->kernel.dev,
-	     params->kernel.part, params->kernel.file);
-
+     DEBUG_F("after parse_device_path: dev=%s part=%d file=%s\n", params->kernel.dev, params->kernel.part, params->kernel.file);
      if (useconf) {
 	  p = cfg_get_strg(label, "initrd");
 	  if (p && *p) {
-	       DEBUG_F("Parsing initrd path <%s>\n", p);
-	       strncpy(initrdpath, p, 1024);
+
+           /* check if user seted to use a initrd file from boot console */
+           if (!definitrd && p != manualinitrd) {
+               if (manualinitrd[0] != "/" && (prom_get_devtype(defdevice_bak) != FILE_DEVICE_NET)) {
+                   strcpy(initrdpath, "/");
+                   strcat(initrdpath, manualinitrd);
+               } else
+                   strncpy(initrdpath, manualinitrd, 1024);
+           } else
+               strncpy(initrdpath, p, 1024);
+
+	       DEBUG_F("Parsing initrd path <%s>\n", initrdpath);
 	       if (!parse_device_path(initrdpath, defdevice, defpart,
 				      "/root.bin", &params->rd)) {
 		    prom_printf("%s: Unable to parse\n", imagepath);
