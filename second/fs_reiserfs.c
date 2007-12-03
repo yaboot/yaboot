@@ -29,6 +29,7 @@
 #include "fs.h"
 #include "errors.h"
 #include "debug.h"
+#include "bootinfo.h"
 #include "reiserfs/reiserfs.h"
 
 /* Exported in struct fs_t */
@@ -84,7 +85,10 @@ reiserfs_open( struct boot_file_t *file, const char *dev_name,
      else
 	  INFO->partition_offset = 0;
 
-     sprintf( buffer, "%s:%d", dev_name, 0 ); /* 0 is full disk in OF */
+     strncpy(buffer, dev_name, 1020);
+     if (_machine != _MACH_bplan)
+	  strcat(buffer, ":0");  /* 0 is full disk in (non-buggy) OF */
+
      file->of_device = prom_open( buffer );
      DEBUG_F( "Trying to open dev_name=%s; filename=%s; partition offset=%Lu\n",
 	      buffer, file_name, INFO->partition_offset );

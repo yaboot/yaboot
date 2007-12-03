@@ -30,6 +30,7 @@
 #include "xfs/xfs.h"
 #include "errors.h"
 #include "debug.h"
+#include "bootinfo.h"
 
 #define SECTOR_BITS 9
 
@@ -77,7 +78,9 @@ xfs_open(struct boot_file_t *file, const char *dev_name,
 	else
 		partition_offset = 0;
 
-	sprintf(buffer, "%s:%d", dev_name, 0); /* 0 is full disk in OF */
+	strncpy(buffer, dev_name, 1020);
+	if (_machine != _MACH_bplan)
+		strcat(buffer, ":0");  /* 0 is full disk in (non-buggy) OF */
 	DEBUG_F("Trying to open dev_name=%s; filename=%s; partition offset=%Lu\n",
 		buffer, file_name, partition_offset);
 	file->of_device = prom_open(buffer);

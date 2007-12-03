@@ -34,6 +34,7 @@
 #define _MACH_classic	0x00000400	/* RPCG RPX-Classic 8xx board */
 #define _MACH_oak	0x00000800	/* IBM "Oak" 403 eval. board */
 #define _MACH_walnut	0x00001000	/* IBM "Walnut" 405GP eval. board */
+#define _MACH_bplan	0x00002000	/* Pegasos/Efika, broken partition #s */
 
 struct bi_record {
      unsigned long tag;			/* tag ID */
@@ -50,6 +51,8 @@ struct bi_record {
 #define BI_MACHTYPE		0x1016
 
 #endif /* _PPC_BOOTINFO_H */
+
+extern int _machine;
 
 /*
  * Local variables:

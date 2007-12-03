@@ -223,7 +223,10 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
      root = prom_finddevice("/");
      if (root != 0) {
 	  static char model[256];
-	  if (prom_getprop(root, "device_type", model, 256 ) > 0 &&
+	  if (prom_getprop(root, "CODEGEN,vendor", model, 256) > 0 &&
+	      !strncmp("bplan", model, 5))
+	       _machine = _MACH_bplan;
+	  else if (prom_getprop(root, "device_type", model, 256 ) > 0 &&
 	      !strncmp("chrp", model, 4))
 	       _machine = _MACH_chrp;
 	  else {
@@ -459,7 +462,7 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
      struct bootp_packet *packet;
      int rc = 0;
      struct boot_fspec_t fspec = *orig_fspec;
-     char *cfgpath = (_machine == _MACH_chrp) ? "/etc/" : "";
+     char *cfgpath = (_machine == _MACH_chrp || _machine == _MACH_bplan) ? "/etc/" : "";
      int flen;
      int minlen;
 
@@ -1726,11 +1729,13 @@ yaboot_main(void)
 	  prom_printf("%s: Unable to parse\n", bootdevice);
 	  return -1;
      }
+     if (_machine == MACH_bplan)
+        boot.part++;
      DEBUG_F("After parse_device_path: dev=%s, part=%d, file=%s\n",
 	     boot.dev, boot.part, boot.file);
 
      if (!conf_given) {
-         if (_machine == _MACH_chrp)
+         if (_machine == _MACH_chrp || machine == _MACH_bplan)
              boot.file = "/etc/";
          else if (strlen(boot.file)) {
              if (!strncmp(boot.file, "\\\\", 2))

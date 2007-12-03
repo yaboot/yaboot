@@ -40,6 +40,7 @@
 #include "linux/iso_fs.h"
 #include "debug.h"
 #include "errors.h"
+#include "bootinfo.h"
 #include "byteorder.h"
 
 /* We currently don't check the partition type, some users
@@ -337,7 +338,8 @@ partitions_lookup(const char *device)
      unsigned int prom_blksize, iso_root_block;
 
      strncpy(block_buffer, device, 2040);
-     strcat(block_buffer, ":0");
+     if (_machine != _MACH_bplan)
+	  strcat(block_buffer, ":0");
 
      /* Open device */
      disk = prom_open(block_buffer);

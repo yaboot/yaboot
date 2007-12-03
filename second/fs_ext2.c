@@ -35,6 +35,7 @@
 #include "fs.h"
 #include "errors.h"
 #include "debug.h"
+#include "bootinfo.h"
 
 #define FAST_VERSION
 #define MAX_READ_RANGE	256
@@ -170,7 +171,8 @@ ext2_open(	struct boot_file_t*	file,
 
      /* Open the OF device for the entire disk */
      strncpy(buffer, dev_name, 1020);
-     strcat(buffer, ":0");
+     if (_machine != _MACH_bplan)
+	  strcat(buffer, ":0");
 
      DEBUG_F("<%s>\n", buffer);
 
