@@ -1735,7 +1735,7 @@ yaboot_main(void)
 	     boot.dev, boot.part, boot.file);
 
      if (!conf_given) {
-         if (_machine == _MACH_chrp || machine == _MACH_bplan)
+         if (_machine == _MACH_chrp || _machine == _MACH_bplan)
              boot.file = "/etc/";
          else if (strlen(boot.file)) {
              if (!strncmp(boot.file, "\\\\", 2))
