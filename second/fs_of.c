@@ -44,9 +44,8 @@
 #include "errors.h"
 #include "debug.h"
 
-#define LOAD_BUFFER_POS		0x600000
-/* this cannot be safely increased any further */
-#define LOAD_BUFFER_SIZE	0x600000
+#define LOAD_BUFFER_POS		0x1000000
+#define LOAD_BUFFER_SIZE	0x1000000
 
 static int of_open(struct boot_file_t* file, const char* dev_name,
 		   struct partition_t* part, const char* file_name);
@@ -166,7 +165,9 @@ of_net_open(struct boot_file_t* file, const char* dev_name,
 	  return FILE_ERR_BAD_FSYS;
      }
 
-     file->buffer = prom_claim((void *)LOAD_BUFFER_POS, LOAD_BUFFER_SIZE, 0);
+
+     file->buffer = prom_claim_chunk((void *)LOAD_BUFFER_POS,
+                                     LOAD_BUFFER_SIZE, 0);
      if (file->buffer == (void *)-1) {
 	  prom_printf("Can't claim memory for TFTP download\n");
 	  prom_close(file->of_device);
