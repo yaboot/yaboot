@@ -1233,7 +1233,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
      Elf32_Ehdr		*e = &(loadinfo->elf.elf32hdr);
      Elf32_Phdr		*p, *ph;
      int			size = sizeof(Elf32_Ehdr) - sizeof(Elf_Ident);
-     unsigned long	addr, loadaddr;
+     unsigned long	loadaddr;
 
      /* Read the rest of the Elf header... */
      if ((*(file->fs->read))(file, size, &e->e_version) < size) {
@@ -1321,13 +1321,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
           loadaddr = loadinfo->load_loc;
      }
 
-     /* On some systems, loadaddr may already be claimed, so try some
-      * other nearby addresses before giving up.
-      */
-     for(addr=loadaddr; addr <= loadaddr * 8 ;addr+=0x100000) {
-	  loadinfo->base = prom_claim((void *)addr, loadinfo->memsize, 0);
-	  if (loadinfo->base != (void *)-1) break;
-     }
+     loadinfo->base = prom_claim_chunk((void *)loadaddr, loadinfo->memsize, 0);
      if (loadinfo->base == (void *)-1) {
 	  prom_printf("Claim error, can't allocate kernel memory\n");
 	  goto bail;
@@ -1377,7 +1371,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      Elf64_Ehdr		*e = &(loadinfo->elf.elf64hdr);
      Elf64_Phdr		*p, *ph;
      int			size = sizeof(Elf64_Ehdr) - sizeof(Elf_Ident);
-     unsigned long	addr, loadaddr;
+     unsigned long	loadaddr;
 
      /* Read the rest of the Elf header... */
      if ((*(file->fs->read))(file, size, &e->e_version) < size) {
@@ -1465,13 +1459,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
           loadaddr = e->e_entry;
      }
 
-     /* On some systems, loadaddr may already be claimed, so try some
-      * other nearby addresses before giving up.
-      */
-     for(addr=loadaddr; addr <= loadaddr * 8 ;addr+=0x100000) {
-	  loadinfo->base = prom_claim((void *)addr, loadinfo->memsize, 0);
-	  if (loadinfo->base != (void *)-1) break;
-     }
+     loadinfo->base = prom_claim_chunk((void *)loadaddr, loadinfo->memsize, 0);
      if (loadinfo->base == (void *)-1) {
 	  prom_printf("Claim error, can't allocate kernel memory\n");
 	  goto bail;

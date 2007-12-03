@@ -37,6 +37,7 @@ typedef void *phandle;
 #define PROM_INVALID_HANDLE	((prom_handle)-1UL)
 #define BOOTDEVSZ               (2048) /* iscsi args can be in excess of 1040 bytes */
 #define TOK_ISCSI               "iscsi"
+#define PROM_CLAIM_MAX_ADDR	0x8000000
 
 struct prom_args;
 typedef int (*prom_entry)(struct prom_args *);
@@ -85,6 +86,7 @@ int prom_set_color(prom_handle device, int color, int r, int g, int b);
 
 /* memory */
 
+void *prom_claim_chunk(void *virt, unsigned int size, unsigned int align);
 void *prom_claim (void *virt, unsigned int size, unsigned int align);
 void prom_release(void *virt, unsigned int size);
 void prom_map (void *phys, void *virt, int size);
