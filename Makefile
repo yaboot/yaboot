@@ -35,7 +35,7 @@ OBJCOPY		:= $(CROSS)objcopy
 
 # The flags for the yaboot binary.
 #
-YBCFLAGS = -Os $(CFLAGS) -nostdinc -Wall -isystem `$(CC) -print-file-name=include` -fsigned-char
+YBCFLAGS = -Os $(CFLAGS) -nostdinc -Wall -isystem `$(CC) -m32 -print-file-name=include` -fsigned-char
 YBCFLAGS += -DVERSION=\"${VERSION}${VERSIONEXTRA}\"	#"
 YBCFLAGS += -DTEXTADDR=$(TEXTADDR) -DDEBUG=$(DEBUG)
 YBCFLAGS += -DMALLOCADDR=$(MALLOCADDR) -DMALLOCSIZE=$(MALLOCSIZE)
@@ -64,7 +64,7 @@ endif
 
 # Link flags
 #
-LFLAGS = -Ttext $(TEXTADDR) -Bstatic
+LFLAGS = -Ttext $(TEXTADDR) -Bstatic -melf32ppclinux
 
 # Libraries
 #
@@ -99,7 +99,7 @@ OBJS += second/fs_reiserfs.o
 endif
 
 # compilation
-lgcc = `$(CC) -print-libgcc-file-name`
+lgcc = `$(CC) -m32 -print-libgcc-file-name`
 
 all: yaboot addnote mkofboot
 
