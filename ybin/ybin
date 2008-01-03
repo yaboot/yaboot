@@ -436,22 +436,21 @@ checkconf()
     fi
 
     if [ "$nonvram" = 0 ] ; then
-		## see if nvsetenv or nvram exists and is executable
-		for program in nvsetenv nvram ; do
-			if (command -v $program > /dev/null 2>&1) && [ -x `command -v $program` ] ; then
-				NVRAM_PROG=$program
-				break
-			fi
-		done
-		if [ -z "$NVRAM_PROG" ] ; then
-			nonvram=1
-			echo 1>&2 "$PRG: Warning: \`nvsetenv' and \`nvram' could not be found, nvram will not be updated"
-		fi
+	## see if nvsetenv exists and is executable
+	if (command -v nvsetenv > /dev/null 2>&1) ; then
+	    [ -x `command -v nvsetenv` ] || MISSING=1 ; else MISSING=1
 	fi
 
 	if [ "$nonvram" = 0 ] ; then
 	    ## if nvsetenv exists see if its the old broken version
-		if [ "$NVRAM_PROG" = "nvsetenv" ] && ! nvsetenv --version > /dev/null 2>&1 ; then
+	    if [ "$MISSING" != 1 ] ; then
+		nvsetenv --version > /dev/null 2>&1 || OLD=1
+	    else
+		nonvram=1
+		echo 1>&2 "$PRG: Warning: \`nvsetenv' could not be found, nvram will not be updated"
+	    fi
+
+	    if [ "$OLD" = 1 ] ; then
 		## i check this myself to avoid misleading error
 		## messages. nvsetenv should REALLY support --version.
 		if [ ! -e /dev/nvram ] ; then
@@ -927,11 +926,7 @@ util_install()
 	if [ "$nonvram" = 0 ] ; then
 	    [ "$VERBOSE" = 1 ] && echo "$PRG: Updating OpenFirmware boot-device variable in nvram..."
 	    [ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: boot-device=${ofboot},${OFFILE}"
-		if [ "$NVRAM_PROG" = "nvsetenv" ] ; then
-			nvsetenv boot-device "${ofboot},${OFFILE}"
-		else
-			nvram -p common --update-config boot-device="${ofboot},${OFFILE}"
-		fi
+	    nvsetenv boot-device "${ofboot},${OFFILE}"
 	    if [ $? != 0 ] ; then
 		echo 1>&2 "$PRG: An error occured while updating nvram, we'll ignore it"
 	    fi
@@ -1117,11 +1112,7 @@ mnt_install()
     if [ "$nonvram" = 0 ] ; then
 	[ "$VERBOSE" = 1 ] && echo "$PRG: Updating OpenFirmware boot-device variable in nvram..."
 	[ "$DEBUG" = 1 ] && echo 1>&2 "$PRG: DEBUG: boot-device=${ofboot},${OFFILE}"
-	if [ "$NVRAM_PROG" = "nvsetenv" ] ; then
-		nvsetenv boot-device "${ofboot},${OFFILE}"
-	else
-		nvram -p common --update-config boot-device="${ofboot},${OFFILE}"
-	fi
+	nvsetenv boot-device "${ofboot},${OFFILE}"
 	if [ $? != 0 ] ; then
 	    echo 1>&2 "$PRG: An error occured while updating nvram, we'll ignore it"
 	fi
