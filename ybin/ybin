@@ -472,7 +472,7 @@ checkconf()
 		    nonvram=1
 		else
 		    nonvram=1
-		    echo 1>&2 "$PRG: Warning: Incompatible version of nvsetenv, nvram will not be updated"
+		    echo 1>&2 "$PRG: Warning: Incompatible version of \`nvsetenv', nvram will not be updated"
 		fi
 	    fi
 	fi
