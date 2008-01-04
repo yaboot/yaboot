@@ -114,6 +114,9 @@ int useconf = 0;
 char bootdevice[BOOTDEVSZ];
 char bootoncelabel[1024];
 char bootargs[1024];
+char bootlastlabel[BOOTLASTSZ] = {0};
+char fw_nbr_reboots[FW_NBR_REBOOTSZ] = {0};
+long  fw_reboot_cnt = 0;
 char *password = NULL;
 struct boot_fspec_t boot;
 int _machine = _MACH_Pmac;
@@ -674,7 +677,7 @@ int get_params(struct boot_param_t* params)
 
      cmdinit();
 
-     if (first) {
+     if (first && !fw_reboot_cnt) {
 	  first = 0;
 	  imagename = bootargs;
 	  word_split(&imagename, &params->args);
@@ -688,6 +691,13 @@ int get_params(struct boot_param_t* params)
 	  if (useconf && (q = cfg_get_strg(0, "timeout")) != 0 && *q != 0)
 	       timeout = simple_strtol(q, NULL, 0);
      }
+
+     /* If this is a reboot due to FW detecting CAS changes then 
+      * set timeout to 1.  The last kernel booted will be booted 
+      * again automatically.  It should seem seamless to the user
+     */
+     if (fw_reboot_cnt) 
+          timeout = 1;
 
      prom_printf("boot: ");
      c = -1;
@@ -725,7 +735,9 @@ int get_params(struct boot_param_t* params)
 	  if (!imagename) {
 	       if (bootoncelabel[0] != 0)
 		    imagename = bootoncelabel;
-	       else
+	       else if (bootlastlabel[0] != 0)
+                         imagename = bootlastlabel;
+               else
 		    imagename = cfg_get_default();
 	  }
 	  if (imagename)
@@ -785,6 +797,9 @@ int get_params(struct boot_param_t* params)
      /* chrp gets this wrong, force it -- Cort */
      if ( useconf && (!imagename || imagename[0] == 0 ))
 	  imagename = cfg_get_default();
+
+     /* write the imagename out so it can be reused on reboot if necessary */
+     prom_set_options("boot-last-label", imagename, strlen(imagename));
 
      label = 0;
      defdevice = boot.dev;
@@ -1676,6 +1691,7 @@ int
 yaboot_main(void)
 {
      char *ptype;
+     char *endp;
      int conf_given = 0;
      char conf_path[1024];
 
@@ -1686,6 +1702,10 @@ yaboot_main(void)
      DEBUG_F("/chosen/bootargs = %s\n", bootargs);
      prom_get_chosen("bootpath", bootdevice, BOOTDEVSZ);
      DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
+     prom_get_options("ibm,fw-nbr-reboots",fw_nbr_reboots, FW_NBR_REBOOTSZ);
+     fw_reboot_cnt = simple_strtol(fw_nbr_reboots,&endp,10);
+     if (fw_reboot_cnt > 0L)
+          prom_get_options("boot-last-label", bootlastlabel, BOOTLASTSZ);
 
      /* If conf= specified on command line, it overrides
         Usage: conf=device:partition,/path/to/conffile
