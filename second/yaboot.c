@@ -1702,7 +1702,8 @@ yaboot_main(void)
      DEBUG_F("/chosen/bootargs = %s\n", bootargs);
      prom_get_chosen("bootpath", bootdevice, BOOTDEVSZ);
      DEBUG_F("/chosen/bootpath = %s\n", bootdevice);
-     prom_get_options("ibm,fw-nbr-reboots",fw_nbr_reboots, FW_NBR_REBOOTSZ);
+     if (prom_get_options("ibm,client-architecture-support-reboot",fw_nbr_reboots, FW_NBR_REBOOTSZ) == -1 )
+        prom_get_options("ibm,fw-nbr-reboots",fw_nbr_reboots, FW_NBR_REBOOTSZ);
      fw_reboot_cnt = simple_strtol(fw_nbr_reboots,&endp,10);
      if (fw_reboot_cnt > 0L)
           prom_get_options("boot-last-label", bootlastlabel, BOOTLASTSZ);
