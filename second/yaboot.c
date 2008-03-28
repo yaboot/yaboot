@@ -1750,7 +1750,7 @@ yaboot_main(void)
 	  prom_printf("%s: Unable to parse\n", bootdevice);
 	  return -1;
      }
-     if (_machine == _MACH_bplan)
+     if (_machine == _MACH_bplan && !conf_given)
         boot.part++;
      DEBUG_F("After parse_device_path: dev=%s, part=%d, file=%s\n",
 	     boot.dev, boot.part, boot.file);

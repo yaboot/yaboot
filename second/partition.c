@@ -287,7 +287,7 @@ partition_amiga_lookup( const char *dev_name, prom_handle disk,
 	for (i=0; i < possible; i++) used[i] = 0;
 
 
-	for (part = amiga_block[AMIGA_PARTITIONS], partition = 0;
+	for (part = amiga_block[AMIGA_PARTITIONS], partition = 1;
 		part != AMIGA_END;
 		part = amiga_block[AMIGA_PART_NEXT], partition++)
 	{
