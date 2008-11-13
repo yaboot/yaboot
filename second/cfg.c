@@ -41,7 +41,7 @@ typedef struct {
      void *data;
 } CONFIG;
 
-#define MAX_TOKEN 200
+#define MAX_TOKEN 511
 #define MAX_VAR_NAME MAX_TOKEN
 #define EOF -1
 
