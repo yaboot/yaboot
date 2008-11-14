@@ -1659,14 +1659,15 @@ checkconf || exit 1
 
 if [ "x$bootonce" != "x" ]; then
     foundlabel=`sed s/\#.*// $bootconf | grep "label=$bootonce$" | wc -l`
-    if [ "$nonvram" = 0 ]; then
+    if [ "$nonvram" = 1 ]; then
 	echo 1>&2 "$PRG: --bootonce specified, but nvsetenv not available."
 	exit 1
     fi
     if [ "$foundlabel" = 1 ]; then
 	nvsetenv boot-once "$bootonce"
 	foundlabel=`nvsetenv boot-once`
-	if [ "$foundlabel" != "boot-once=$bootonce" ]; then
+	if [ "$foundlabel" != "boot-once=$bootonce" -a \
+             "$foundlabel" != "$bootonce" ]; then
 	    echo 1>&2 "$PRG: Could not nvsetenv boot-once $bootonce"
 	    exit 1
 	fi
