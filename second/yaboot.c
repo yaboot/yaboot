@@ -1606,7 +1606,7 @@ is_elf64(loadinfo_t *loadinfo)
 	     e->e_ident[EI_MAG3]  == ELFMAG3	    &&
 	     e->e_ident[EI_CLASS] == ELFCLASS64  &&
 	     e->e_ident[EI_DATA]  == ELFDATA2MSB &&
-	     e->e_type            == ET_EXEC	    &&
+	     (e->e_type == ET_EXEC || e->e_type == ET_DYN) &&
 	     e->e_machine         == EM_PPC64);
 }
 
