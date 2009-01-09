@@ -135,22 +135,35 @@ of_net_open(struct boot_file_t* file,
 	    struct partition_t* part, struct boot_fspec_t* fspec)
 {
      static char	buffer[1024];
-     char               *filename;
+     char               *filename = NULL;
      char               *p;
 
      DEBUG_ENTER;
      DEBUG_OPEN;
 
-     strncpy(buffer, fspec->dev, 768);
      if (fspec->file && strlen(fspec->file)) {
-	  strcat(buffer, ",");
 	  filename = strdup(fspec->file);
 	  for (p = filename; *p; p++)
 	       if (*p == '/')
 		    *p = '\\';
-	  strcat(buffer, filename);
-	  free(filename);
      }
+
+     DEBUG_F("siaddr <%s>; filename <%s>; ciaddr <%s>; giaddr <%s>;\n",
+		fspec->siaddr, filename, fspec->ciaddr, fspec->giaddr);
+     strncpy(buffer, fspec->dev, 768);
+     strcat(buffer, fspec->siaddr);
+     strcat(buffer, ",");
+     strcat(buffer, filename);
+     strcat(buffer, ",");
+     strcat(buffer, fspec->ciaddr);
+     strcat(buffer, ",");
+     strcat(buffer, fspec->giaddr);
+     strcat(buffer, ",");
+     strcat(buffer, fspec->bootp_retries);
+     strcat(buffer, ",");
+     strcat(buffer, fspec->tftp_retries);
+     strcat(buffer, ",");
+     strcat(buffer, fspec->addl_params);
 
      DEBUG_F("Opening: \"%s\"\n", buffer);
 

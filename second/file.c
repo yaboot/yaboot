@@ -38,19 +38,48 @@
 
 extern char bootdevice[];
 
-static char *netdev_path_to_filename(const char *path)
+/*
+ * Copy the string from source to dest till newline or comma(,) is seen
+ * in the source.
+ * Move source and dest pointers respectively.
+ * Returns pointer to the start of the string that has just been copied.
+ */
+static char *
+scopy(char **dest, char **source)
 {
-     char *tmp, *args, *filename;
-     size_t len;
+     char *ret = *dest;
 
-     DEBUG_F("path = %s\n", path);
-
-     if (!path)
+     if (!**source)
 	  return NULL;
 
-     args = strrchr(path, ':');
+     while (**source != ',' && **source != '\0')
+	  *(*dest)++ = *(*source)++;
+     if (**source != '\0')
+	  *(*source)++;
+     **dest = '\0';
+     *(*dest)++;
+     return ret;
+}
+
+/*
+ * Extract all the arguments provided in the imagepath and fill it in result.
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
+{
+     char *tmp, *args, *str, *start;
+
+     DEBUG_F("imagepath = %s\n", imagepath);
+
+     if (!imagepath)
+	  return 1;
+
+     args = strrchr(imagepath, ':');
      if (!args)
-	  return NULL;
+	  return 1;
+
+     start = args; /* used to see if we read any optional parameters */
 
      /* The obp-tftp device arguments should be at the end of
       * the argument list.  Skip over any extra arguments (promiscuous,
@@ -77,46 +106,42 @@ static char *netdev_path_to_filename(const char *path)
      if (tmp && tmp > args)
 	  args = tmp + strlen("rarp");
 
-     args = strchr(args, ',');
-     if (!args)
-	  return NULL;
-
-     tmp = args;
-     tmp--;
-     /* If the preceding character is ':' then there were no
-      * non-obp-tftp arguments and we know we're right up to the
-      * filename.  Otherwise, we must advance args once more.
-      */
-     args++;
-     if (*tmp != ':') {
+     if (args != start) /* we read some parameters, so go past the next comma(,) */
 	  args = strchr(args, ',');
-	  if (!args)
-	       return NULL;
-	  args++;
+     if (!args)
+	  return 1;
+
+     str = malloc(strlen(args) + 1); /*long enough to hold all strings */
+     if (!str)
+	  return 0;
+
+     if (args[-1] != ':')
+	  args++; /* If comma(,) is not immediately followed by ':' then go past the , */
+
+     /*
+      * read the arguments in order: siaddr,filename,ciaddr,giaddr,
+      * bootp-retries,tftp-retries,addl_prameters
+      */
+     result->siaddr = scopy(&str, &args);
+     result->file = scopy(&str, &args);
+     result->ciaddr = scopy(&str, &args);
+     result->giaddr = scopy(&str, &args);
+     result->bootp_retries = scopy(&str, &args);
+     result->tftp_retries = scopy(&str, &args);
+     if (*args) {
+	  result->addl_params = strdup(args);
+	  if (!result->addl_params)
+		return 0;
      }
 
-     /* filename may be empty; e.g. enet:192.168.1.1,,192.168.1.2 */
-     if (*args == ',') {
-	  DEBUG_F("null filename\n");
-	  return NULL;
-     }
-
-     /* Now see whether there are more args following the filename. */
-     tmp = strchr(args, ',');
-     if (!tmp)
-	  len = strlen(args) + 1;
-     else
-	  len = tmp - args + 1;
-
-     filename = malloc(len);
-     if (!filename)
-	  return NULL;
-
-     strncpy(filename, args, len);
-     filename[len - 1] = '\0';
-
-     DEBUG_F("filename = %s\n", filename);
-     return filename;
+     DEBUG_F("siaddr = <%s>\n", result->siaddr);
+     DEBUG_F("file = <%s>\n", result->file);
+     DEBUG_F("ciaddr = <%s>\n", result->ciaddr);
+     DEBUG_F("giaddr = <%s>\n", result->giaddr);
+     DEBUG_F("bootp_retries = <%s>\n", result->bootp_retries);
+     DEBUG_F("tftp_retries = <%s>\n", result->tftp_retries);
+     DEBUG_F("addl_params = <%s>\n", result->addl_params);
+     return 1;
 }
 
 static char *netdev_path_to_dev(const char *path)
@@ -163,6 +188,10 @@ static char *netdev_path_to_dev(const char *path)
     - enet:,/tftpboot/vmlinux
     - enet:bootp
     - enet:0
+    - arguments for obp-tftp open as specified in section 4.1 of
+      http://playground.sun.com/1275/practice/obp-tftp/tftp1_0.pdf
+      [bootp,]siaddr,filename,ciaddr,giaddr,bootp-retries,tftp-retries
+      ex: enet:bootp,10.0.0.11,bootme,10.0.0.12,10.0.0.1,5,5
    Supported only if defdevice == NULL
     - disc
     - any other device path lacking a :
@@ -178,6 +207,9 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      char *ipath = NULL;
      char *defdev = NULL;
      int device_kind = -1;
+
+     DEBUG_F("imagepath = %s; defdevice %s; defpart %d, deffile %s\n",
+		imagepath, defdevice, defpart, deffile);
 
      result->dev = NULL;
      result->part = -1;
@@ -247,9 +279,10 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
      }
 
      if (device_kind == FILE_DEVICE_NET) {
-	  if (strchr(ipath, ':'))
-	       result->file = netdev_path_to_filename(ipath);
-	  else
+	  if (strchr(ipath, ':')) {
+	       if (extract_args_from_netdev_path(ipath, result) == 0)
+		   return 0;
+	  } else
 	       result->file = strdup(ipath);
 
 	  if (!defdev)

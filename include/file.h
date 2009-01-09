@@ -39,7 +39,13 @@ struct boot_file_t;
 struct boot_fspec_t {
 	char*	dev;		/* OF device path */
 	int	part;		/* Partition number or -1 */
+	char*	siaddr;		/* Server address */
 	char*	file;		/* File path */
+	char*	ciaddr;		/* Client address */
+	char*	giaddr;		/* Gateway address */
+	char*	bootp_retries;	/* Bootp retries */
+	char*	tftp_retries;	/* TFTP retries */
+	char*	addl_params;	/* copy all additional parameters */
 };
 
 struct boot_file_t {
