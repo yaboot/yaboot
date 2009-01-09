@@ -287,15 +287,14 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
 static int
 file_block_open(	struct boot_file_t*	file,
-			const char*		dev_name,
-			const char*		file_name,
+			struct boot_fspec_t*	fspec,
 			int			partition)
 {
      struct partition_t*	parts;
      struct partition_t*	p;
      struct partition_t*	found;
 
-     parts = partitions_lookup(dev_name);
+     parts = partitions_lookup(fspec->dev);
      found = NULL;
 
 #if DEBUG
@@ -308,7 +307,7 @@ file_block_open(	struct boot_file_t*	file,
 	  DEBUG_F("number: %02d, start: 0x%08lx, length: 0x%08lx\n",
 		  p->part_number, p->part_start, p->part_size );
 	  if (partition == -1) {
-	       file->fs = fs_open( file, dev_name, p, file_name );
+	       file->fs = fs_open( file, p, fspec );
 	       if (file->fs == NULL || fserrorno != FILE_ERR_OK)
 		    continue;
 	       else {
@@ -328,7 +327,7 @@ file_block_open(	struct boot_file_t*	file,
       * cases, let OF figure out a default partition.
       */
      DEBUG_F( "Using OF defaults.. (found = %p)\n", found );
-     file->fs = fs_open( file, dev_name, found, file_name );
+     file->fs = fs_open( file, found, fspec );
 
 done:
      if (parts)
@@ -338,12 +337,10 @@ done:
 }
 
 static int
-file_net_open(	struct boot_file_t*	file,
-		const char*		dev_name,
-		const char*		file_name)
+file_net_open(struct boot_file_t* file, struct boot_fspec_t *fspec)
 {
      file->fs = fs_of_netboot;
-     return fs_of_netboot->open(file, dev_name, NULL, file_name);
+     return fs_of_netboot->open(file, NULL, fspec);
 }
 
 static int
@@ -380,7 +377,7 @@ static struct fs_t fs_default =
 };
 
 
-int open_file(const struct boot_fspec_t* spec, struct boot_file_t* file)
+int open_file(struct boot_fspec_t* spec, struct boot_file_t* file)
 {
      int result;
 
@@ -399,10 +396,10 @@ int open_file(const struct boot_fspec_t* spec, struct boot_file_t* file)
      switch(file->device_kind) {
      case FILE_DEVICE_BLOCK:
 	  DEBUG_F("device is a block device\n");
-	  return file_block_open(file, spec->dev, spec->file, spec->part);
+	  return file_block_open(file, spec, spec->part);
      case FILE_DEVICE_NET:
 	  DEBUG_F("device is a network device\n");
-	  return file_net_open(file, spec->dev, spec->file);
+	  return file_net_open(file, spec);
      }
      return 0;
 }

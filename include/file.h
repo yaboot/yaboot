@@ -63,7 +63,7 @@ struct boot_file_t {
 };
 
 extern int
-open_file(const struct boot_fspec_t*	spec,
+open_file(struct boot_fspec_t*	spec,
 	  struct boot_file_t*		file);
 
 extern int

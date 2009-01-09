@@ -32,8 +32,8 @@
     prom_printf( fmt, ## args );\
 }
 # define DEBUG_OPEN DEBUG_F( "dev=%s, part=0x%p (%d), file_name=%s\n",\
-                             dev_name, part, part ? part->part_number : -1,\
-                             file_name)
+                             fspec->dev, part, part ? part->part_number : -1,\
+                             fspec->file)
 # define DEBUG_SLEEP prom_sleep(3)
 #else
 #define DEBUG_ENTER

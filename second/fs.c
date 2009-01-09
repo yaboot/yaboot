@@ -56,12 +56,12 @@ const struct fs_t *fs_of = &of_filesystem;              /* needed by ISO9660 */
 const struct fs_t *fs_of_netboot = &of_net_filesystem;  /* needed by file.c */
 
 const struct fs_t *
-fs_open(struct boot_file_t *file, const char *dev_name,
-	struct partition_t *part, const char *file_name)
+fs_open(struct boot_file_t *file,
+	struct partition_t *part, struct boot_fspec_t *fspec)
 {
      const struct fs_t **fs;
      for (fs = block_filesystems; *fs; fs++)
-	  if ((fserrorno = (*fs)->open(file, dev_name, part, file_name)) != FILE_ERR_BAD_FSYS)
+	  if ((fserrorno = (*fs)->open(file, part, fspec)) != FILE_ERR_BAD_FSYS)
 	       break;
 
      return *fs;

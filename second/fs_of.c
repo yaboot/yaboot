@@ -47,15 +47,15 @@
 #define LOAD_BUFFER_POS		0x1000000
 #define LOAD_BUFFER_SIZE	0x1400000
 
-static int of_open(struct boot_file_t* file, const char* dev_name,
-		   struct partition_t* part, const char* file_name);
+static int of_open(struct boot_file_t* file,
+		   struct partition_t* part, struct boot_fspec_t* fspec);
 static int of_read(struct boot_file_t* file, unsigned int size, void* buffer);
 static int of_seek(struct boot_file_t* file, unsigned int newpos);
 static int of_close(struct boot_file_t* file);
 
 
-static int of_net_open(struct boot_file_t* file, const char* dev_name,
-		       struct partition_t* part, const char* file_name);
+static int of_net_open(struct boot_file_t* file,
+		       struct partition_t* part, struct boot_fspec_t* fspec);
 static int of_net_read(struct boot_file_t* file, unsigned int size, void* buffer);
 static int of_net_seek(struct boot_file_t* file, unsigned int newpos);
 
@@ -79,8 +79,8 @@ struct fs_t of_net_filesystem =
 };
 
 static int
-of_open(struct boot_file_t* file, const char* dev_name,
-	struct partition_t* part, const char* file_name)
+of_open(struct boot_file_t* file,
+	struct partition_t* part, struct boot_fspec_t* fspec)
 {
      static char	buffer[1024];
      char               *filename;
@@ -89,7 +89,7 @@ of_open(struct boot_file_t* file, const char* dev_name,
      DEBUG_ENTER;
      DEBUG_OPEN;
 
-     strncpy(buffer, dev_name, 768);
+     strncpy(buffer, fspec->dev, 768);
      strcat(buffer, ":");
      if (part) {
           if (part->sys_ind == LINUX_RAID) {
@@ -101,10 +101,10 @@ of_open(struct boot_file_t* file, const char* dev_name,
 	  sprintf(pn, "%02d", part->part_number);
 	  strcat(buffer, pn);
      }
-     if (file_name && strlen(file_name)) {
+     if (fspec->file && strlen(fspec->file)) {
 	  if (part)
 	       strcat(buffer, ",");
-	  filename = strdup(file_name);
+	  filename = strdup(fspec->file);
 	  for (p = filename; *p; p++)
 	       if (*p == '/')
 		    *p = '\\';
@@ -131,8 +131,8 @@ of_open(struct boot_file_t* file, const char* dev_name,
 }
 
 static int
-of_net_open(struct boot_file_t* file, const char* dev_name,
-	    struct partition_t* part, const char* file_name)
+of_net_open(struct boot_file_t* file,
+	    struct partition_t* part, struct boot_fspec_t* fspec)
 {
      static char	buffer[1024];
      char               *filename;
@@ -141,10 +141,10 @@ of_net_open(struct boot_file_t* file, const char* dev_name,
      DEBUG_ENTER;
      DEBUG_OPEN;
 
-     strncpy(buffer, dev_name, 768);
-     if (file_name && strlen(file_name)) {
+     strncpy(buffer, fspec->dev, 768);
+     if (fspec->file && strlen(fspec->file)) {
 	  strcat(buffer, ",");
-	  filename = strdup(file_name);
+	  filename = strdup(fspec->file);
 	  for (p = filename; *p; p++)
 	       if (*p == '/')
 		    *p = '\\';

@@ -29,9 +29,8 @@
 #include "errors.h"
 
 static int iso_open(	struct boot_file_t*	file,
-			const char*		dev_name,
 			struct partition_t*	part,
-			const char*		file_name);
+			struct boot_fspec_t*	fspec);
 static int iso_read(	struct boot_file_t*	file,
 			unsigned int		size,
 			void*			buffer);
@@ -50,9 +49,8 @@ struct fs_t iso_filesystem =
 
 static int
 iso_open(	struct boot_file_t*	file,
-		const char*		dev_name,
 		struct partition_t*	part,
-		const char*		file_name)
+		struct boot_fspec_t*	fspec)
 {
      return FILE_ERR_BAD_FSYS;
 }

@@ -46,9 +46,8 @@ typedef int FILE;
 #include "ext2fs/ext2fs.h"
 
 static int ext2_open(	struct boot_file_t*	file,
-			const char*		dev_name,
 			struct partition_t*	part,
-			const char*		file_name);
+			struct boot_fspec_t*	fspec);
 static int ext2_read(	struct boot_file_t*	file,
 			unsigned int		size,
 			void*			buffer);
@@ -123,14 +122,15 @@ void com_err (const char *a, long i, const char *fmt,...)
 
 static int
 ext2_open(	struct boot_file_t*	file,
-		const char*		dev_name,
 		struct partition_t*	part,
-		const char*		file_name)
+		struct boot_fspec_t*	fspec)
 {
      int result = 0;
      int error = FILE_ERR_NOTFOUND;
      static char buffer[1024];
      int ofopened = 0;
+     char *dev_name = fspec->dev;
+     char *file_name = fspec->file;
 
      DEBUG_ENTER;
      DEBUG_OPEN;

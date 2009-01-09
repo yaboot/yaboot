@@ -39,8 +39,8 @@ int xfs_read_data (char *buf, int len);
 int xfs_dir (char *dirname);
 
 /* Exported in struct fs_t */
-static int xfs_open(struct boot_file_t *file, const char *dev_name,
-		    struct partition_t *part, const char *file_name);
+static int xfs_open(struct boot_file_t *file,
+		    struct partition_t *part, struct boot_fspec_t *fspec);
 static int xfs_read(struct boot_file_t *file, unsigned int size, void *buffer);
 static int xfs_seek(struct boot_file_t *file, unsigned int newpos);
 static int xfs_close(struct boot_file_t *file);
@@ -59,8 +59,8 @@ uint64_t partition_offset;
 int errnum;
 
 static int
-xfs_open(struct boot_file_t *file, const char *dev_name,
-	 struct partition_t *part, const char *file_name)
+xfs_open(struct boot_file_t *file,
+	 struct partition_t *part, struct boot_fspec_t *fspec)
 {
 	static char buffer[1024];
 
@@ -78,11 +78,11 @@ xfs_open(struct boot_file_t *file, const char *dev_name,
 	else
 		partition_offset = 0;
 
-	strncpy(buffer, dev_name, 1020);
+	strncpy(buffer, fspec->dev, 1020);
 	if (_machine != _MACH_bplan)
 		strcat(buffer, ":0");  /* 0 is full disk in (non-buggy) OF */
 	DEBUG_F("Trying to open dev_name=%s; filename=%s; partition offset=%Lu\n",
-		buffer, file_name, partition_offset);
+		buffer, fspec->file, partition_offset);
 	file->of_device = prom_open(buffer);
 
 	if (file->of_device == PROM_INVALID_HANDLE || file->of_device == NULL)
@@ -105,8 +105,8 @@ xfs_open(struct boot_file_t *file, const char *dev_name,
 		return FILE_ERR_BAD_FSYS;
 	}
 
-	DEBUG_F("Attempting to open %s\n", file_name);
-	strcpy(buffer, file_name); /* xfs_dir modifies argument */
+	DEBUG_F("Attempting to open %s\n", fspec->file);
+	strcpy(buffer, fspec->file); /* xfs_dir modifies argument */
 	if(!xfs_dir(buffer))
 	{
 		DEBUG_F("xfs_dir() failed. errnum = %d\n", errnum);
@@ -116,7 +116,7 @@ xfs_open(struct boot_file_t *file, const char *dev_name,
 		return errnum;
 	}
 
-	DEBUG_F("Successfully opened %s\n", file_name);
+	DEBUG_F("Successfully opened %s\n", fspec->file);
 
 	DEBUG_LEAVE(FILE_ERR_OK);
 	return FILE_ERR_OK;

@@ -33,8 +33,8 @@
 #include "reiserfs/reiserfs.h"
 
 /* Exported in struct fs_t */
-static int reiserfs_open( struct boot_file_t *file, const char *dev_name,
-			  struct partition_t *part, const char *file_name );
+static int reiserfs_open( struct boot_file_t *file, struct partition_t *part,
+			  struct boot_fspec_t *fspec);
 static int reiserfs_read( struct boot_file_t *file, unsigned int size,
 
 			  void *buffer );
@@ -63,10 +63,12 @@ int errnum;
 
 
 static int
-reiserfs_open( struct boot_file_t *file, const char *dev_name,
-               struct partition_t *part, const char *file_name )
+reiserfs_open( struct boot_file_t *file, struct partition_t *part,
+		struct boot_fspec_t *fspec)
 {
      static char buffer[1024];
+     char *dev_name = fspec->dev;
+     char *file_name = fspec->file;
 
      DEBUG_ENTER;
      DEBUG_OPEN;
@@ -74,7 +76,7 @@ reiserfs_open( struct boot_file_t *file, const char *dev_name,
      memset( INFO, 0, sizeof(struct reiserfs_state) );
      INFO->file = file;
 
-     if (part)
+     if (fspec->part)
      {
 	  DEBUG_F( "Determining offset for partition %d\n", part->part_number );
 	  INFO->partition_offset = ((uint64_t)part->part_start) * part->blocksize;
