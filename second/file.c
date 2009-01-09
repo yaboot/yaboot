@@ -62,18 +62,13 @@ scopy(char **dest, char **source)
 }
 
 /*
- * Extract all the arguments provided in the imagepath and fill it in result.
+ * Extract all the ipv4 arguments from the bootpath provided and fill result
  * Returns 1 on success, 0 on failure.
  */
 static int
-extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
+extract_ipv4_args(char *imagepath, struct boot_fspec_t *result)
 {
      char *tmp, *args, *str, *start;
-
-     DEBUG_F("imagepath = %s\n", imagepath);
-
-     if (!imagepath)
-	  return 1;
 
      args = strrchr(imagepath, ':');
      if (!args)
@@ -133,6 +128,24 @@ extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
 	  if (!result->addl_params)
 		return 0;
      }
+     return 1;
+}
+
+/*
+ * Extract all the arguments provided in the imagepath and fill it in result.
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
+{
+     int ret;
+
+     DEBUG_F("imagepath = %s\n", imagepath);
+
+     if (!imagepath)
+	  return 1;
+
+     ret = extract_ipv4_args(imagepath, result);
 
      DEBUG_F("siaddr = <%s>\n", result->siaddr);
      DEBUG_F("file = <%s>\n", result->file);
@@ -141,7 +154,7 @@ extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
      DEBUG_F("bootp_retries = <%s>\n", result->bootp_retries);
      DEBUG_F("tftp_retries = <%s>\n", result->tftp_retries);
      DEBUG_F("addl_params = <%s>\n", result->addl_params);
-     return 1;
+     return ret;
 }
 
 static char *netdev_path_to_dev(const char *path)
