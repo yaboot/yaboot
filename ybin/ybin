@@ -1152,6 +1152,7 @@ raw_install()
     fi
     sync ; sync
     [ "$VERBOSE" = 1 ] && echo "$PRG: Installation successful"
+    return 0
 }
 
 ## make sure the first stage ofboot generator is compatible.
