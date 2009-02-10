@@ -431,12 +431,12 @@ static int cfg_reset ()
     curr_table = cf_options;
     for (walk = curr_table; walk->type != cft_end; walk++) {
 #if DEBUG
-        prom_printf("ItemA %s = %s\n", walk->name, walk->data);
+        prom_printf("ItemA %s = %s\n", walk->name, (char *)walk->data);
 #endif
         if (walk->data != NULL)
             walk->data = NULL;
 #if DEBUG
-        prom_printf("ItemB %s = %s\n\n", walk->name, walk->data);
+        prom_printf("ItemB %s = %s\n\n", walk->name, (char *)walk->data);
 #endif
     }
 
