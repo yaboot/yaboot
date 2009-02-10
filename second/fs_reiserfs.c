@@ -156,7 +156,7 @@ reiserfs_close( struct boot_file_t *file )
 
 
 static __inline__ __u32
-log2( __u32 word )
+reiserfs_log2( __u32 word )
 {
      int i = 0;
      while( word && (word & (1 << ++i)) == 0 );
@@ -428,7 +428,7 @@ reiserfs_read_super( void )
 
      INFO->version = le16_to_cpu(super.s_version);
      INFO->blocksize = le16_to_cpu(super.s_blocksize);
-     INFO->blocksize_shift = log2( INFO->blocksize );
+     INFO->blocksize_shift = reiserfs_log2( INFO->blocksize );
 
      INFO->journal_block = le32_to_cpu(super.s_journal_block);
      INFO->journal_block_count = le32_to_cpu(super.s_orig_journal_size);
