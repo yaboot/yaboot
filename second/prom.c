@@ -715,7 +715,7 @@ struct bootp_packet * prom_get_netinfo (void)
 
      chosen = prom_finddevice("/chosen");
      if (chosen < 0) {
-          DEBUG_F("chosen=%d\n", chosen);
+          DEBUG_F("chosen=%lu\n", (unsigned long)chosen);
       return 0;
      }
 
