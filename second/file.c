@@ -38,6 +38,19 @@
 
 extern char bootdevice[];
 
+/* Convert __u32 into std, dotted quad string, leaks like a sive :( */
+static char *
+ipv4_to_str(__u32 ip)
+{
+     char *buf = malloc(sizeof("000.000.000.000"));
+
+     sprintf(buf,"%u.%u.%u.%u",
+             (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16,
+             (ip & 0x0000ff00) >>  8, (ip & 0x000000ff));
+
+     return buf;
+}
+
 /*
  * Copy the string from source to dest till newline or comma(,) is seen
  * in the source.
@@ -132,11 +145,59 @@ extract_ipv4_args(char *imagepath, struct boot_fspec_t *result)
 }
 
 /*
+ * Check netinfo for ipv4 parameters and add them to the fspec iff the
+ * fspec has no existing value.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+extract_netinfo_args(struct boot_fspec_t *result)
+{
+     struct bootp_packet *packet;
+
+     /* Check to see if we can get the [scyg]iaddr fields from netinfo */
+     packet = prom_get_netinfo();
+     if (!packet)
+          return 0;
+
+     DEBUG_F("We have a boot packet\n");
+     DEBUG_F(" siaddr = <%x>\n", packet->siaddr);
+     DEBUG_F(" ciaddr = <%x>\n", packet->ciaddr);
+     DEBUG_F(" yiaddr = <%x>\n", packet->yiaddr);
+     DEBUG_F(" giaddr = <%x>\n", packet->giaddr);
+
+     /* Try to fallback to yiaddr if ciaddr is empty. Broken? */
+     if (packet->ciaddr == 0 && packet->yiaddr != 0)
+          packet->ciaddr = packet->yiaddr;
+
+     if ((result->siaddr == NULL || *(result->siaddr) == NULL)
+         && packet->siaddr != 0)
+          result->siaddr = ipv4_to_str(packet->siaddr);
+     if ((result->ciaddr == NULL || *(result->ciaddr) == NULL)
+         && packet->ciaddr != 0)
+          result->ciaddr = ipv4_to_str(packet->ciaddr);
+     if ((result->giaddr == NULL || *(result->giaddr) == NULL)
+         && packet->giaddr != 0)
+          result->giaddr = ipv4_to_str(packet->giaddr);
+
+     /* FIXME: Yck! if we /still/ do not have a gateway then "cheat" and use
+      *        the server.  This will be okay if the client and server are on
+      *        the same IP network, if not then lets hope the server does ICMP
+      *        redirections */
+     if (result->giaddr == NULL) {
+          result->giaddr = ipv4_to_str(packet->siaddr);
+          DEBUG_F("Forcing giaddr to siaddr <%s>\n", result->giaddr);
+     }
+
+     return 1;
+}
+
+/*
  * Extract all the arguments provided in the imagepath and fill it in result.
  * Returns 1 on success, 0 on failure.
  */
 static int
-extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
+extract_netboot_args(char *imagepath, struct boot_fspec_t *result)
 {
      int ret;
 
@@ -146,6 +207,7 @@ extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
 	  return 1;
 
      ret = extract_ipv4_args(imagepath, result);
+     ret |= extract_netinfo_args(result);
 
      DEBUG_F("siaddr = <%s>\n", result->siaddr);
      DEBUG_F("file = <%s>\n", result->file);
@@ -154,6 +216,7 @@ extract_args_from_netdev_path(char *imagepath, struct boot_fspec_t *result)
      DEBUG_F("bootp_retries = <%s>\n", result->bootp_retries);
      DEBUG_F("tftp_retries = <%s>\n", result->tftp_retries);
      DEBUG_F("addl_params = <%s>\n", result->addl_params);
+   
      return ret;
 }
 
@@ -293,10 +356,13 @@ parse_device_path(char *imagepath, char *defdevice, int defpart,
 
      if (device_kind == FILE_DEVICE_NET) {
 	  if (strchr(ipath, ':')) {
-	       if (extract_args_from_netdev_path(ipath, result) == 0)
+	       if (extract_netboot_args(ipath, result) == 0)
 		   return 0;
-	  } else
+	  } else {
+               /* If we didn't get a ':' then look only in netinfo */
+	       extract_netinfo_args(result);
 	       result->file = strdup(ipath);
+          }
 
 	  if (!defdev)
 	       result->dev = netdev_path_to_dev(ipath);

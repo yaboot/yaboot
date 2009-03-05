@@ -471,6 +471,8 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
      int minlen;
 
      packet = prom_get_netinfo();
+     if (!packet)
+          goto out;
 
      /*
       * First, try to match on mac address with the hardware type

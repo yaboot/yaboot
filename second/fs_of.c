@@ -151,6 +151,9 @@ of_net_open(struct boot_file_t* file,
      DEBUG_F("siaddr <%s>; filename <%s>; ciaddr <%s>; giaddr <%s>;\n",
 		fspec->siaddr, filename, fspec->ciaddr, fspec->giaddr);
      strncpy(buffer, fspec->dev, 768);
+     /* If we didn't get a ':' include one */
+     if (fspec->dev[strlen(fspec->dev)-1] != ':')
+          strcat(buffer, ":");
      strcat(buffer, fspec->siaddr);
      strcat(buffer, ",");
      strcat(buffer, filename);
@@ -158,12 +161,18 @@ of_net_open(struct boot_file_t* file,
      strcat(buffer, fspec->ciaddr);
      strcat(buffer, ",");
      strcat(buffer, fspec->giaddr);
-     strcat(buffer, ",");
-     strcat(buffer, fspec->bootp_retries);
-     strcat(buffer, ",");
-     strcat(buffer, fspec->tftp_retries);
-     strcat(buffer, ",");
-     strcat(buffer, fspec->addl_params);
+
+     /* If /packages/cas exists the we have a "new skool" tftp */
+     if (prom_finddevice("/packages/cas") != PROM_INVALID_HANDLE) {
+          strcat(buffer, ",");
+          strcat(buffer, fspec->bootp_retries);
+          strcat(buffer, ",");
+          strcat(buffer, fspec->tftp_retries);
+          strcat(buffer, ",");
+          strcat(buffer, fspec->addl_params);
+     } else {
+          DEBUG_F("No \"/packages/cas\" using simple args\n")
+     }
 
      DEBUG_F("Opening: \"%s\"\n", buffer);
 
