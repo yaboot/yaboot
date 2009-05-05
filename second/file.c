@@ -144,6 +144,78 @@ extract_ipv4_args(char *imagepath, struct boot_fspec_t *result)
      return 1;
 }
 
+/* DHCP options */
+enum dhcp_options {
+     DHCP_PAD = 0,
+     DHCP_NETMASK = 1,
+     DHCP_ROUTERS = 3,
+     DHCP_DNS = 6,
+     DHCP_END = 255,
+};
+
+#define DHCP_COOKIE        0x63825363
+#define DHCP_COOKIE_SIZE   4
+
+/*
+ * Process the bootp reply packet's vendor extensions.
+ * Vendor extensions are detailed in: http://www.faqs.org/rfcs/rfc1084.html
+ */
+static void
+extract_vendor_options(struct bootp_packet *packet, struct boot_fspec_t *result)
+{
+     int i = 0;
+     __u32 cookie;
+     __u8 *options = &packet->options[0];
+
+     memcpy(&cookie, &options[i], DHCP_COOKIE_SIZE);
+
+     if (cookie != DHCP_COOKIE) {
+          prom_printf("EEEK! cookie is fubar got %08x expected %08x\n",
+                      cookie, DHCP_COOKIE);
+          return;
+     }
+
+     i += DHCP_COOKIE_SIZE;
+
+     /* FIXME: It may be possible to run off the end of a packet here /if/
+      *         it's malformed. :( */
+     while (options[i] != DHCP_END) {
+          __u8 tag = options[i++], len;
+          __u32 value;
+
+          if (tag == DHCP_PAD)
+               continue;
+
+          len = options[i++];
+          memcpy(&value, &options[i], len);
+
+#if DEBUG
+{
+     DEBUG_F("tag=%2d, len=%2d, data=", tag, len);
+     int j;
+     for (j=0; j<len; j++)
+          prom_printf("%02x", options[i+j]);
+     prom_printf("\n");
+}
+#endif
+
+          switch (tag) {
+               case DHCP_NETMASK:
+                    /* FIXME: do we need to grok the subnet mask? */
+                    break;
+               case DHCP_ROUTERS:
+                    if ((result->giaddr == NULL || *(result->giaddr) == '\x0')
+                        && value != 0) {
+                         result->giaddr = ipv4_to_str(value);
+                         DEBUG_F("Storing %s as gateway from options\n",
+                                 result->giaddr);
+                    }
+                    break;
+               }
+          i += len;
+     }
+}
+
 /*
  * Check netinfo for ipv4 parameters and add them to the fspec iff the
  * fspec has no existing value.
@@ -170,15 +242,17 @@ extract_netinfo_args(struct boot_fspec_t *result)
      if (packet->ciaddr == 0 && packet->yiaddr != 0)
           packet->ciaddr = packet->yiaddr;
 
-     if ((result->siaddr == NULL || *(result->siaddr) == NULL)
+     if ((result->siaddr == NULL || *(result->siaddr) == '\x0')
          && packet->siaddr != 0)
           result->siaddr = ipv4_to_str(packet->siaddr);
-     if ((result->ciaddr == NULL || *(result->ciaddr) == NULL)
+     if ((result->ciaddr == NULL || *(result->ciaddr) == '\x0')
          && packet->ciaddr != 0)
           result->ciaddr = ipv4_to_str(packet->ciaddr);
-     if ((result->giaddr == NULL || *(result->giaddr) == NULL)
+     if ((result->giaddr == NULL || *(result->giaddr) == '\x0')
          && packet->giaddr != 0)
           result->giaddr = ipv4_to_str(packet->giaddr);
+
+     extract_vendor_options(packet, result);
 
      /* FIXME: Yck! if we /still/ do not have a gateway then "cheat" and use
       *        the server.  This will be okay if the client and server are on

@@ -152,7 +152,7 @@ struct bootp_packet {
      unsigned char chaddr[16];
      unsigned char sname[64];
      unsigned char file[128];
-     /* vendor options go here if we need them */
+     unsigned char options[]; /* vendor options */
 };
 
 struct bootp_packet * prom_get_netinfo (void);
