@@ -51,6 +51,42 @@ ipv4_to_str(__u32 ip)
      return buf;
 }
 
+/* Ensure the string arg is a plausible IPv4 address */
+static char * is_valid_ipv4_str(char *str)
+{
+     int i;
+     long tmp;
+     __u32 ip = 0;
+     char *ptr=str, *endptr;
+
+     if (str == NULL)
+          return NULL;
+
+     for (i=0; i<4; i++, ptr = ++endptr) {
+          tmp = strtol(ptr, &endptr, 10);
+          if ((tmp & 0xff) != tmp)
+               return NULL;
+
+          /* If we reach the end of the string but we're not in the 4th octet
+           * we have an invalid IP */
+          if (*endptr == '\x0' && i!=3)
+               return NULL;
+
+          /* If we have anything other than a NULL or '.' we have an invlaid
+           * IP */
+          if (*endptr != '\x0' && *endptr != '.')
+               return NULL;
+
+          ip += (tmp << (24-(i*8)));
+     }
+
+     if (ip == 0 || ip == ~0u)
+          return NULL;
+
+     return str;
+}
+
+
 /*
  * Copy the string from source to dest till newline or comma(,) is seen
  * in the source.
@@ -130,10 +166,10 @@ extract_ipv4_args(char *imagepath, struct boot_fspec_t *result)
       * read the arguments in order: siaddr,filename,ciaddr,giaddr,
       * bootp-retries,tftp-retries,addl_prameters
       */
-     result->siaddr = scopy(&str, &args);
+     result->siaddr = is_valid_ipv4_str(scopy(&str, &args));
      result->file = scopy(&str, &args);
-     result->ciaddr = scopy(&str, &args);
-     result->giaddr = scopy(&str, &args);
+     result->ciaddr = is_valid_ipv4_str(scopy(&str, &args));
+     result->giaddr = is_valid_ipv4_str(scopy(&str, &args));
      result->bootp_retries = scopy(&str, &args);
      result->tftp_retries = scopy(&str, &args);
      if (*args) {
