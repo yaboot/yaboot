@@ -137,6 +137,7 @@ of_net_open(struct boot_file_t* file,
      static char	buffer[1024];
      char               *filename = NULL;
      char               *p;
+     int                new_tftp;
 
      DEBUG_ENTER;
      DEBUG_OPEN;
@@ -154,16 +155,22 @@ of_net_open(struct boot_file_t* file,
      /* If we didn't get a ':' include one */
      if (fspec->dev[strlen(fspec->dev)-1] != ':')
           strcat(buffer, ":");
-     strcat(buffer, fspec->siaddr);
-     strcat(buffer, ",");
-     strcat(buffer, filename);
-     strcat(buffer, ",");
-     strcat(buffer, fspec->ciaddr);
-     strcat(buffer, ",");
-     strcat(buffer, fspec->giaddr);
 
-     /* If /packages/cas exists the we have a "new skool" tftp */
-     if (prom_finddevice("/packages/cas") != PROM_INVALID_HANDLE) {
+     /* If /packages/cas exists the we have a "new skool" tftp.
+      * This means that siaddr is the tftp server and that we can add
+      * {tftp,bootp}_retrys, subnet mask and tftp block size to the load
+      * method */
+     new_tftp = (prom_finddevice("/packages/cas") != PROM_INVALID_HANDLE);
+     DEBUG_F("Using %s tftp style\n", (new_tftp? "new": "old"));
+
+     if (new_tftp) {
+          strcat(buffer, fspec->siaddr);
+          strcat(buffer, ",");
+          strcat(buffer, filename);
+          strcat(buffer, ",");
+          strcat(buffer, fspec->ciaddr);
+          strcat(buffer, ",");
+          strcat(buffer, fspec->giaddr);
           strcat(buffer, ",");
           strcat(buffer, fspec->bootp_retries);
           strcat(buffer, ",");
@@ -171,7 +178,8 @@ of_net_open(struct boot_file_t* file,
           strcat(buffer, ",");
           strcat(buffer, fspec->addl_params);
      } else {
-          DEBUG_F("No \"/packages/cas\" using simple args\n")
+          strcat(buffer, ",");
+          strcat(buffer, filename);
      }
 
      DEBUG_F("Opening: \"%s\"\n", buffer);
