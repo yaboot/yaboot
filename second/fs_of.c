@@ -92,8 +92,9 @@ of_open(struct boot_file_t* file,
      strncpy(buffer, fspec->dev, 768);
      strcat(buffer, ":");
      if (part) {
-          if (part->sys_ind == LINUX_RAID) {
-	       DEBUG_F("skipping because partition is marked LINUX_RAID\n");
+          if (part->sys_ind == LINUX_RAID || part->sys_ind == LINUX_NATIVE) {
+	       DEBUG_F("skipping because partition is tagged %08x\n",
+                       part->sys_ind  );
 	       DEBUG_LEAVE(FILE_ERR_BAD_FSYS);
 	       return FILE_ERR_BAD_FSYS;
 	  }
