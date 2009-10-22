@@ -47,6 +47,11 @@ struct boot_fspec_t {
 	char*	tftp_retries;	/* TFTP retries */
 	char*	subnetmask;	/* Subnet mask */
 	char*	addl_params;	/* copy all additional parameters */
+
+	/* Following fields are used only in ipv6 format */
+	int	is_ipv6;	/* is ipv6 specified ? */
+	char*	dhcpv6;		/* dhcpv6 string */
+	char*	blksize;	/* blksize string */
 };
 
 struct boot_file_t {

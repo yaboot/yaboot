@@ -149,8 +149,11 @@ of_net_open(struct boot_file_t* file,
 		    *p = '\\';
      }
 
-     DEBUG_F("siaddr <%s>; filename <%s>; ciaddr <%s>; giaddr <%s>;\n",
-		fspec->siaddr, filename, fspec->ciaddr, fspec->giaddr);
+     DEBUG_F("siaddr <%s>; filename <%s>; ciaddr <%s>; giaddr <%s>;"
+             " ipv6 <%d>\n",
+             fspec->siaddr, filename, fspec->ciaddr, fspec->giaddr,
+             fspec->is_ipv6);
+
      strncpy(buffer, fspec->dev, 768);
      /* If we didn't get a ':' include one */
      if (fspec->dev[strlen(fspec->dev)-1] != ':')
@@ -166,6 +169,10 @@ of_net_open(struct boot_file_t* file,
      if (new_tftp) {
           strcat(buffer, fspec->siaddr);
           strcat(buffer, ",");
+
+          if (fspec->is_ipv6 && (strstr(filename, "filename=") == NULL))
+               strcat(buffer, "filename=");
+
           strcat(buffer, filename);
           strcat(buffer, ",");
           strcat(buffer, fspec->ciaddr);

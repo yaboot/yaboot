@@ -309,6 +309,50 @@ extract_netinfo_args(struct boot_fspec_t *result)
 }
 
 /*
+ * Extract all the ipv6 arguments from the bootpath provided and fill result
+ * Syntax: ipv6,[dhcpv6[=diaddr,]]ciaddr=c_iaddr,giaddr=g_iaddr,siaddr=s_iaddr,
+ *      filename=file_name,tftp-retries=tftp_retries,blksize=block_size
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+extract_ipv6_args(char *imagepath, struct boot_fspec_t *result)
+{
+     char *str, *tmp;
+     int total_len;
+
+     result->is_ipv6 = 1;
+
+     /* Just allocate the max required size */
+     total_len = strlen(imagepath) + 1;
+     str = malloc(total_len);
+     if (!str)
+	return 0;
+
+     if ((tmp = strstr(imagepath, "dhcpv6=")) != NULL)
+	result->dhcpv6 = scopy(&str, &tmp);
+
+     if ((tmp = strstr(imagepath, "ciaddr=")) != NULL)
+	result->ciaddr = scopy(&str, &tmp);
+
+     if ((tmp = strstr(imagepath, "giaddr=")) != NULL)
+	result->giaddr = scopy(&str, &tmp);
+
+     if ((tmp = strstr(imagepath, "siaddr=")) != NULL)
+	result->siaddr = scopy(&str, &tmp);
+
+     if ((tmp = strstr(imagepath, "filename=")) != NULL)
+	result->file = scopy(&str, &tmp);
+
+     if ((tmp = strstr(imagepath, "tftp-retries=")) != NULL)
+	result->tftp_retries = scopy(&str, &tmp);
+
+     if ((tmp = strstr(imagepath, "blksize=")) != NULL)
+	result->blksize = scopy(&str, &tmp);
+
+     return 1;
+}
+
+/*
  * Extract all the arguments provided in the imagepath and fill it in result.
  * Returns 1 on success, 0 on failure.
  */
@@ -322,9 +366,13 @@ extract_netboot_args(char *imagepath, struct boot_fspec_t *result)
      if (!imagepath)
 	  return 1;
 
-     ret = extract_ipv4_args(imagepath, result);
+     if (strstr(imagepath, TOK_IPV6))
+	  ret = extract_ipv6_args(imagepath, result);
+     else
+	  ret = extract_ipv4_args(imagepath, result);
      ret |= extract_netinfo_args(result);
 
+     DEBUG_F("ipv6 = <%d>\n", result->is_ipv6);
      DEBUG_F("siaddr = <%s>\n", result->siaddr);
      DEBUG_F("file = <%s>\n", result->file);
      DEBUG_F("ciaddr = <%s>\n", result->ciaddr);
@@ -332,7 +380,9 @@ extract_netboot_args(char *imagepath, struct boot_fspec_t *result)
      DEBUG_F("bootp_retries = <%s>\n", result->bootp_retries);
      DEBUG_F("tftp_retries = <%s>\n", result->tftp_retries);
      DEBUG_F("addl_params = <%s>\n", result->addl_params);
-   
+     DEBUG_F("dhcpv6 = <%s>\n", result->dhcpv6);
+     DEBUG_F("blksize = <%s>\n", result->blksize);
+
      return ret;
 }
 
