@@ -36,20 +36,6 @@
 #define _MACH_walnut	0x00001000	/* IBM "Walnut" 405GP eval. board */
 #define _MACH_bplan	0x00002000	/* Pegasos/Efika, broken partition #s */
 
-struct bi_record {
-     unsigned long tag;			/* tag ID */
-     unsigned long size;			/* size of record (in bytes) */
-     unsigned long data[0];		/* data */
-};
-
-#define BI_FIRST		0x1010  /* first record - marker */
-#define BI_LAST			0x1011	/* last record - marker */
-#define BI_CMD_LINE		0x1012
-#define BI_BOOTLOADER_ID	0x1013
-#define BI_INITRD		0x1014
-#define BI_SYSMAP		0x1015
-#define BI_MACHTYPE		0x1016
-
 #endif /* _PPC_BOOTINFO_H */
 
 extern int _machine;
