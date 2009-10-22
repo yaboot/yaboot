@@ -176,6 +176,8 @@ of_net_open(struct boot_file_t* file,
           strcat(buffer, ",");
           strcat(buffer, fspec->tftp_retries);
           strcat(buffer, ",");
+          strcat(buffer, fspec->subnetmask);
+          strcat(buffer, ",");
           strcat(buffer, fspec->addl_params);
      } else {
           strcat(buffer, ",");

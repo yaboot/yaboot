@@ -172,6 +172,7 @@ extract_ipv4_args(char *imagepath, struct boot_fspec_t *result)
      result->giaddr = is_valid_ipv4_str(scopy(&str, &args));
      result->bootp_retries = scopy(&str, &args);
      result->tftp_retries = scopy(&str, &args);
+     result->subnetmask = is_valid_ipv4_str(scopy(&str, &args));
      if (*args) {
 	  result->addl_params = strdup(args);
 	  if (!result->addl_params)
@@ -237,7 +238,12 @@ extract_vendor_options(struct bootp_packet *packet, struct boot_fspec_t *result)
 
           switch (tag) {
                case DHCP_NETMASK:
-                    /* FIXME: do we need to grok the subnet mask? */
+                    if ((result->subnetmask == NULL ||
+                         *(result->subnetmask) == '\x0') && value != 0) {
+                         result->subnetmask = ipv4_to_str(value);
+                         DEBUG_F("Storing %s as subnetmask from options\n",
+                                 result->subnetmask);
+                    }
                     break;
                case DHCP_ROUTERS:
                     if ((result->giaddr == NULL || *(result->giaddr) == '\x0')

@@ -45,6 +45,7 @@ struct boot_fspec_t {
 	char*	giaddr;		/* Gateway address */
 	char*	bootp_retries;	/* Bootp retries */
 	char*	tftp_retries;	/* TFTP retries */
+	char*	subnetmask;	/* Subnet mask */
 	char*	addl_params;	/* copy all additional parameters */
 };
 
