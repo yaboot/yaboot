@@ -261,10 +261,8 @@ extract_vendor_options(struct bootp_packet *packet, struct boot_fspec_t *result)
 /*
  * Check netinfo for ipv4 parameters and add them to the fspec iff the
  * fspec has no existing value.
- *
- * Returns 1 on success, 0 on failure.
  */
-static int
+static void
 extract_netinfo_args(struct boot_fspec_t *result)
 {
      struct bootp_packet *packet;
@@ -272,7 +270,7 @@ extract_netinfo_args(struct boot_fspec_t *result)
      /* Check to see if we can get the [scyg]iaddr fields from netinfo */
      packet = prom_get_netinfo();
      if (!packet)
-          return 0;
+          return;
 
      DEBUG_F("We have a boot packet\n");
      DEBUG_F(" siaddr = <%x>\n", packet->siaddr);
@@ -304,8 +302,6 @@ extract_netinfo_args(struct boot_fspec_t *result)
           result->giaddr = ipv4_to_str(packet->siaddr);
           DEBUG_F("Forcing giaddr to siaddr <%s>\n", result->giaddr);
      }
-
-     return 1;
 }
 
 /*
@@ -370,7 +366,7 @@ extract_netboot_args(char *imagepath, struct boot_fspec_t *result)
 	  ret = extract_ipv6_args(imagepath, result);
      else
 	  ret = extract_ipv4_args(imagepath, result);
-     ret |= extract_netinfo_args(result);
+     extract_netinfo_args(result);
 
      DEBUG_F("ipv6 = <%d>\n", result->is_ipv6);
      DEBUG_F("siaddr = <%s>\n", result->siaddr);
