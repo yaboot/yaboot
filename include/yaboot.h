@@ -49,7 +49,6 @@
 struct boot_param_t {
 	struct boot_fspec_t	kernel;
 	struct boot_fspec_t	rd;
-	struct boot_fspec_t	sysmap;
 
 	char*	args;
 };

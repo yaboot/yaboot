@@ -666,7 +666,6 @@ int get_params(struct boot_param_t* params)
      static int first = 1;
      static char imagepath[1024];
      static char initrdpath[1024];
-     static char sysmappath[1024];
      static char manualinitrd[1024];
      static int definitrd = 1, hasarg = 0;
 
@@ -675,7 +674,6 @@ int get_params(struct boot_param_t* params)
      params->args = "";
      params->kernel.part = -1;
      params->rd.part = -1;
-     params->sysmap.part = -1;
      defpart = boot.part;
 
      cmdinit();
@@ -1020,17 +1018,6 @@ int get_params(struct boot_param_t* params)
 		    return 0;
 	       }
 	  }
-	  p = cfg_get_strg(label, "sysmap");
-	  if (p && *p) {
-	       DEBUG_F("Parsing sysmap path <%s>\n", p);
-	       strncpy(sysmappath, p, 1024);
-	       params->sysmap = boot; /* Copy all the original paramters */
-	       if (!parse_device_path(sysmappath, defdevice, defpart,
-				      "/boot/System.map", &params->sysmap)) {
-		    prom_printf("%s: Unable to parse\n", imagepath);
-		    return 0;
-	       }
-	  }
      }
      return 0;
 }
@@ -1050,8 +1037,6 @@ yaboot_text_ui(void)
      static struct boot_param_t	params;
      void		*initrd_base;
      unsigned long	initrd_size;
-     void                *sysmap_base;
-     unsigned long	sysmap_size;
      kernel_entry_t      kernel_entry;
      char*               loc=NULL;
      loadinfo_t          loadinfo;
@@ -1063,8 +1048,6 @@ yaboot_text_ui(void)
      for (;;) {
 	  initrd_size = 0;
 	  initrd_base = 0;
-	  sysmap_base = 0;
-	  sysmap_size = 0;
 
 	  if (get_params(&params))
 	       return;
@@ -1126,55 +1109,6 @@ yaboot_text_ui(void)
 	  }
 	  file.fs->close(&file);
 	  memset(&file, 0, sizeof(file));
-
-	  /* If sysmap, load it (only if booting a vmlinux).
-	   */
-	  if (flat_vmlinux && params.sysmap.file) {
-	       prom_printf("Loading System.map ...\n");
-	       if(strlen(boot.file) && !strcmp(boot.file,"\\\\") && params.sysmap.file[0] != '/'
-		  && params.sysmap.file[0] != '\\') {
-		    if (loc) free(loc);
-		    loc=(char*)malloc(strlen(params.sysmap.file)+3);
-		    if (!loc) {
-			 prom_printf ("malloc error\n");
-			 goto next;
-		    }
-		    strcpy(loc,boot.file);
-		    strcat(loc,params.sysmap.file);
-		    free(params.sysmap.file);
-		    params.sysmap.file=loc;
-	       }
-
-	       result = open_file(&params.sysmap, &file);
-	       if (result != FILE_ERR_OK) {
-		    prom_printf("%s:%d,", params.sysmap.dev, params.sysmap.part);
-		    prom_perror(result, params.sysmap.file);
-	       }
-	       else {
-		    sysmap_base = prom_claim(loadinfo.base+loadinfo.memsize, 0x100000, 0);
-		    if (sysmap_base == (void *)-1) {
-			 prom_printf("Claim failed for sysmap memory\n");
-			 prom_pause();
-			 sysmap_base = 0;
-		    } else {
-			 sysmap_size = file.fs->read(&file, 0xfffff, sysmap_base);
-			 if (sysmap_size == 0)
-			      sysmap_base = 0;
-			 else
-			      ((char *)sysmap_base)[sysmap_size++] = 0;
-		    }
-		    file.fs->close(&file);
-		    memset(&file, 0, sizeof(file));
-	       }
-	       if (sysmap_base) {
-		    prom_printf("System.map loaded at %p, size: %lu Kbytes\n",
-				sysmap_base, sysmap_size >> 10);
-		    loadinfo.memsize += _ALIGN(0x100000, 0x1000);
-	       } else {
-		    prom_printf("System.map load failed !\n");
-		    prom_pause();
-	       }
-	  }
 
 	  /* If ramdisk, load it (only if booting a vmlinux).  For now, we
 	   * can't tell the size it will be so we claim an arbitrary amount
