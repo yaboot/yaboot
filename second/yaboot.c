@@ -985,7 +985,7 @@ int get_params(struct boot_param_t* params)
 
            /* check if user seted to use a initrd file from boot console */
            if (!definitrd && p != manualinitrd) {
-               if (manualinitrd[0] != "/" && (prom_get_devtype(defdevice_bak) != FILE_DEVICE_NET)) {
+               if (manualinitrd[0] != '/' && (prom_get_devtype(defdevice_bak) != FILE_DEVICE_NET)) {
                    strcpy(initrdpath, "/");
                    strcat(initrdpath, manualinitrd);
                } else
