@@ -174,8 +174,6 @@ extern unsigned char linux_logo_blue[];
 extern char* __bss_start;
 extern char* _end;
 
-static struct first_info *quik_fip = NULL;
-
 int
 yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 {
@@ -186,15 +184,6 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 
      /* OF seems to do it, but I'm not very confident */
      memset(&__bss_start, 0, &_end - &__bss_start);
-
-     /* Check for quik first stage bootloader (but I don't think we are
-      * compatible with it anyway, I'll look into backporting to older OF
-      * versions later
-      */
-     if (r5 == 0xdeadbeef) {
-	  r5 = r3;
-	  quik_fip = (struct first_info *)r4;
-     }
 
      /* Initialize OF interface */
      prom_init ((prom_entry) r5);
