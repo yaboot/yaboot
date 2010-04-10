@@ -1013,8 +1013,6 @@ int get_params(struct boot_param_t* params)
 void
 yaboot_text_ui(void)
 {
-#define MAX_HEADERS	32
-
      struct boot_file_t	file;
      int			result;
      static struct boot_param_t	params;
@@ -1211,11 +1209,6 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 
      loadinfo->entry = e->e_entry;
 
-     if (e->e_phnum > MAX_HEADERS) {
-	  prom_printf ("Can only load kernels with one program header\n");
-	  goto bail;
-     }
-
      ph = (Elf32_Phdr *)malloc(sizeof(Elf32_Phdr) * e->e_phnum);
      if (!ph) {
 	  prom_printf ("Malloc error\n");
@@ -1348,11 +1341,6 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
      DEBUG_F(" e.e_phnum     = %d\n", (int)e->e_phnum);
 
      loadinfo->entry = e->e_entry;
-
-     if (e->e_phnum > MAX_HEADERS) {
-	  prom_printf ("Can only load kernels with one program header\n");
-	  goto bail;
-     }
 
      ph = (Elf64_Phdr *)malloc(sizeof(Elf64_Phdr) * e->e_phnum);
      if (!ph) {
