@@ -154,10 +154,6 @@ int fgcolor = 15;
 int bgcolor = 0;
 #endif /* CONFIG_COLOR_TEXT */
 
-#if DEBUG
-static int test_bss;
-static int test_data = 0;
-#endif
 static int pause_after;
 static char *pause_message = "Type go<return> to continue.\n";
 static char given_bootargs[1024];
@@ -204,10 +200,6 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 
      /* A few useless DEBUG_F's */
      DEBUG_F("reloc_offset :  %ld         (should be 0)\n", reloc_offset());
-     DEBUG_F("test_bss     :  %d         (should be 0)\n", test_bss);
-     DEBUG_F("test_data    :  %d         (should be 0)\n", test_data);
-     DEBUG_F("&test_data   :  %p\n", &test_data);
-     DEBUG_F("&test_bss    :  %p\n", &test_bss);
      DEBUG_F("linked at    :  0x%08x\n", TEXTADDR);
 
      /* ask the OF info if we're a chrp or pmac */
