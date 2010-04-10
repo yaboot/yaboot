@@ -213,7 +213,7 @@ block_read( __u32 blockNr, __u32 start, __u32 len, char *buffer )
      while ( transactions-- > 0 )
      {
 	  int i = 0;
-	  int j_len;
+	  int j_len = 0;
 
 	  if ( *journal_table != 0xffffffff )
 	  {
