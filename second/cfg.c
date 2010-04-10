@@ -102,7 +102,6 @@ static char *currp = NULL;
 static char *endp = NULL;
 static char *file_name = NULL;
 static CONFIG *curr_table = cf_options;
-static int ignore_entry;
 static jmp_buf env;
 
 static struct IMAGES {
