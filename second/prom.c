@@ -387,16 +387,14 @@ prom_readblocks (prom_handle dev, int blockNum, int blockCount, void *buffer)
 int
 prom_getchar ()
 {
-     char c[4];
+     char c;
      int a;
 
-     while ((a = (int)call_prom ("read", 3, 1, prom_stdin, c, 4)) == 0)
+     while ((a = (int)call_prom ("read", 3, 1, prom_stdin, &c, 1)) == 0)
 	  ;
      if (a == -1)
 	  prom_abort ("EOF on console\n");
-     if (a == 3 && c[0] == '\e' && c[1] == '[')
-	  return 0x100 | c[2];
-     return c[0];
+     return c;
 }
 
 int
@@ -511,8 +509,6 @@ prom_readline (char *prompt, char *buf, int len)
 
      while (i < len-1 && (c = prom_getchar ()) != '\r')
      {
-	  if (c >= 0x100)
-	       continue;
 	  if (c == 8)
 	  {
 	       if (i > 0)
