@@ -58,6 +58,8 @@
 #define CONFIG_FILE_NAME	"yaboot.conf"
 #define CONFIG_FILE_MAX		0x8000		/* 32k */
 
+#define MESSAGE_FILE_MAX	2048
+
 #ifdef USE_MD5_PASSWORDS
 #include "md5.h"
 #endif /* USE_MD5_PASSWORDS */
@@ -295,13 +297,13 @@ void print_message_file(char *filename)
      } else
 	  opened = 1;
 
-     msg = malloc(2001);
+     msg = malloc(MESSAGE_FILE_MAX + 1);
      if (!msg)
 	  goto done;
      else
-	  memset(msg, 0, 2001);
+	  memset(msg, 0, MESSAGE_FILE_MAX + 1);
 
-     if (file.fs->read(&file, 2000, msg) <= 0)
+     if (file.fs->read(&file, MESSAGE_FILE_MAX, msg) <= 0)
 	  goto done;
      else
 	  prom_printf("%s", msg);
