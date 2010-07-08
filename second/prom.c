@@ -599,6 +599,23 @@ prom_claim_chunk(void *virt, unsigned int size, unsigned int align)
      return((void*)-1);
 }
 
+/* Start from top of memory and work down to get the needed space */
+void *
+prom_claim_chunk_top(unsigned int size, unsigned int align)
+{
+     void *found, *addr;
+     for(addr=(void*)PROM_CLAIM_MAX_ADDR; addr >= (void *)size;
+         addr-=(0x100000/sizeof(addr))) {
+          found = call_prom("claim", 3, 1, addr, size, 0);
+          if (found != (void *)-1) {
+               prom_debug("claim of 0x%x at 0x%x returned 0x%x\n", size, (int)addr, (int)found);
+               return(found);
+          }
+     }
+     prom_printf("ERROR: claim of 0x%x in range 0x0-0x%x failed\n", size, PROM_CLAIM_MAX_ADDR);
+     return((void*)-1);
+}
+
 void *
 prom_claim (void *virt, unsigned int size, unsigned int align)
 {

@@ -92,6 +92,7 @@ int prom_set_color(prom_handle device, int color, int r, int g, int b);
 /* memory */
 
 void *prom_claim_chunk(void *virt, unsigned int size, unsigned int align);
+void *prom_claim_chunk_top(unsigned int size, unsigned int align);
 void *prom_claim (void *virt, unsigned int size, unsigned int align);
 void prom_release(void *virt, unsigned int size);
 void prom_map (void *phys, void *virt, int size);
