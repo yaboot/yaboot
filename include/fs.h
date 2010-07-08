@@ -44,6 +44,8 @@ struct fs_t {
 			unsigned int		newpos);
 
 	int (*close)(	struct boot_file_t*	file);
+
+	unsigned int (*ino_size)(struct boot_file_t *file);
 };
 
 extern const struct fs_t *fs_of;

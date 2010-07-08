@@ -58,6 +58,7 @@ static int of_net_open(struct boot_file_t* file,
 		       struct partition_t* part, struct boot_fspec_t* fspec);
 static int of_net_read(struct boot_file_t* file, unsigned int size, void* buffer);
 static int of_net_seek(struct boot_file_t* file, unsigned int newpos);
+static unsigned int of_net_ino_size(struct boot_file_t* file);
 
 
 struct fs_t of_filesystem =
@@ -75,7 +76,8 @@ struct fs_t of_net_filesystem =
      of_net_open,
      of_net_read,
      of_net_seek,
-     of_close
+     of_close,
+     of_net_ino_size,
 };
 
 static int
@@ -281,6 +283,12 @@ of_close(struct boot_file_t* file)
 
      DEBUG_LEAVE(0);
      return 0;
+}
+
+static unsigned int
+of_net_ino_size(struct boot_file_t* file)
+{
+	return file->len;
 }
 
 /*
