@@ -44,7 +44,6 @@
 #include "errors.h"
 #include "debug.h"
 
-#define LOAD_BUFFER_POS		0x1000000
 #define LOAD_BUFFER_SIZE	0x1800000
 
 static int of_open(struct boot_file_t* file,
@@ -208,8 +207,7 @@ of_net_open(struct boot_file_t* file,
      }
 
 
-     file->buffer = prom_claim_chunk((void *)LOAD_BUFFER_POS,
-                                     LOAD_BUFFER_SIZE, 0);
+     file->buffer = prom_claim_chunk_top(LOAD_BUFFER_SIZE, 0);
      if (file->buffer == (void *)-1) {
 	  prom_printf("Can't claim memory for TFTP download\n");
 	  prom_close(file->of_device);
