@@ -180,10 +180,10 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
      prom_print_available();
 
      /* Allocate some memory for malloc'ator */
-     malloc_base = prom_claim_chunk((void *)MALLOCADDR, MALLOCSIZE, 0);
+     malloc_base = prom_claim_chunk_top(MALLOCSIZE, 0);
      if (malloc_base == (void *)-1) {
-	  prom_printf("Can't claim malloc buffer (%d bytes at 0x%08x)\n",
-		      MALLOCSIZE, MALLOCADDR);
+	  prom_printf("Can't claim malloc buffer of %d bytes\n",
+		      MALLOCSIZE);
 	  return -1;
      }
      malloc_init(malloc_base, MALLOCSIZE);

@@ -17,8 +17,7 @@ GETROOT = fakeroot
 
 # Load the bootstrap at 2Mb
 TEXTADDR	= 0x200000
-# Malloc block at 3Mb -> 4Mb
-MALLOCADDR	= 0x300000
+# Malloc block of 1MB
 MALLOCSIZE	= 0x100000
 # Load kernel and ramdisk at real-base.  If there is overlap, will retry until find open space
 KERNELADDR	= 0x00C00000
