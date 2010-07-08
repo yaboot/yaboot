@@ -15,8 +15,8 @@ GETROOT = fakeroot
 # We use fixed addresses to avoid overlap when relocating
 # and other trouble with initrd
 
-# Load the bootstrap at 2Mb
-TEXTADDR	= 0x200000
+# Load the bootstrap at 1Mb
+TEXTADDR	= 0x100000
 # Malloc block of 1MB
 MALLOCSIZE	= 0x100000
 # Load kernel and ramdisk at as low as possible
