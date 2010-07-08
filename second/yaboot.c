@@ -177,6 +177,8 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
      /* Initialize OF interface */
      prom_init ((prom_entry) r5);
 
+     prom_print_available();
+
      /* Allocate some memory for malloc'ator */
      malloc_base = prom_claim_chunk((void *)MALLOCADDR, MALLOCSIZE, 0);
      if (malloc_base == (void *)-1) {
@@ -1167,6 +1169,8 @@ yaboot_text_ui(void)
 		  initrd_base + loadinfo.load_loc, initrd_size, prom, 0, 0);
 
 	  DEBUG_F("Entering kernel...\n");
+
+	  prom_print_available();
 
           /* call the kernel with our stack. */
 	  kernel_entry(initrd_base + loadinfo.load_loc, initrd_size, prom, 0, 0);
