@@ -2,7 +2,7 @@
 #include "asm/processor.h"
 
 /*
- * Main entry point. should add code to clear BSS and more ...
+ * Main entry point. We zero the BSS then jump to yaboot_start.
  */
 _GLOBAL(_start)
 	lis	r10,edata@h

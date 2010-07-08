@@ -167,20 +167,12 @@ extern unsigned char linux_logo_blue[];
 
 #define DEFAULT_TIMEOUT		-1
 
-/* Entry, currently called directly by crt0 (bss not inited) */
-
-extern char* __bss_start;
-extern char* _end;
-
 int
 yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 {
      int result;
      void* malloc_base = NULL;
      prom_handle root;
-
-     /* OF seems to do it, but I'm not very confident */
-     memset(&__bss_start, 0, &_end - &__bss_start);
 
      /* Initialize OF interface */
      prom_init ((prom_entry) r5);
