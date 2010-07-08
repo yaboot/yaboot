@@ -473,6 +473,19 @@ prom_printf (char *fmt, ...)
 }
 
 void
+prom_debug (char *fmt, ...)
+{
+     va_list ap;
+
+     if (!yaboot_debug)
+          return;
+
+     va_start (ap, fmt);
+     prom_vfprintf (prom_stdout, fmt, ap);
+     va_end (ap);
+}
+
+void
 prom_perror (int error, char *filename)
 {
      if (error == FILE_ERR_EOF)
@@ -576,26 +589,37 @@ prom_claim_chunk(void *virt, unsigned int size, unsigned int align)
      void *found, *addr;
      for(addr=virt; addr <= (void*)PROM_CLAIM_MAX_ADDR;
          addr+=(0x100000/sizeof(addr))) {
-          found = prom_claim(addr, size, 0);
+          found = call_prom("claim", 3, 1, addr, size, 0);
           if (found != (void *)-1) {
-               DEBUG_F("claimed %i at 0x%x (0x%x)\n",size,(int)found,(int)virt);
+               prom_debug("claim of 0x%x at 0x%x returned 0x%x\n", size, (int)addr, (int)found);
                return(found);
           }
      }
-     prom_printf("Claim error, can't allocate %x at 0x%x\n",size,(int)virt);
+     prom_printf("ERROR: claim of 0x%x in range 0x%x-0x%x failed\n", size, (int)virt, PROM_CLAIM_MAX_ADDR);
      return((void*)-1);
 }
 
 void *
 prom_claim (void *virt, unsigned int size, unsigned int align)
 {
-     return call_prom ("claim", 3, 1, virt, size, align);
+     void *ret;
+
+     ret = call_prom ("claim", 3, 1, virt, size, align);
+     if (ret == (void *)-1)
+          prom_printf("ERROR: claim of 0x%x at 0x%x failed\n", size, (int)virt);
+     else
+          prom_debug("claim of 0x%x at 0x%x returned 0x%x\n", size, (int)virt, (int)ret);
+
+     return ret;
 }
 
 void
 prom_release(void *virt, unsigned int size)
 {
-     call_prom ("release", 2, 0, virt, size);
+     void *ret;
+
+     ret = call_prom ("release", 2, 0, virt, size);
+     prom_debug("release of 0x%x at 0x%x returned 0x%x\n", size, (int)virt, (int)ret);
 }
 
 void
