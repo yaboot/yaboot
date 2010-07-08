@@ -1106,25 +1106,33 @@ yaboot_text_ui(void)
 	       }
 	       else {
 #define INITRD_CHUNKSIZE 0x100000
-		    initrd_base = prom_claim(loadinfo.base+loadinfo.memsize, INITRD_CHUNKSIZE, 0);
+		    unsigned int len = INITRD_CHUNKSIZE;
+
+		    /* We add a bit to the actual size so the loop below doesn't think
+		     * there is more to load.
+		     */
+		    if (file.fs->ino_size && file.fs->ino_size(&file) > 0)
+			 len = file.fs->ino_size(&file) + 0x1000;
+
+		    initrd_base = prom_claim_chunk(loadinfo.base+loadinfo.memsize, len, 0);
 		    if (initrd_base == (void *)-1) {
 			 prom_printf("Claim failed for initrd memory\n");
 			 initrd_base = 0;
 		    } else {
-			 initrd_size = file.fs->read(&file, INITRD_CHUNKSIZE, initrd_base);
+			 initrd_size = file.fs->read(&file, len, initrd_base);
 			 if (initrd_size == 0)
 			      initrd_base = 0;
 			 initrd_read = initrd_size;
 			 initrd_more = initrd_base;
-			 while (initrd_read == INITRD_CHUNKSIZE ) { /* need to read more? */
-			      initrd_want = (void *)((unsigned long)initrd_more+INITRD_CHUNKSIZE);
-			      initrd_more = prom_claim(initrd_want, INITRD_CHUNKSIZE, 0);
+			 while (initrd_read == len ) { /* need to read more? */
+			      initrd_want = (void *)((unsigned long)initrd_more+len);
+			      initrd_more = prom_claim(initrd_want, len, 0);
 			      if (initrd_more != initrd_want) {
 				   prom_printf("Claim failed for initrd memory at %p rc=%p\n",initrd_want,initrd_more);
 				   prom_pause();
 				   break;
 			      }
-			      initrd_read = file.fs->read(&file, INITRD_CHUNKSIZE, initrd_more);
+			      initrd_read = file.fs->read(&file, len, initrd_more);
 			      DEBUG_F("  block at %p rc=%lu\n",initrd_more,initrd_read);
 			      initrd_size += initrd_read;
 			 }
