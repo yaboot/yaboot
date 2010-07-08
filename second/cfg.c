@@ -42,7 +42,6 @@ typedef struct {
 } CONFIG;
 
 #define MAX_TOKEN 511
-#define MAX_VAR_NAME MAX_TOKEN
 #define EOF -1
 
 CONFIG cf_options[] =
