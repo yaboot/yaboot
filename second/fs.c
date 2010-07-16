@@ -27,6 +27,7 @@
 extern const struct fs_t	of_filesystem;
 extern const struct fs_t	of_net_filesystem;
 extern const struct fs_t	ext2_filesystem;
+extern const struct fs_t        swap_filesystem;
 //extern const struct fs_t	iso_filesystem;
 
 /* Configurable filesystems */
@@ -41,6 +42,7 @@ extern const struct fs_t        reiserfs_filesystem;
 
 /* Filesystem handlers yaboot knows about */
 static const struct fs_t *block_filesystems[] = {
+     &swap_filesystem,		/* swap signature checker */
      &ext2_filesystem,		/* ext2 */
 #ifdef CONFIG_FS_XFS
      &xfs_filesystem,                /* XFS */
