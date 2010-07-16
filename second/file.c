@@ -186,7 +186,6 @@ enum dhcp_options {
      DHCP_PAD = 0,
      DHCP_NETMASK = 1,
      DHCP_ROUTERS = 3,
-     DHCP_DNS = 6,
      DHCP_END = 255,
 };
 
@@ -218,13 +217,18 @@ extract_vendor_options(struct bootp_packet *packet, struct boot_fspec_t *result)
       *         it's malformed. :( */
      while (options[i] != DHCP_END) {
           __u8 tag = options[i++], len;
-          __u32 value;
+          __u32 value = 0;
 
           if (tag == DHCP_PAD)
                continue;
 
           len = options[i++];
-          memcpy(&value, &options[i], len);
+          /* Clamp the maxium length of the memcpy() to the right size for
+           * value. */
+          if (len > sizeof(value))
+               memcpy(&value, &options[i], sizeof(value));
+          else
+               memcpy(&value, &options[i], len);
 
 #if DEBUG
 {
