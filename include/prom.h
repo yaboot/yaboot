@@ -37,6 +37,7 @@ typedef void *phandle;
 #define PROM_INVALID_HANDLE	((prom_handle)-1UL)
 #define BOOTDEVSZ               (2048) /* iscsi args can be in excess of 1040 bytes */
 #define TOK_ISCSI               "iscsi"
+#define TOK_IPV6                "ipv6"
 #define PROM_CLAIM_MAX_ADDR	0x8000000
 #define BOOTLASTSZ		1024
 #define FW_NBR_REBOOTSZ		4
@@ -152,7 +153,7 @@ struct bootp_packet {
      unsigned char chaddr[16];
      unsigned char sname[64];
      unsigned char file[128];
-     /* vendor options go here if we need them */
+     unsigned char options[]; /* vendor options */
 };
 
 struct bootp_packet * prom_get_netinfo (void);

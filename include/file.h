@@ -39,7 +39,19 @@ struct boot_file_t;
 struct boot_fspec_t {
 	char*	dev;		/* OF device path */
 	int	part;		/* Partition number or -1 */
+	char*	siaddr;		/* Server address */
 	char*	file;		/* File path */
+	char*	ciaddr;		/* Client address */
+	char*	giaddr;		/* Gateway address */
+	char*	bootp_retries;	/* Bootp retries */
+	char*	tftp_retries;	/* TFTP retries */
+	char*	subnetmask;	/* Subnet mask */
+	char*	addl_params;	/* copy all additional parameters */
+
+	/* Following fields are used only in ipv6 format */
+	int	is_ipv6;	/* is ipv6 specified ? */
+	char*	dhcpv6;		/* dhcpv6 string */
+	char*	blksize;	/* blksize string */
 };
 
 struct boot_file_t {
@@ -63,7 +75,7 @@ struct boot_file_t {
 };
 
 extern int
-open_file(const struct boot_fspec_t*	spec,
+open_file(struct boot_fspec_t*	spec,
 	  struct boot_file_t*		file);
 
 extern int

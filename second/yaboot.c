@@ -300,6 +300,7 @@ void print_message_file(char *filename)
 	  }
 
      strncpy(msgpath, filename, sizeof(msgpath));
+     msgfile = boot; /* Copy all the original paramters */
      if (!parse_device_path(msgpath, defdev, defpart, "/etc/yaboot.msg", &msgfile)) {
 	  prom_printf("%s: Unable to parse\n", msgpath);
 	  goto done;
@@ -470,6 +471,8 @@ static int load_my_config_file(struct boot_fspec_t *orig_fspec)
      int minlen;
 
      packet = prom_get_netinfo();
+     if (!packet)
+          goto out;
 
      /*
       * First, try to match on mac address with the hardware type
@@ -988,6 +991,7 @@ int get_params(struct boot_param_t* params)
      if (!label && password)
 	  check_password ("To boot a custom image you must enter the password.");
 
+     params->kernel = boot; /* Copy all the original paramters */
      if (!parse_device_path(imagepath, defdevice, defpart,
 			    "/vmlinux", &params->kernel)) {
 	  prom_printf("%s: Unable to parse\n", imagepath);
@@ -1009,6 +1013,7 @@ int get_params(struct boot_param_t* params)
                strncpy(initrdpath, p, 1024);
 
 	       DEBUG_F("Parsing initrd path <%s>\n", initrdpath);
+	       params->rd = boot; /* Copy all the original paramters */
 	       if (!parse_device_path(initrdpath, defdevice, defpart,
 				      "/root.bin", &params->rd)) {
 		    prom_printf("%s: Unable to parse\n", imagepath);
@@ -1019,6 +1024,7 @@ int get_params(struct boot_param_t* params)
 	  if (p && *p) {
 	       DEBUG_F("Parsing sysmap path <%s>\n", p);
 	       strncpy(sysmappath, p, 1024);
+	       params->sysmap = boot; /* Copy all the original paramters */
 	       if (!parse_device_path(sysmappath, defdevice, defpart,
 				      "/boot/System.map", &params->sysmap)) {
 		    prom_printf("%s: Unable to parse\n", imagepath);

@@ -27,14 +27,14 @@
 #include "file.h"
 
 int fserrorno;
+struct boot_fspec_t;
 
 struct fs_t {
 	const char* name;
 
 	int (*open)(	struct boot_file_t*	file,
-			const char*		dev_name,
 			struct partition_t*	part,
-			const char*		file_name);
+			struct boot_fspec_t*	fspec);
 
 	int (*read)(	struct boot_file_t*	file,
 			unsigned int		size,
@@ -49,7 +49,7 @@ struct fs_t {
 extern const struct fs_t *fs_of;
 extern const struct fs_t *fs_of_netboot;
 
-const struct fs_t *fs_open(struct boot_file_t *file, const char *dev_name,
-			  struct partition_t *part, const char *file_name);
+const struct fs_t *fs_open(struct boot_file_t *file,
+			  struct partition_t *part, struct boot_fspec_t *fspec);
 
 #endif

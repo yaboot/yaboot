@@ -683,6 +683,10 @@ struct bootp_packet * prom_get_netinfo (void)
      void *bootp_response = NULL;
      char *propname;
      struct bootp_packet *packet;
+     /* struct bootp_packet contains a VLA, so sizeof won't work.
+        the VLA /must/ be the last field in the structure so use it's
+        offset as a good estimate of the packet size */
+     size_t packet_size = offsetof(struct bootp_packet, options);
      int i = 0, size, offset = 0;
      prom_handle chosen;
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
@@ -707,7 +711,7 @@ struct bootp_packet * prom_get_netinfo (void)
      if (size <= 0)
          return NULL;
 
-     if (sizeof(*packet) > size - offset) {
+     if (packet_size > size - offset) {
          prom_printf("Malformed %s property?\n", propname);
          return NULL;
      }
