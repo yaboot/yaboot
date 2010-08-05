@@ -141,7 +141,8 @@ ext2_open(	struct boot_file_t*	file,
 	  DEBUG_LEAVE(FILE_ERR_FSBUSY);
 	  return FILE_ERR_FSBUSY;
      }
-     if (file->device_kind != FILE_DEVICE_BLOCK) {
+     if (file->device_kind != FILE_DEVICE_BLOCK
+         && file->device_kind != FILE_DEVICE_ISCSI) {
 	  DEBUG_LEAVE(FILE_ERR_BADDEV);
 	  return FILE_ERR_BADDEV;
      }

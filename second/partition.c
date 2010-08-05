@@ -400,7 +400,8 @@ get_part_type(char *device, int partition)
      struct partition_t*	found;
      char *type = NULL;
 
-     if (prom_get_devtype(device) != FILE_DEVICE_BLOCK)
+     int device_kind = prom_get_devtype(device);
+     if (device_kind != FILE_DEVICE_BLOCK && device_kind != FILE_DEVICE_ISCSI)
 	  return NULL;
 
      parts = partitions_lookup(device);

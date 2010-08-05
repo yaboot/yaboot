@@ -675,6 +675,9 @@ int open_file(struct boot_fspec_t* spec, struct boot_file_t* file)
      case FILE_DEVICE_BLOCK:
 	  DEBUG_F("device is a block device\n");
 	  return file_block_open(file, spec, spec->part);
+     case FILE_DEVICE_ISCSI:
+	  DEBUG_F("device is a iSCSI device\n");
+	  return file_block_open(file, spec, spec->part);
      case FILE_DEVICE_NET:
 	  DEBUG_F("device is a network device\n");
 	  return file_net_open(file, spec);

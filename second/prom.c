@@ -196,7 +196,7 @@ prom_get_devtype (char *device)
      char       tmp[64];
 
      if (strstr(device, TOK_ISCSI))
-	  device = strcpy(tmp, "/vdevice/gscsi/disk");
+	  return FILE_DEVICE_ISCSI;
 
      /* Find OF device phandle */
      dev = prom_finddevice(device);
