@@ -23,6 +23,10 @@
 #include "stddef.h"
 #include "string.h"
 
+/* Copied from asm-generic/errno-base.h */
+#define	ENOMEM		12	/* Out of memory */
+#define	EINVAL		22	/* Invalid argument */
+
 /* Imported functions */
 extern void prom_printf (char *fmt, ...);
 
@@ -58,6 +62,49 @@ void *malloc (unsigned int size)
     last_alloc = caddr;
     malloc_ptr = (char *) ((((unsigned int) malloc_ptr) + 3) & (~3));
     return caddr;
+}
+
+/* Do not fall back to the malloc above as posix_memalign is needed by
+ * external libraries not yaboot */
+int posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+    char *caddr;
+    /* size of allocation including the alignment */
+    size_t alloc_size;
+
+    if (!malloc_ptr)
+        return EINVAL;
+
+    /* Minimal aligment is sizeof(void *) */
+    if (alignment < sizeof(void*))
+	alignment = sizeof(void*);
+
+    /* Check for valid alignment and power of 2 */
+    if ((alignment % sizeof(void*) != 0) || ((alignment-1)&alignment))
+        return EINVAL;
+
+    if (size == 0) {
+	*memptr=NULL;
+	return 0;
+    }
+
+    caddr = (char*)(
+             (size_t)((malloc_ptr + sizeof(int))+(alignment-1)) &
+             (~(alignment-1))
+            );
+
+    alloc_size = size + (caddr - (malloc_ptr+sizeof(int)));
+
+    if ((malloc_ptr + alloc_size + sizeof(int)) > malloc_top)
+        return ENOMEM;
+
+    *(int *)(caddr - sizeof(int)) = size;
+    malloc_ptr += alloc_size + sizeof(int);
+    last_alloc = caddr;
+    malloc_ptr = (char *) ((((unsigned int) malloc_ptr) + 3) & (~3));
+    *memptr=(void*)caddr;
+
+    return 0;
 }
 
 void *realloc(void *ptr, unsigned int size)
