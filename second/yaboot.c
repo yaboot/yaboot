@@ -709,9 +709,10 @@ int get_params(struct boot_param_t* params)
 	  if (!imagename) {
 	       if (bootoncelabel[0] != 0)
 		    imagename = bootoncelabel;
-	       else if (bootlastlabel[0] != 0)
-                         imagename = bootlastlabel;
-               else
+	       else if (bootlastlabel[0] != 0) {
+		    imagename = bootlastlabel;
+		    word_split(&imagename, &params->args);
+	       } else
 		    imagename = cfg_get_default();
 	  }
 	  if (imagename)
@@ -773,7 +774,13 @@ int get_params(struct boot_param_t* params)
 	  imagename = cfg_get_default();
 
      /* write the imagename out so it can be reused on reboot if necessary */
-     prom_set_options("boot-last-label", imagename, strlen(imagename));
+     strcpy(bootlastlabel, imagename);
+     if (params->args && params->args[0]) {
+	  strcat(bootlastlabel, " ");
+	  strcat(bootlastlabel, params->args);
+     }
+     prom_set_options("boot-last-label", bootlastlabel,
+		      strlen(bootlastlabel) + 1);
 
      label = 0;
      defdevice = boot.dev;
