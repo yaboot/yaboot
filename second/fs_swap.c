@@ -54,7 +54,7 @@ swap_open(struct boot_file_t* file, struct partition_t* part,
      int i;
      unsigned char *buffer;
      /* Make static to move into the BSS rather then the stack */
-     static unsigned char device_name[1024];
+     static char device_name[1024];
 
      DEBUG_ENTER;
      DEBUG_OPEN;

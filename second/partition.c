@@ -337,12 +337,12 @@ partitions_lookup(const char *device)
      struct partition_t* list = NULL;
      unsigned int prom_blksize, iso_root_block;
 
-     strncpy(block_buffer, device, 2040);
+     strncpy((char *)block_buffer, device, 2040);
      if (_machine != _MACH_bplan)
-	  strcat(block_buffer, ":0");
+	  strcat((char *)block_buffer, ":0");
 
      /* Open device */
-     disk = prom_open(block_buffer);
+     disk = prom_open((char *)block_buffer);
      if (disk == NULL) {
 	  prom_printf("Can't open device <%s>\n", block_buffer);
 	  goto bail;

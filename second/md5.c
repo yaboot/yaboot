@@ -156,7 +156,7 @@ md5_init(void)
 }
 
 static void
-md5_update (const char *input, int inputlen)
+md5_update (const unsigned char *input, int inputlen)
 {
   int buflen = length & 63;
   length += inputlen;
@@ -211,21 +211,21 @@ md5_final()
    If CHECK is false, crypt KEY and save the result in CRYPTED.
    CRYPTED must have a salt.  */
 int
-md5_password (const char *key, char *crypted, int check)
+md5_password (const unsigned char *key, unsigned char *crypted, int check)
 {
-  int keylen = strlen (key);
-  char *salt = crypted + 3; /* skip $1$ header */
-  char *p;
+  int keylen = strlen ((char *)key);
+  unsigned char *salt = crypted + 3; /* skip $1$ header */
+  unsigned char *p;
   int saltlen;
   int i, n;
   unsigned char alt_result[16];
   unsigned char *digest;
 
   if (check)
-    saltlen = strstr (salt, "$") - salt;
+    saltlen = strstr ((char *)salt, "$") - (char* )salt;
   else
     {
-      char *end = strstr (salt, "$");
+      unsigned char *end = (unsigned char*)strstr ((char *)salt, "$");
       if (end && end - salt < 8)
 	saltlen = end - salt;
       else

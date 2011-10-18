@@ -109,7 +109,7 @@ static unsigned long read_total;
 static unsigned long read_max;
 static struct boot_file_t* read_cur_file;
 static errcode_t read_result;
-static char* read_buffer;
+static unsigned char* read_buffer;
 
 static int read_dump_range(void);
 static int read_iterator(ext2_filsys fs, blk_t *blocknr, int lg_block, void *private);

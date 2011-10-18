@@ -603,7 +603,7 @@ void check_password(char *str)
 	  prom_printf ("\n");
 #ifdef USE_MD5_PASSWORDS
 	  if (!strncmp (password, "$1$", 3)) {
-	       if (!check_md5_password(passwdbuff, password))
+	       if (!check_md5_password((unsigned char*)passwdbuff, (unsigned char*)password))
 		    return;
 	  }
 	  else if (!strcmp (password, passwdbuff))

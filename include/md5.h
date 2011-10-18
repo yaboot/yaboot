@@ -23,7 +23,7 @@
    to strcmp.
    If CHECK is false, crypt KEY and save the result in CRYPTED.
    CRYPTED must have a salt.  */
-extern int md5_password (const char *key, char *crypted, int check);
+extern int md5_password (const unsigned char *key, unsigned char *crypted, int check);
 
 /* For convenience.  */
 #define check_md5_password(key,crypted)	md5_password((key), (crypted), 1)

@@ -415,7 +415,7 @@ extern int ffs(unsigned int);
 
 _INLINE_ int ext2fs_find_first_bit_set(void * addr, unsigned size)
 {
-	char	*cp = (unsigned char *) addr;
+	unsigned char	*cp = (unsigned char *) addr;
 	int 	res = 0, d0;
 
 	if (!size)

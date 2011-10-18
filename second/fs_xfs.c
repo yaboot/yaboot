@@ -490,7 +490,7 @@ next_dentry (xfs_ino_t *ino)
 	int toread;
 	static char *usual[2] = {".", ".."};
 	static xfs_dir2_sf_entry_t *sfe;
-	char *name = usual[0];
+	unsigned char *name = (unsigned char *)usual[0];
 
 	if (xfs.dirpos >= xfs.dirmax) {
 		if (xfs.forw == 0)
@@ -552,14 +552,14 @@ next_dentry (xfs_ino_t *ino)
 #undef dau
 		toread = roundup8 (namelen + 11) - 9;
 		xfs_read_data (dirbuf, toread);
-		name = (char *)dirbuf;
+		name = (unsigned char *)dirbuf;
 		xfs.blkoff += toread + 5;
 		break;
 	}
 	++xfs.dirpos;
 	name[namelen] = 0;
 
-	return name;
+	return (char *)name;
 }
 
 static char *
