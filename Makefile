@@ -35,7 +35,7 @@ OBJCOPY		:= $(CROSS)objcopy
 # The flags for the yaboot binary.
 #
 YBCFLAGS = -Os -m32 $(CFLAGS) -nostdinc -Wall -isystem `$(CC) -m32 -print-file-name=include` -fsigned-char
-YBCFLAGS += -DVERSION=\"${VERSION}${VERSIONEXTRA}\"	#"
+YBCFLAGS += -DVERSION="\"${VERSION}${VERSIONEXTRA}\""
 YBCFLAGS += -DTEXTADDR=$(TEXTADDR) -DDEBUG=$(DEBUG)
 YBCFLAGS += -DMALLOCADDR=$(MALLOCADDR) -DMALLOCSIZE=$(MALLOCSIZE)
 YBCFLAGS += -DKERNELADDR=$(KERNELADDR)
