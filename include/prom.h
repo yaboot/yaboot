@@ -74,15 +74,16 @@ void prom_putchar (char);
 int prom_nbgetchar();
 
 #ifdef __GNUC__
-void prom_vprintf (char *fmt, va_list ap) __attribute__ ((format (printf, 1, 0)));
-void prom_fprintf (prom_handle dev, char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
-void prom_printf (char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-void prom_debug (char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void prom_vprintf (const char *fmt, va_list ap) __attribute__ ((format (printf, 1, 0)));
+void prom_vfprintf (prom_handle file, const char *fmt, va_list ap)  __attribute__ ((format (printf, 2, 0)));
+void prom_fprintf (prom_handle dev, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
+void prom_printf (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+void prom_debug (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 #else
-void prom_vprintf (char *fmt, va_list ap);
-void prom_fprintf (prom_handle dev, char *fmt, ...);
-void prom_printf (char *fmt, ...);
-void prom_debug (char *fmt, ...);
+void prom_vprintf (const char *fmt, va_list ap);
+void prom_fprintf (prom_handle dev, const char *fmt, ...);
+void prom_printf (const char *fmt, ...);
+void prom_debug (const char *fmt, ...);
 #endif
 
 void prom_perror (int error, char *filename);

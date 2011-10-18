@@ -439,7 +439,7 @@ prom_puts (prom_handle file, char *s)
 }
 
 void
-prom_vfprintf (prom_handle file, char *fmt, va_list ap)
+prom_vfprintf (prom_handle file, const char *fmt, va_list ap)
 {
      static char printf_buf[2048];
      vsprintf (printf_buf, fmt, ap);
@@ -447,7 +447,7 @@ prom_vfprintf (prom_handle file, char *fmt, va_list ap)
 }
 
 void
-prom_vprintf (char *fmt, va_list ap)
+prom_vprintf (const char *fmt, va_list ap)
 {
      static char printf_buf[2048];
      vsprintf (printf_buf, fmt, ap);
@@ -455,7 +455,7 @@ prom_vprintf (char *fmt, va_list ap)
 }
 
 void
-prom_fprintf (prom_handle file, char *fmt, ...)
+prom_fprintf (prom_handle file, const char *fmt, ...)
 {
      va_list ap;
      va_start (ap, fmt);
@@ -464,7 +464,7 @@ prom_fprintf (prom_handle file, char *fmt, ...)
 }
 
 void
-prom_printf (char *fmt, ...)
+prom_printf (const char *fmt, ...)
 {
      va_list ap;
      va_start (ap, fmt);
@@ -473,7 +473,7 @@ prom_printf (char *fmt, ...)
 }
 
 void
-prom_debug (char *fmt, ...)
+prom_debug (const char *fmt, ...)
 {
      va_list ap;
 
