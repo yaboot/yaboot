@@ -205,6 +205,9 @@ yaboot_start (unsigned long r3, unsigned long r4, unsigned long r5)
 	  else if (prom_getprop(root, "device_type", model, 256 ) > 0 &&
 	      !strncmp("chrp", model, 4))
 	       _machine = _MACH_chrp;
+	  else if (prom_getprop(root, "compatible", model, 256 ) > 0 &&
+		   strstr(model, "ibm,powernv"))
+	       _machine = _MACH_chrp;
 	  else {
 	       if (prom_getprop(root, "model", model, 256 ) > 0 &&
 		   !strncmp(model, "IBM", 3))

@@ -73,7 +73,9 @@ fi
 
 ## defaults
 usemount=no
-if (cat /proc/cpuinfo 2> /dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
+if (cat /proc/cpuinfo 2> /dev/null | grep ^platform | grep -q 'pSeries') ; then
+    fstype=raw
+elif (cat /proc/cpuinfo 2> /dev/null | grep ^platform | grep -q 'PowerNV') ; then
     fstype=raw
 else
     fstype=hfs
@@ -504,7 +506,11 @@ checkconf()
 	echo 1>&2
 	[ "$nonvram" = 0 ] && echo 1>&2 "$PRG: OldWorld PowerMac, nvram will not be updated"
 	nonvram=1
-    elif (cat /proc/cpuinfo 2> /dev/null | grep ^machine | grep -q 'CHRP IBM') ; then
+    elif (cat /proc/cpuinfo 2> /dev/null | grep ^platform | grep -q 'pSeries') ; then
+	## IBM hardware does not need nvram update AFAICT
+	nonvram=1
+	ADDNOTE=yes
+    elif (cat /proc/cpuinfo 2> /dev/null | grep ^platform | grep -q 'PowerNV') ; then
 	## IBM hardware does not need nvram update AFAICT
 	nonvram=1
 	ADDNOTE=yes
