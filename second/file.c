@@ -88,7 +88,7 @@ static char * is_valid_ipv4_str(char *str)
 
 
 /*
- * Copy the string from source to dest till newline or comma(,) is seen
+ * Copy the string from source to dest until the end of string or comma is seen
  * in the source.
  * Move source and dest pointers respectively.
  * Returns pointer to the start of the string that has just been copied.
@@ -104,9 +104,9 @@ scopy(char **dest, char **source)
      while (**source != ',' && **source != '\0')
 	  *(*dest)++ = *(*source)++;
      if (**source != '\0')
-	  *(*source)++;
+	  (void)*(*source)++;
      **dest = '\0';
-     *(*dest)++;
+     (void)*(*dest)++;
      return ret;
 }
 
