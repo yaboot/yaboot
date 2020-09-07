@@ -56,7 +56,7 @@ struct fs_t xfs_filesystem = {
 struct boot_file_t *xfs_file;
 static char FSYS_BUF[32768];
 uint64_t partition_offset;
-int errnum;
+static int errnum;
 
 static int
 xfs_open(struct boot_file_t *file,

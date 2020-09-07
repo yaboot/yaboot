@@ -87,7 +87,8 @@ swap_open(struct boot_file_t* file, struct partition_t* part,
 
      for(i=0; i< ARRAY_SIZE(signatures); i++) {
 	  int blk = part->part_start + (signatures[i].offset / part->blocksize);
-          int rc = prom_readblocks(file->of_device, blk, BLKCOUNT, buffer);
+          int rc __attribute__((unused));
+          rc = prom_readblocks(file->of_device, blk, BLKCOUNT, buffer);
 
           /* FIXME: going past partition length */
           DEBUG_F("Looking for %s @ offset 0x%x, rc == %d, blk=0x%x\n",

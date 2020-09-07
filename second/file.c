@@ -37,6 +37,7 @@
 #include "debug.h"
 
 extern char bootdevice[];
+int fserrorno;
 
 /* Convert __u32 into std, dotted quad string, leaks like a sive :( */
 static char *
@@ -659,7 +660,7 @@ int open_file(struct boot_fspec_t* spec, struct boot_file_t* file)
 {
      int result;
 
-     memset(file, 0, sizeof(struct boot_file_t*));
+     memset(file, 0, sizeof(struct boot_file_t));
      file->fs        = &fs_default;
 
      DEBUG_F("dev_path = %s\nfile_name = %s\npartition = %d\n",

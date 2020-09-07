@@ -1195,7 +1195,7 @@ load_elf32(struct boot_file_t *file, loadinfo_t *loadinfo)
 {
      int			i;
      Elf32_Ehdr		*e = &(loadinfo->elf.elf32hdr);
-     Elf32_Phdr		*p, *ph;
+     Elf32_Phdr		*p, *ph = NULL;
      int			size = sizeof(Elf32_Ehdr) - sizeof(Elf_Ident);
      unsigned long	loadaddr;
 
@@ -1328,7 +1328,7 @@ load_elf64(struct boot_file_t *file, loadinfo_t *loadinfo)
 {
      int			i;
      Elf64_Ehdr		*e = &(loadinfo->elf.elf64hdr);
-     Elf64_Phdr		*p, *ph;
+     Elf64_Phdr		*p, *ph = NULL;
      int			size = sizeof(Elf64_Ehdr) - sizeof(Elf_Ident);
      unsigned long	loadaddr;
 
@@ -1507,7 +1507,7 @@ setup_display(void)
 	  0xff, 0xff, 0x55,
 	  0xff, 0xff, 0xff
      };
-     int i, result;
+     int i, result __attribute__((unused));
      prom_handle scrn = PROM_INVALID_HANDLE;
 
      /* Try Apple's mac-boot screen ihandle */

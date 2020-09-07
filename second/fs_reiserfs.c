@@ -59,7 +59,7 @@ static struct reiserfs_state *INFO = &reiserfs;
 
 /* Adapted from GRUB: */
 static char FSYS_BUF[FSYSREISER_CACHE_SIZE];
-int errnum;
+static int errnum;
 
 
 static int
