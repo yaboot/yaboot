@@ -192,7 +192,7 @@ ext2_open(	struct boot_file_t*	file,
      ofopened = 1;
 
      /* Open the ext2 filesystem */
-     result = ext2fs_open (buffer, EXT2_FLAG_RW, 0, 0, linux_io_manager, &fs);
+     result = ext2fs_open (buffer, 0, 0, 0, linux_io_manager, &fs);
      if (result) {
 
 	  if(result == EXT2_ET_BAD_MAGIC)
