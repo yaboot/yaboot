@@ -26,7 +26,7 @@
 #include "partition.h"
 #include "file.h"
 
-int fserrorno;
+extern int fserrorno;
 struct boot_fspec_t;
 
 struct fs_t {
