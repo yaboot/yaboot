@@ -56,7 +56,7 @@ struct fs_t xfs_filesystem = {
 struct boot_file_t *xfs_file;
 static char FSYS_BUF[32768];
 uint64_t partition_offset;
-int errnum;
+int xfserrnum;
 
 static int
 xfs_open(struct boot_file_t *file,
@@ -109,11 +109,11 @@ xfs_open(struct boot_file_t *file,
 	strcpy(buffer, fspec->file); /* xfs_dir modifies argument */
 	if(!xfs_dir(buffer))
 	{
-		DEBUG_F("xfs_dir() failed. errnum = %d\n", errnum);
+		DEBUG_F("xfs_dir() failed. xfserrnum = %d\n", xfserrnum);
 		prom_close( file->of_device );
-		DEBUG_LEAVE_F(errnum);
+		DEBUG_LEAVE_F(xfserrnum);
 		DEBUG_SLEEP;
-		return errnum;
+		return xfserrnum;
 	}
 
 	DEBUG_F("Successfully opened %s\n", fspec->file);
@@ -715,7 +715,7 @@ xfs_dir (char *dirname)
 		DEBUG_F("di_mode: %o\n", di_mode);
 		if ((di_mode & IFMT) == IFLNK) {
 			if (++link_count > MAX_LINK_COUNT) {
-				errnum = FILE_ERR_SYMLINK_LOOP;
+				xfserrnum = FILE_ERR_SYMLINK_LOOP;
 				DEBUG_LEAVE(FILE_ERR_SYMLINK_LOOP);
 				return 0;
 			}
@@ -724,7 +724,7 @@ xfs_dir (char *dirname)
 				xfs_file->len = di_size;
 				n = xfs_read_data (linkbuf, xfs_file->len);
 			} else {
-				errnum = FILE_ERR_LENGTH;
+				xfserrnum = FILE_ERR_LENGTH;
 				DEBUG_LEAVE(FILE_ERR_LENGTH);
 				return 0;
 			}
@@ -739,7 +739,7 @@ xfs_dir (char *dirname)
 		DEBUG_F("*dirname: %s\n", dirname);
 		if (!*dirname || isspace (*dirname)) {
 			if ((di_mode & IFMT) != IFREG) {
-				errnum = FILE_ERR_BAD_TYPE;
+				xfserrnum = FILE_ERR_BAD_TYPE;
 				DEBUG_LEAVE(FILE_ERR_BAD_TYPE);
 				return 0;
 			}
@@ -750,7 +750,7 @@ xfs_dir (char *dirname)
 		}
 
 		if ((di_mode & IFMT) != IFDIR) {
-			errnum = FILE_ERR_NOTDIR;
+			xfserrnum = FILE_ERR_NOTDIR;
 			DEBUG_LEAVE(FILE_ERR_NOTDIR);
 			return 0;
 		}
@@ -772,7 +772,7 @@ xfs_dir (char *dirname)
 			}
 			name = next_dentry (&new_ino);
 			if (name == NULL) {
-				errnum = FILE_ERR_NOTFOUND;
+				xfserrnum = FILE_ERR_NOTFOUND;
 				DEBUG_LEAVE(FILE_ERR_NOTFOUND);
 				*rest = ch;
 				return 0;

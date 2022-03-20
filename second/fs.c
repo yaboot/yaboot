@@ -57,6 +57,8 @@ static const struct fs_t *block_filesystems[] = {
 const struct fs_t *fs_of = &of_filesystem;              /* needed by ISO9660 */
 const struct fs_t *fs_of_netboot = &of_net_filesystem;  /* needed by file.c */
 
+int fserrorno;
+
 const struct fs_t *
 fs_open(struct boot_file_t *file,
 	struct partition_t *part, struct boot_fspec_t *fspec)
